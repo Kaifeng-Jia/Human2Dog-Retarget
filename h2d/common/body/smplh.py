@@ -30,10 +30,46 @@ REQUIRED = ("v_template", "shapedirs", "posedirs", "J_regressor", "weights", "ki
 
 
 class _ChumpyStub:
-    """Stands in for any chumpy class while unpickling; chumpy pickles an object's ``__dict__``."""
+    """Stands in for any chumpy class while unpickling; chumpy pickles an object's ``__dict__``.
+    ``_kind`` is the pickled class name (Ch, Select, Reshape, transpose, ...)."""
+
+    _kind = "Ch"
 
     def __setstate__(self, state):
         self.__dict__.update(state if isinstance(state, dict) else {"state": state})
+
+
+_CHUMPY_STUBS: dict[str, type] = {}
+
+
+def _chumpy_value(v):
+    """Evaluate a pickled chumpy expression the way chumpy's ``compute_r`` would (leaf ``Ch`` objects hold ``x``;
+    reordering ops are recomputed from their stored operand ``a`` and terms)."""
+    if not isinstance(v, _ChumpyStub):
+        return np.asarray(v)
+    d, kind = v.__dict__, v._kind
+    if "a" not in d:
+        if "x" in d:
+            return np.asarray(_chumpy_value(d["x"]))
+        raise UnconvertibleEntry(f"chumpy {kind} without a stored 'x' or 'a' (fields {sorted(d)})")
+    a = _chumpy_value(d["a"])
+    ops = {
+        "Select": lambda: (a.ravel()[_chumpy_value(d["idxs"]).astype(np.int64).ravel()].reshape(d["preferred_shape"])
+                           if "preferred_shape" in d else a.ravel()[_chumpy_value(d["idxs"]).astype(np.int64)]),
+        "Reshape": lambda: a.reshape(d["newshape"]),
+        "transpose": lambda: np.transpose(a, axes=d.get("axes")),
+        "swapaxes": lambda: np.swapaxes(a, d["axis1"], d["axis2"]),
+        "rollaxis": lambda: np.rollaxis(a, d["axis"], d.get("start", 0)),
+        "Tile": lambda: np.tile(a, d["reps"]),
+        "Repeat": lambda: np.repeat(a, d["repeats"], d.get("axis")),
+        "Roll": lambda: np.roll(a, d["shift"], d.get("axis")),
+        "Diag": lambda: np.diag(a, d.get("k", 0)),
+        "DiagFlat": lambda: np.diagflat(a, d.get("k", 0)),
+        "Rot90": lambda: np.rot90(a, d.get("k", 1)),
+    }
+    if kind not in ops:
+        raise UnconvertibleEntry(f"chumpy {kind} is not supported (fields {sorted(d)})")
+    return np.asarray(ops[kind]())
 
 
 class _SparseStub:
@@ -57,7 +93,9 @@ _SPARSE_STUBS: dict[str, type] = {}
 class _Unpickler(pickle.Unpickler):
     def find_class(self, module, name):
         if module.split(".")[0] == "chumpy":
-            return _ChumpyStub
+            if name not in _CHUMPY_STUBS:
+                _CHUMPY_STUBS[name] = type(f"_Chumpy_{name}", (_ChumpyStub,), {"_kind": name})
+            return _CHUMPY_STUBS[name]
         if module.startswith("scipy.sparse") and name.endswith("_matrix"):
             if name not in _SPARSE_STUBS:
                 _SPARSE_STUBS[name] = type(f"_Stub_{name}", (_SparseStub,), {"_kind": name})
@@ -93,9 +131,7 @@ def _sparse_from_state(kind: str, d: dict) -> sp.csr_matrix:
 
 def _plain(v):
     if isinstance(v, _ChumpyStub):
-        if "x" in v.__dict__:
-            return _plain(v.__dict__["x"])
-        raise UnconvertibleEntry(f"chumpy object without a stored 'x' (fields {sorted(v.__dict__)})")
+        return _chumpy_value(v)
     if isinstance(v, _SparseStub):
         return _sparse_from_state(v._kind, v.__dict__)
     if sp.issparse(v):

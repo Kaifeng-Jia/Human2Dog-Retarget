@@ -151,3 +151,37 @@ def test_old_style_model_file_tolerates_unconvertible_extras(tmp_path):
     info = smplh.describe_file(p)
     assert info["J_regressor"]["shape"] == [52, 300]
     assert info["weights_prior"]["type"] == "UNCONVERTIBLE" and "dok_matrix" in info["weights_prior"]["detail"]
+
+
+def test_chumpy_select_of_full_shape_basis(tmp_path):
+    """MANO SMPLH_*.pkl store shapedirs as chumpy Select(a=Ch(x=full basis), idxs, preferred_shape)."""
+    d = fake_model()
+    full = np.random.default_rng(3).normal(size=(300, 3, 16))
+    idxs = np.arange(full.size).reshape(full.shape)[:, :, :10].ravel()
+    mod_ch, mod_re, pkg = (types.ModuleType("chumpy.ch"), types.ModuleType("chumpy.reordering"),
+                           types.ModuleType("chumpy"))
+
+    class Ch:
+        pass
+
+    class Select:
+        pass
+
+    Ch.__module__, Ch.__qualname__ = "chumpy.ch", "Ch"
+    Select.__module__, Select.__qualname__ = "chumpy.reordering", "Select"
+    mod_ch.Ch, mod_re.Select = Ch, Select
+    leaf = Ch()
+    leaf.__dict__.update({"x": full, "_dirty_vars": set()})
+    sel = Select()
+    sel.__dict__.update({"a": leaf, "idxs": idxs, "preferred_shape": (300, 3, 10), "_itr": None,
+                         "_dirty_vars": set(), "_depends_on_deps": {}})
+    sys.modules.update({"chumpy": pkg, "chumpy.ch": mod_ch, "chumpy.reordering": mod_re})
+    p = tmp_path / "SMPLH_select.pkl"
+    try:
+        with open(p, "wb") as f:
+            pickle.dump(dict(d, shapedirs=sel), f, protocol=2)
+    finally:
+        for k in ("chumpy", "chumpy.ch", "chumpy.reordering"):
+            del sys.modules[k]
+    m = smplh.load_model(p)
+    assert m.shapedirs.shape == (300, 3, 10) and np.allclose(m.shapedirs, full[:, :, :10])
