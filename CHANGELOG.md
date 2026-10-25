@@ -2,7 +2,7 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.3] — unreleased (stacked on 0.1.2)
+## [0.1.3] — unreleased
 
 ### Added
 - [common] SMPL-H body model in numpy (`h2d/common/body/smplh.py`): loads MANO `SMPLH_*.pkl` without chumpy
@@ -28,7 +28,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - `ObjectMesh` moved from `omomo_objects.py` to `h2d/common/objectmesh.py` (re-exported); exact surface
   distance now takes candidate faces from surface samples instead of nearest vertices.
 
-## [0.1.2] — unreleased
+## [0.1.2] — 2026-10-25 (merge `8ab1e9b`)
 
 ### Added
 - [common] OMOMO_new adapter (`h2d/common/data/omomo_new.py`): typed clip, per-hand / non-hand contact
