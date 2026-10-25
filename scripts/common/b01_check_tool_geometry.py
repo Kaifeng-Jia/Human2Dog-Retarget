@@ -14,7 +14,8 @@ Checks (spec v0.5 section 2, Codex review B01):
 Also writes a collision-geometry inventory for the arm and a figure.
 
 Usage:
-  XMORPH_ROOT=/path/to/morph python scripts/b01_check_tool_geometry.py --out outputs/b01_tool_geometry
+  XMORPH_ROOT=/path/to/morph python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
+  (writes outputs/R001_b01/; refuses to run on a dirty tree or an unpinned X-Morph, see docs/versioning.md)
 """
 
 from __future__ import annotations
@@ -32,9 +33,10 @@ import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 from scipy.spatial import ConvexHull  # noqa: E402
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.meshgeom import point_mesh_distance, triangle_areas  # noqa: E402
 from h2d.common.robot import B2Z1Robot  # noqa: E402
+from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.paths import xmorph_path  # noqa: E402
 
 TOL_ON_SURFACE = 1e-5     # m
@@ -62,17 +64,23 @@ def random_config(robot: B2Z1Robot, rng: np.random.Generator) -> np.ndarray:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default="outputs/b01_tool_geometry")
+    add_run_args(ap)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
-    out = Path(args.out)
+    try:
+        prov = start_run(args.run_id, needs=("xmorph",), allow_dirty=args.allow_dirty,
+                         allow_external_mismatch=args.allow_external_mismatch)
+    except ProvenanceError as e:
+        print(f"[refused] {e}", file=sys.stderr)
+        return 2
+    out = Path(args.out or f"outputs/{args.run_id}")
     out.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(args.seed)
 
     robot = B2Z1Robot()
     cfg = robot.cfg
     m = robot.model
-    results: dict = {"xmorph_commit_expected": cfg["xmorph"]["commit"], "checks": {}}
+    results: dict = {"provenance": prov, "checks": {}}
 
     # nominal state: default qpos0, gripper locked
     q = m.qpos0.copy()
@@ -267,7 +275,9 @@ def main() -> int:
     lines = [
         "# B01 tool and collision geometry check",
         "",
-        f"X-Morph commit expected: `{cfg['xmorph']['commit']}`",
+        f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
+        f"X-Morph `{(prov['externals']['xmorph'].get('actual') or '?')[:7]}` "
+        f"(pinned match={prov['externals']['xmorph'].get('match')}) · host `{prov['host']}`",
         "",
         "| Check | Result | Pass |",
         "|---|---|---|",

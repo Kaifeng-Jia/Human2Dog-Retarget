@@ -3,7 +3,7 @@
 
 xmorph:
   # All model paths below are relative to $XMORPH_ROOT (the X-Morph checkout).
-  commit: a9f4a7713ac9e593a1e40f77851ba5ba44c92d78
+  # The pinned X-Morph commit lives in configs/external.yaml.
   model_xml: assets/robots/b2_z1/b2_with_z1.xml   # full model: kinematics + collision geoms
   fk_xml: assets/fk/b2_z1_fk.xml                  # X-Morph's stripped FK model (no geoms); only used for a consistency check
 

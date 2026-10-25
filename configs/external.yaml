@@ -1,0 +1,13 @@
+# Pinned third-party code. Every run records the actual commits and refuses to run on a
+# mismatch unless --allow-external-mismatch is given (and then the mismatch is recorded).
+# Changing a pin is a versioned change: bump the version in CHANGELOG.md.
+
+xmorph:
+  url: https://github.com/Maker-Rat/morph
+  commit: a9f4a7713ac9e593a1e40f77851ba5ba44c92d78
+  env_var: XMORPH_ROOT          # path to the checkout; default external/morph
+
+gmr:
+  url: https://github.com/YanjieZe/GMR
+  commit: 25f56db79ac411258b377b6d4ccba0c8ff3372ac
+  env_var: GMR_ROOT             # default external/GMR (needed from the prior-wrapper step on)

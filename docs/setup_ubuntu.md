@@ -43,9 +43,14 @@ pytest -q
 
 ## 4. Running a step and sending results back
 
-Every script writes one self-contained folder under `outputs/<run>/` (`summary.json`, `report.md`,
-figures). Copy that folder to the Mac at `~/Desktop/Study/cs6758/project/results/<run>/`.
+Run on a clean checkout of the commit named in the run ticket. Every script writes one self-contained
+folder `outputs/<run-id>/` (`summary.json` with provenance, `report.md`, figures) and refuses to run on a
+dirty tree or an unpinned X-Morph (see `docs/versioning.md`).
 
 ```bash
-python scripts/b01_check_tool_geometry.py --out outputs/b01_tool_geometry
+git status                      # must be clean
+python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 ```
+
+Then copy the small files to the `reports` branch (`R001_b01/`), push, and comment on the ticket
+(details in `CLAUDE.md`). Large files go to Google Drive `Human2Dog/runs/<run-id>/`.
