@@ -14,6 +14,7 @@ Checked in the cloud on 2026-10-25 (repository files only; numbers below are fro
 | world | y-up (pelvis height ~0.95 m on y); the adapter rotates +90° about x into z-up |
 | object meshes | `assets/*.ply` scans, 500-8000 vertices; the pose applies to the scan centred at its bounding-box centre (authors' `visualize_force_dataset.py`) |
 | body shape | one `assets/betas.pkl` (10 betas, male), used for every sequence |
+| root convention | the pelvis joint is at `smpl_trans` (the authors' `SMPL_Layer('male', hands=True)` passes `'male'` as `normalise`, i.e. root-relative body + trans; standard SMPL would put the body ~0.22 m too low, found in R004) |
 | per sequence | `objs`, `hands` (L / R / B), `dirs` (L / R / F / B / empty), `weights` (added kg: 0-30), `success` (1 / 2 / 3, undocumented) |
 | frame rate | not documented. 60 fps assumed: 467,378 frames / 60 fps = 130 min, the paper's 141.5 min scaled to 398 of 450 sequences is 125 min |
 | contact labels | not released; derived here from the skinned SMPL-H mesh (a body touches the object when one of its vertices is within 2 cm of the surface) |
@@ -24,3 +25,18 @@ plasticcontainer 57 B; laundrybasket 37 B. On-floor motion (object height range 
 
 Adapter: `h2d/common/data/force.py` (z-up `Clip` with the 52 bodies in InterMimic order, derived per-body contact,
 floor from the soles). SMPL-H model: `h2d/common/body/smplh.py` (no chumpy).
+
+## Profile (R004b, `5c1e1a6`, real SMPL-H male)
+
+All checks pass: floor at z = 0 for the pushed objects (box_huge −0.012 m, chair −0.017 m lowest point over the
+clip), derived contact found in 99 % of box/chair sequences, single-hand annotation agreement 0.88.
+
+* **Push / pull on the floor**: box_huge 56 "slid" segments (both 18, left 7, right 15, mixed 16), chair 86
+  (both 52, left 6, right 7, mixed 21). Hand contact at 0.62 m (box) and 0.79 m (chair backrest). Slid segments
+  last 2.2 / 4.7 / 8.9 s (quartiles); first hand contact at 2.8 / 4.1 / 6.5 s (10/50/90 %), so the approach
+  phase is in the data, unlike OMOMO_new.
+* Other objects are mostly lifted and carried. Single-hand suitcase sequences: derived contact in 76 %; the
+  annotated hand stays ~1.3 cm from the scan (handle not modelled), so suitcase contacts are not reliable.
+  laundrybasket: annotated hand ~6 cm from the scan.
+* "Other body parts" (forearm, torso, pelvis, thigh within 2 cm) are frequent for carried objects (suitcase,
+  container, basket held against the body) and rare for box_huge.
