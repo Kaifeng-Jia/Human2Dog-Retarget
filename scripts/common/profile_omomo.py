@@ -42,7 +42,9 @@ from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa:
 from h2d.common.viz_hoi import example_figure, example_video  # noqa: E402
 from h2d.paths import data_path  # noqa: E402
 
-CHECK_CONTACT_M = 0.05      # per object: median distance of the closest flagged hand body to the surface
+CHECK_CONTACT_M = 0.08      # per object: median distance of the closest flagged hand body to the surface.
+                            # Body positions are joint centres (the wrist joint is several cm from the palm
+                            # skin); a wrong pose/mesh convention gives errors of the object size (0.2-1 m).
 CHECK_FLOOR_M = 0.03        # per object: |median lowest point height at the clip start|
 STATE_COLORS = {"lifted": "#2a78d6", "tilted": "#eb6834", "slid": "#1baf7a", "turned": "#eda100", "still": "#b5b4ad"}
 HAND_COLORS = {"left": "#2a78d6", "right": "#eb6834", "both": "#1baf7a", "mixed": "#b5b4ad"}
