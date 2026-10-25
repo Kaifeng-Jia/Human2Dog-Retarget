@@ -1,0 +1,135 @@
+{
+  "provenance": {
+    "run_id": "R002_xmorph_smoke",
+    "started_utc": "2026-10-25T09:20:14+00:00",
+    "h2d_version": "0.1.1",
+    "git": {
+      "commit": "2c616eb5a90172c125b3324fdacae375fbde8adf",
+      "branch": "HEAD",
+      "describe": "v0.1.0-1-g2c616eb",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "96ae9f58e9c6a965",
+      "external.yaml": "2dbd75f95849fd08",
+      "learned/xmorph.yaml": "810f2480029d83ea"
+    },
+    "command": "xmorph_smoke.py --run-id R002_xmorph_smoke --device cuda:0",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "device": "cuda:0",
+  "clips": {
+    "General_A5_-_Pick_Up_Box_stageii": {
+      "src": "/home/kevin/CS6758Project/morph/data/raw/g1/manip_slow/General_A5_-_Pick_Up_Box_stageii.pkl",
+      "src_n_frames": 281,
+      "out_n_frames_raw": 284,
+      "out_n_frames": 281,
+      "truncated_to_input_length": true,
+      "runtime_s": 2.0497250960006568,
+      "out_root_pos0": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "src_root_pos0": [
+        0.0,
+        0.0,
+        0.8337185382843018
+      ],
+      "src_yaw0": 1.5249924192225643,
+      "out_yaw0": 1.5223442748535105,
+      "finite": true,
+      "max_quat_norm_error": 5.0407762741677686e-08,
+      "joint_limit_violation_frames": {},
+      "max_joint_limit_violation_rad": 0.0,
+      "base_height_range_m": [
+        0.39809471368789673,
+        0.5063853859901428
+      ],
+      "contact_site_height_range_m": [
+        0.8819127661300754,
+        1.0960845623514823
+      ],
+      "lag_arm_frames": -13,
+      "corr_arm": 0.7596459808211988,
+      "lag_root_frames": 2,
+      "corr_root": 0.7075146591494701,
+      "g1_root_path_len_m": 0.4308521534618721,
+      "b2_root_path_len_m": 0.2861935320212033,
+      "path_length_ratio_b2_over_g1": 0.664249974664522,
+      "g1_total_turn_deg": 0.8843947942515415,
+      "b2_total_turn_deg": 11.046956442616587,
+      "heading_drift_deg": 10.162561648365044,
+      "pass": true
+    },
+    "B20_-__Walk_with_box_stageii": {
+      "src": "/home/kevin/CS6758Project/morph/data/raw/g1/manip_slow/B20_-__Walk_with_box_stageii.pkl",
+      "src_n_frames": 385,
+      "out_n_frames_raw": 388,
+      "out_n_frames": 385,
+      "truncated_to_input_length": true,
+      "runtime_s": 2.027936847000092,
+      "out_root_pos0": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "src_root_pos0": [
+        0.0,
+        0.0,
+        0.7712879776954651
+      ],
+      "src_yaw0": 2.007372929591252,
+      "out_yaw0": 2.036220102288148,
+      "finite": true,
+      "max_quat_norm_error": 3.3948688971108254e-08,
+      "joint_limit_violation_frames": {},
+      "max_joint_limit_violation_rad": 0.0,
+      "base_height_range_m": [
+        0.47350984811782837,
+        0.5907888412475586
+      ],
+      "contact_site_height_range_m": [
+        1.0417505136998515,
+        1.3172582884881485
+      ],
+      "lag_arm_frames": 6,
+      "corr_arm": 0.3257692560330155,
+      "lag_root_frames": 0,
+      "corr_root": 0.7824457941375211,
+      "g1_root_path_len_m": 8.722407275505585,
+      "b2_root_path_len_m": 7.218384696503872,
+      "path_length_ratio_b2_over_g1": 0.8275679486756672,
+      "g1_total_turn_deg": 25.197116750940875,
+      "b2_total_turn_deg": 13.888247855758125,
+      "heading_drift_deg": -11.30886889518275,
+      "pass": true
+    }
+  },
+  "pass": true
+}
