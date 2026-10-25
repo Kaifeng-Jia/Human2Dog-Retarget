@@ -30,7 +30,7 @@
 
 ## 4. 版本号和标签
 
-- **代码版本**：`vMAJOR.MINOR.PATCH`，写在 `h2d/__init__.py` 和 `CHANGELOG.md` 中。开发期为 `0.x`：每完成一个里程碑升 MINOR，修复升 PATCH。修改 `configs/external.yaml` 中的固定提交也算版本变更。
+- **代码版本**：`vMAJOR.MINOR.PATCH`，写在 `h2d/__init__.py` 和 `CHANGELOG.md` 中。开发期为 `0.x`：每完成一个里程碑升 MINOR；里程碑之间每合并一个 PR 升 PATCH。修改 `configs/external.yaml` 中的固定提交也算版本变更。
 - **里程碑标签**（annotated tag，打在 `main` 上，指向产出报告数字的那次提交）：
 
 | 标签 | 内容 | 计划日期 |

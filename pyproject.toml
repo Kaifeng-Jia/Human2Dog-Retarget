@@ -4,22 +4,30 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "h2d"
-version = "0.1.0"
+version = "0.1.1"
 description = "Human2Dog: functional interaction retargeting from human-object demonstrations to a B2-Z1 quadruped manipulator"
 requires-python = ">=3.10,<3.12"
 # Kinematics and collision use MuJoCo directly; torch is only needed inside X-Morph inference.
 dependencies = [
   "numpy>=1.24,<2",
   "scipy>=1.10",
-  # Pinned: mesh compilation differs across versions at the float32 level (R001: 8e-10 vs 1.7e-9 m),
-  # so all machines use the same MuJoCo. Changing it is a version bump.
-  "mujoco==3.17.0",
+  # Pinned so every machine compiles meshes identically (R001). 3.11.0 is the newest release that
+  # pytorch-kinematics 0.10.0 (used inside X-Morph inference) can parse; >= 3.12 breaks its MJCF loader.
+  "mujoco==3.11.0",
   "PyYAML>=6.0",
   "matplotlib>=3.7",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
+# Runtime deps of X-Morph inference (the checkout itself is used via PYTHONPATH, not pip-installed).
+# torch is installed separately (cu128 build for the RTX 5070, see docs/setup_ubuntu.md).
+xmorph = [
+  "pytorch-kinematics==0.10.0",
+  "wandb>=0.16",
+  "tensorboard>=2.14",
+  "protobuf>=3.20,<4",
+]
 
 [tool.setuptools.packages.find]
 include = ["h2d*"]

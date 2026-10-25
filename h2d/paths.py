@@ -29,3 +29,10 @@ def xmorph_root() -> Path:
 
 def xmorph_path(rel: str) -> Path:
     return xmorph_root() / rel
+
+
+def data_path(name: str) -> Path:
+    """Resolve a dataset root from configs/data.yaml (env var first, then default)."""
+    spec = load_config("data.yaml")[name]
+    raw = os.environ.get(spec["env_var"]) or spec["default"]
+    return Path(raw).expanduser()
