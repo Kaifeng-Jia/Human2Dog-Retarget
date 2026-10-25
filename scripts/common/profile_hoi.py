@@ -51,8 +51,9 @@ CHECK_CONTACT_M = 0.08      # per object: median distance of the closest flagged
                             # Body positions are joint centres (the wrist joint is several cm from the palm
                             # skin); a wrong pose/mesh convention gives errors of the object size (0.2-1 m).
 CHECK_FLOOR_M = 0.03        # per object: |median lowest point height at the clip start|
-CHECK_HAND_AGREE = 0.8      # FORCE: share of L / R annotated sequences whose more-touching hand matches
-CHECK_CONTACT_FOUND = 0.9   # FORCE: share of sequences with any derived hand contact
+CHECK_HAND_AGREE = 0.8      # FORCE: share of L / R annotated sequences (with contact) whose more-touching hand matches
+CHECK_CONTACT_FOUND = 0.9   # FORCE: share of push/pull sequences with any derived hand contact
+FORCE_FLOOR_OBJECTS = ("box_huge", "chair")     # FORCE objects that stay on the floor (pushed / pulled)
 FORCE_PAPER_MIN, FORCE_PAPER_SEQ = 141.5, 450   # FORCE paper, Tables 3-5 and Sec. 3
 STATE_COLORS = {"lifted": "#2a78d6", "tilted": "#eb6834", "slid": "#1baf7a", "turned": "#eda100", "still": "#b5b4ad"}
 HAND_COLORS = {"left": "#2a78d6", "right": "#eb6834", "both": "#1baf7a", "mixed": "#b5b4ad"}
@@ -167,10 +168,16 @@ class ForceSource:
         c, ex = self.fo.load_sequence(f, self.root, self.model, self.betas)
         lc = float((ex.hand_min_dist[:, 0] < ex.contact_thr_m).mean())
         rc = float((ex.hand_min_dist[:, 1] < ex.contact_thr_m).mean())
+        p10 = np.percentile(ex.hand_min_dist, 10, axis=0)
+        h = ex.annotation["hands"]
+        ann_p10 = p10[0] if h == "L" else p10[1] if h == "R" else float(p10.max())
         extra = {"ann_hands": ex.annotation["hands"], "ann_dir": ex.annotation["dir"],
                  "ann_weight_kg": ex.annotation["weight_kg"], "ann_success": ex.annotation["success_code"],
                  "frac_left_hand_contact": lc, "frac_right_hand_contact": rc,
                  "derived_more_touching_hand": "L" if lc > rc else "R" if rc > lc else "",
+                 "hand_dist_p10_left_m": float(p10[0]), "hand_dist_p10_right_m": float(p10[1]),
+                 "annotated_hand_dist_p10_m": float(ann_p10),
+                 "obj_lowest_z_median_m": float(np.median(mesh_low(c, self.fo.load_force_object(str(self.root), c.obj)))),
                  "floor_raw_m": ex.floor_raw_m, "step_hz": self.fo.step_frequency_hz(c),
                  "src_frames": len(np.load(f)["smpl_trans"])}
         return c, self.fo.load_force_object(str(self.root), c.obj), extra
@@ -192,6 +199,10 @@ class ForceSource:
 
 
 SOURCES = {"omomo_new": OmomoSource, "force": ForceSource}
+
+
+def mesh_low(c, mesh):
+    return mesh.lowest_z(c.obj_pos, c.obj_rot_xyzw)
 
 
 def main() -> int:
@@ -289,10 +300,23 @@ def main() -> int:
     all_contact = [v for vs in checks["contact_hand_min_m"].values() for v in vs]
     all_free = [v for vs in checks["free_hand_min_m"].values() for v in vs]
     bad_mesh = [o for o in objs if not (P[o]["check_contact_hand_median_m"] <= CHECK_CONTACT_M)]
-    bad_floor = [o for o in objs if not (abs(P[o]["floor_lowest_z_start_median_m"]) <= CHECK_FLOOR_M)]
+    if args.dataset == "force":                    # FORCE: only the pushed / pulled objects stay on the floor
+        for o in objs:
+            P[o]["floor_lowest_z_clip_median_m"] = nanmed([r["obj_lowest_z_median_m"] for r in clips if r["object"] == o])
+            C = [r for r in clips if r["object"] == o]
+            P[o]["annotated_hand_dist_p10_median_m"] = nanmed([r["annotated_hand_dist_p10_m"] for r in C])
+            P[o]["share_with_hand_contact"] = float(np.mean([max(r["frac_left_hand_contact"],
+                                                                 r["frac_right_hand_contact"]) > 0 for r in C]))
+        write_csv(out / "per_object.csv", [P[o] for o in objs])
+        floor_objs = [o for o in objs if o in FORCE_FLOOR_OBJECTS]
+        bad_floor = [o for o in floor_objs if not (abs(P[o]["floor_lowest_z_clip_median_m"]) <= CHECK_FLOOR_M)]
+    else:
+        floor_objs = objs
+        bad_floor = [o for o in objs if not (abs(P[o]["floor_lowest_z_start_median_m"]) <= CHECK_FLOOR_M)]
     check_res = {
         "all_files_processed": {"pass": not errors, "n_errors": len(errors)},
-        "floor_at_zero": {"pass": not bad_floor, "threshold_m": CHECK_FLOOR_M, "failing_objects": bad_floor,
+        "floor_at_zero": {"pass": not bad_floor, "threshold_m": CHECK_FLOOR_M, "objects": floor_objs,
+                          "failing_objects": bad_floor,
                           "median_lowest_z_start_m": nanmed([r["obj_lowest_z_start_m"] for r in clips]),
                           "median_toe_z_min_m": nanmed([r["toe_z_min_m"] for r in clips])},
     }
@@ -305,19 +329,26 @@ def main() -> int:
             "pass": bool(nanmed(all_contact) < 0.5 * nanmed(all_free)),
             "rule": "median(contact) < 0.5 * median(free hand)"}
     else:
-        single = [r for r in clips if r["ann_hands"] in ("L", "R")]
+        has = lambda r: max(r["frac_left_hand_contact"], r["frac_right_hand_contact"]) > 0  # noqa: E731
+        single = [r for r in clips if r["ann_hands"] in ("L", "R") and has(r)]
         agree = [r["derived_more_touching_hand"] == r["ann_hands"] for r in single]
-        found = [max(r["frac_left_hand_contact"], r["frac_right_hand_contact"]) > 0 for r in clips]
+        pp = [r for r in clips if r["object"] in FORCE_FLOOR_OBJECTS]
+        found = [has(r) for r in pp] or [False]
         minutes = sum(r["src_frames"] for r in clips) / versions["src_fps_assumed"] / 60
         expect = FORCE_PAPER_MIN * len(clips) / FORCE_PAPER_SEQ
         check_res["force_data_pinned"] = {"pass": bool(versions["force_commit_match"]),
                                           "actual": versions["force_commit"], "pinned": versions["force_commit_pinned"]}
         check_res["hand_annotation_agreement"] = {
             "pass": bool(agree) and float(np.mean(agree)) >= CHECK_HAND_AGREE, "threshold": CHECK_HAND_AGREE,
-            "agreement": float(np.mean(agree)) if agree else None, "n_single_hand_sequences": len(single),
+            "agreement": float(np.mean(agree)) if agree else None, "n_single_hand_with_contact": len(single),
+            "n_single_hand_without_contact": sum(1 for r in clips if r["ann_hands"] in ("L", "R") and not has(r)),
             "disagreeing": [r["name"] for r, a in zip(single, agree) if not a][:30]}
         check_res["hand_contact_found"] = {"pass": float(np.mean(found)) >= CHECK_CONTACT_FOUND,
-                                           "threshold": CHECK_CONTACT_FOUND, "share": float(np.mean(found))}
+                                           "threshold": CHECK_CONTACT_FOUND, "objects": list(FORCE_FLOOR_OBJECTS),
+                                           "share": float(np.mean(found)),
+                                           "share_by_object": {o: P[o]["share_with_hand_contact"] for o in objs},
+                                           "annotated_hand_dist_p10_by_object_m":
+                                               {o: P[o]["annotated_hand_dist_p10_median_m"] for o in objs}}
         check_res["frame_rate_info"] = {"pass": True, "assumed_src_fps": versions["src_fps_assumed"],
                                         "minutes_at_assumed_fps": minutes,
                                         "paper_minutes_scaled_to_n_sequences": expect,
