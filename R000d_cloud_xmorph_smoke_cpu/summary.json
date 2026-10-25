@@ -1,0 +1,133 @@
+{
+  "provenance": {
+    "run_id": "R000d_cloud_xmorph_smoke_cpu",
+    "started_utc": "2026-10-25T09:11:08+00:00",
+    "h2d_version": "0.1.1",
+    "git": {
+      "commit": "2c616eb5a90172c125b3324fdacae375fbde8adf",
+      "branch": "claude/learned/xmorph-prior",
+      "describe": "v0.1.0-1-g2c616eb",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/claude/ext/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "96ae9f58e9c6a965",
+      "external.yaml": "2dbd75f95849fd08",
+      "learned/xmorph.yaml": "810f2480029d83ea"
+    },
+    "command": "xmorph_smoke.py --run-id R000d_cloud_xmorph_smoke_cpu --out /tmp/claude-0/-home-claude/4e04c178-dff8-5f7f-9702-2ba09a7afe8b/scratchpad/R000d_cloud_xmorph_smoke_cpu --device cpu",
+    "host": "vm",
+    "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu126",
+      "cuda_available": false
+    }
+  },
+  "device": "cpu",
+  "clips": {
+    "General_A5_-_Pick_Up_Box_stageii": {
+      "src": "/home/claude/ext/morph/data/raw/g1/manip_slow/General_A5_-_Pick_Up_Box_stageii.pkl",
+      "src_n_frames": 281,
+      "out_n_frames_raw": 284,
+      "out_n_frames": 281,
+      "truncated_to_input_length": true,
+      "runtime_s": 3.115227652000158,
+      "out_root_pos0": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "src_root_pos0": [
+        0.0,
+        0.0,
+        0.8337185382843018
+      ],
+      "src_yaw0": 1.5249924192225643,
+      "out_yaw0": 1.5223429591826518,
+      "finite": true,
+      "max_quat_norm_error": 5.1141652246400326e-08,
+      "joint_limit_violation_frames": {},
+      "max_joint_limit_violation_rad": 0.0,
+      "base_height_range_m": [
+        0.39806070923805237,
+        0.5063714981079102
+      ],
+      "contact_site_height_range_m": [
+        0.881854566949877,
+        1.0960903997655755
+      ],
+      "lag_arm_frames": -13,
+      "corr_arm": 0.7594047295206856,
+      "lag_root_frames": 2,
+      "corr_root": 0.707518164240207,
+      "g1_root_path_len_m": 0.4308521534618721,
+      "b2_root_path_len_m": 0.28618833341528754,
+      "path_length_ratio_b2_over_g1": 0.6642379087948868,
+      "g1_total_turn_deg": 0.8843947942515415,
+      "b2_total_turn_deg": 11.046917523195518,
+      "heading_drift_deg": 10.162522728943976,
+      "pass": true
+    },
+    "B20_-__Walk_with_box_stageii": {
+      "src": "/home/claude/ext/morph/data/raw/g1/manip_slow/B20_-__Walk_with_box_stageii.pkl",
+      "src_n_frames": 385,
+      "out_n_frames_raw": 388,
+      "out_n_frames": 385,
+      "truncated_to_input_length": true,
+      "runtime_s": 2.6836617880001086,
+      "out_root_pos0": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "src_root_pos0": [
+        0.0,
+        0.0,
+        0.7712879776954651
+      ],
+      "src_yaw0": 2.007372929591252,
+      "out_yaw0": 2.0362217214749525,
+      "finite": true,
+      "max_quat_norm_error": 3.318367458593485e-08,
+      "joint_limit_violation_frames": {},
+      "max_joint_limit_violation_rad": 0.0,
+      "base_height_range_m": [
+        0.4735153019428253,
+        0.590750515460968
+      ],
+      "contact_site_height_range_m": [
+        1.0417723178370777,
+        1.3172836039735571
+      ],
+      "lag_arm_frames": 6,
+      "corr_arm": 0.3253454473495726,
+      "lag_root_frames": 0,
+      "corr_root": 0.7824350411471939,
+      "g1_root_path_len_m": 8.722407275505585,
+      "b2_root_path_len_m": 7.218382830874213,
+      "path_length_ratio_b2_over_g1": 0.8275677347863589,
+      "g1_total_turn_deg": 25.197116750940875,
+      "b2_total_turn_deg": 13.887634499688762,
+      "heading_drift_deg": -11.309482251252112,
+      "pass": true
+    }
+  },
+  "pass": true
+}
