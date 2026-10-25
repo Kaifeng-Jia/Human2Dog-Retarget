@@ -51,7 +51,8 @@ python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 | Step (spec v0.5 §8) | State |
 |---|---|
 | B01 tool frame, contact site, collision geometry | done (v0.1.0) |
-| X-Morph prior wrapper + source-origin sidecar | next |
+| X-Morph prior wrapper + source-origin sidecar | done (v0.1.1), GPU check in R002 |
+| OMOMO_new format inspection, GMR install | R002 |
 | Scene registration (start-anchored / contact-fitted) | next |
 | Frozen-body reachability diagnostic (§7.1) → tag `m1-reachability` | next |
 | B1 / B2 / M arm refinement and evaluation | later |

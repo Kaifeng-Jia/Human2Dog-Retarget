@@ -1,0 +1,6 @@
+# Version constraints for every environment that runs this project (pip install ... -c constraints.txt).
+# Each line exists because something broke without it.
+numpy<2                      # h2d and X-Morph need numpy 1.x
+opencv-python<4.12           # GMR leaves opencv unpinned; opencv-python>=4.12 pulls numpy 2.x (R002)
+mujoco==3.11.0               # newest MuJoCo that pytorch-kinematics 0.10.0 (X-Morph FK) can parse
+pytorch-kinematics==0.10.0

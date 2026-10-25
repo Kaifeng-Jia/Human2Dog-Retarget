@@ -17,31 +17,58 @@ pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128
 python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
-## 2. External repositories at pinned commits
+## 2. This package (with X-Morph runtime deps)
 
 ```bash
 cd Human2Dog-Retarget
-mkdir -p external
-git clone https://github.com/Maker-Rat/morph external/morph
-git -C external/morph checkout a9f4a7713ac9e593a1e40f77851ba5ba44c92d78
-pip install -e external/morph
+pip install -e ".[dev,xmorph]" -c constraints.txt
+python -c "import mujoco; print(mujoco.__version__)"   # must print 3.11.0
 ```
 
-If you already have an X-Morph checkout, you can reuse it instead: check
-`git -C <path> rev-parse HEAD` equals the commit above and set `XMORPH_ROOT=<path>`.
+MuJoCo is pinned to **3.11.0**: it is the newest release that `pytorch-kinematics 0.10.0` (used inside
+X-Morph inference) can parse; 3.12 and later break X-Morph's FK loader. If another version is installed,
+`pip install mujoco==3.11.0`.
 
-GMR (needed from the X-Morph prior step on; pinned `25f56db79ac411258b377b6d4ccba0c8ff3372ac`) will be
-added to this page together with that step.
+## 3. Third-party repositories at pinned commits (`configs/external.yaml`)
 
-## 3. This package
+**X-Morph** is used read-only through `PYTHONPATH`; it is never pip-installed, so an existing checkout is
+not modified.
 
 ```bash
-pip install -e ".[dev]"
-export XMORPH_ROOT=$PWD/external/morph
-pytest -q
+# reuse an existing checkout if `git -C <path> rev-parse HEAD` equals the pinned commit
+export XMORPH_ROOT=/home/kevin/CS6758Project/morph
+# otherwise:
+#   git clone https://github.com/Maker-Rat/morph external/morph
+#   git -C external/morph checkout a9f4a7713ac9e593a1e40f77851ba5ba44c92d78
+#   export XMORPH_ROOT=$PWD/external/morph
 ```
 
-## 4. Running a step and sending results back
+**GMR** is cloned into `external/GMR` and installed editable (it pulls `mink`, `smplx`, `qpsolvers`,
+`opencv-python`). Always pass `-c constraints.txt`: without it pip installs opencv-python 5.x, which
+upgrades numpy to 2.x and breaks this project (found in R002).
+
+```bash
+git clone https://github.com/YanjieZe/GMR external/GMR
+git -C external/GMR checkout 25f56db79ac411258b377b6d4ccba0c8ff3372ac
+pip install -e external/GMR -c constraints.txt
+pip check                      # must report no broken requirements
+export GMR_ROOT=$PWD/external/GMR
+```
+
+## 4. Data locations (`configs/data.yaml`)
+
+Data never enters git. Point the project at the datasets with symlinks (or the env vars below):
+
+```bash
+mkdir -p ~/CS6758Project/data
+ln -s /home/kevin/holosoma/data       ~/CS6758Project/data/omomo_raw    # OMOMO_RAW_ROOT
+ln -s /home/kevin/holosoma/OMOMO_new  ~/CS6758Project/data/omomo_new    # OMOMO_NEW_ROOT
+# SMPL-X model files (licensed download): ~/CS6758Project/data/smplx_models  (SMPLX_MODEL_ROOT)
+```
+
+Only data files are read from those folders; no code from them is used.
+
+## 5. Running a step and sending results back
 
 Run on a clean checkout of the commit named in the run ticket. Every script writes one self-contained
 folder `outputs/<run-id>/` (`summary.json` with provenance, `report.md`, figures) and refuses to run on a
@@ -49,8 +76,9 @@ dirty tree or an unpinned X-Morph (see `docs/versioning.md`).
 
 ```bash
 git status                      # must be clean
-python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
+pytest -q
+python scripts/common/b01_check_tool_geometry.py --run-id <id>
 ```
 
-Then copy the small files to the `reports` branch (`R001_b01/`), push, and comment on the ticket
+Then copy the small files to the `reports` branch (`<run-id>/`), push, and comment on the ticket
 (details in `CLAUDE.md`). Large files go to Google Drive `Human2Dog/runs/<run-id>/`.

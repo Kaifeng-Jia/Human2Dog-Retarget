@@ -1,0 +1,17 @@
+# X-Morph inference settings for the learned-line prior (B2-Z1 mixed loco-manipulation).
+# Paths are relative to $XMORPH_ROOT. Values follow the released checkpoints' run metadata
+# (runs/corrector_mix_g1_b2_z1/corrector_run.json: dst_start_height 0.5; dataset root_ang = yaw).
+
+task_family: manipulation
+pair_id: g1_to_b2_z1
+teacher_dir: runs/teacher_mix_g1_b2_z1
+corrector_ckpt: runs/corrector_mix_g1_b2_z1/best.pt
+processed_dir: data/processed/mix_g1_b2_z1_slow
+dst_start_height: 0.5
+dst_start_height_mode: fixed
+root_rotation_mode: yaw
+apply_root_skate_comp: true
+
+# X-Morph's strided conv encoder can return a few extra frames (e.g. 281 -> 284).
+# The wrapper keeps the first n_in frames and records the raw length in the sidecar.
+truncate_to_input_length: true
