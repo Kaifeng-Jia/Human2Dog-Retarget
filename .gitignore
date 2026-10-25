@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+venv*/
+
+# third-party repos cloned by docs/setup_ubuntu.md
+external/
+
+# run outputs and datasets stay out of git
+outputs/
+data/
+*.mp4
+*.npz
+*.pkl
