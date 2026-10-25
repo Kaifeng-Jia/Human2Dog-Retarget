@@ -1,0 +1,34 @@
+# B2-Z1 robot, tool and collision conventions shared by every method (B0/B1/B2/M)
+# and by both project lines. Spec: learned-line method v0.5, section 2 (Codex B01).
+
+xmorph:
+  # All model paths below are relative to $XMORPH_ROOT (the X-Morph checkout).
+  # The pinned X-Morph commit lives in configs/external.yaml.
+  model_xml: assets/robots/b2_z1/b2_with_z1.xml   # full model: kinematics + collision geoms
+  fk_xml: assets/fk/b2_z1_fk.xml                  # X-Morph's stripped FK model (no geoms); only used for a consistency check
+
+robot:
+  # X-Morph dof_pos order == MuJoCo qpos[7:26] order of the full model (checked in B01).
+  joint_order: [FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+                FR_hip_joint, FR_thigh_joint, FR_calf_joint,
+                RL_hip_joint, RL_thigh_joint, RL_calf_joint,
+                RR_hip_joint, RR_thigh_joint, RR_calf_joint,
+                joint1, joint2, joint3, joint4, joint5, joint6, jointGripper]
+  arm_joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+  gripper_joint: jointGripper
+  gripper_lock: 0.0          # closed; r_c below is only valid at this value
+
+tool:
+  frame_body: gripperStator  # tool frame = gripperStator body frame
+  contact_site_local: [0.149, 0.0, 0.0]   # r_c in tool frame [m]
+  contact_body: gripperMover               # at gripper_lock, r_c lies on the mover front face
+  approach_axis_local: [1.0, 0.0, 0.0]     # tool x axis
+  front_face_x: 0.149                      # front-face plane in tool frame [m]
+  front_face_tol: 1.0e-4                   # vertex tolerance when collecting front-face triangles [m]
+
+collision:
+  arm_bodies: [z1_mount_computer, link00, link01, link02, link03, link04, link05, link06,
+               gripperStator, gripperMover]
+  tool_bodies: [gripperStator, gripperMover]   # bodies whose front face may touch the object
+  # MuJoCo collides mesh geoms through their convex hull; B01 reports how far the
+  # front face lies from that hull so the approximation is stated, not assumed.
