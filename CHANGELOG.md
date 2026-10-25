@@ -2,7 +2,21 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.1] — unreleased
+## [0.1.2] — unreleased
+
+### Added
+- [common] OMOMO_new adapter (`h2d/common/data/omomo_new.py`): typed clip, per-hand / non-hand contact,
+  per-frame contact modes (none / left / right / both / body / unknown) with short-run removal, contact
+  intervals, screening statistics, SMPL-X parameters (y-up -> z-up body-frame permutation and per-joint
+  `[1, 2, 0]` reorder as in the HOI-Retarget reader, BSD-3).
+- [common] `scripts/common/screen_omomo_clips.py`: screens all clips for single-hand floor-push
+  candidates (duration, object displacement, object stays low and upright, human root nearly static).
+- [learned] `h2d/learned/human_to_g1.py`: GMR SMPL-X -> G1 with a convention self-check
+  (mean-shape vs recorded pelvis-relative wrists).
+- [learned] `scripts/learned/d0_chain.py`: first end-to-end chain OMOMO_new -> GMR -> G1 -> X-Morph -> B2-Z1
+  with contact timeline, hand path in the object frame, paths and heights.
+
+## [0.1.1] — 2026-10-25 (merge `e7a7f5e`)
 
 ### Fixed
 - [env] Pin `mujoco==3.11.0` instead of 3.17.0. pytorch-kinematics 0.10.0, which X-Morph inference uses to
