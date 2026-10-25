@@ -2,6 +2,25 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.1.3] — unreleased (stacked on 0.1.2)
+
+### Added
+- [common] SMPL-H body model in numpy (`h2d/common/body/smplh.py`): loads MANO `SMPLH_*.pkl` without chumpy
+  (stub unpickler; also old-scipy sparse matrices) or an `.npz`; forward kinematics; skinning with pose blend shapes.
+- [common] FORCE adapter (`h2d/common/data/force.py`, format notes in `docs/data/force_format.md`): sequence ->
+  z-up `Clip` with the 52 bodies in InterMimic order; object scans from PLY; floor from the soles; per-body
+  contact derived from the skinned mesh (2 cm). Frame rate 60 fps (inferred from the paper's total duration).
+- [common] Generic object meshes (`h2d/common/objectmesh.py`): OBJ and PLY (ascii / binary) loading; surface
+  queries through area-weighted surface samples (works for coarse scans), two-level fast approximate distance.
+- Data locations `force` (pinned commit) and `smplh_models` in `configs/data.yaml`.
+
+### Changed
+- `scripts/common/profile_omomo.py` -> `scripts/common/profile_hoi.py --dataset {omomo_new,force}`; FORCE checks:
+  data at the pinned commit, derived hand contact vs the per-sequence hand annotation, contact found; frame-rate
+  information (duration vs paper, step frequency).
+- `ObjectMesh` moved from `omomo_objects.py` to `h2d/common/objectmesh.py` (re-exported); exact surface
+  distance now takes candidate faces from surface samples instead of nearest vertices.
+
 ## [0.1.2] — unreleased
 
 ### Added

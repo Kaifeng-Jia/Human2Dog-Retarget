@@ -9,7 +9,7 @@ at the human hand vs the prior's gripper.
 Pass/fail per clip: chain completes; frame counts consistent; pelvis height z-up sane;
 convention self-check (pelvis-relative wrist error, mean shape vs recorded) median <= 0.08 m.
 The figure follows the clip's longest hand-contact segment (h2d/common/data/describe.py).
-Clips are chosen explicitly, after looking at the data profile (scripts/common/profile_omomo.py).
+Clips are chosen explicitly, after looking at the data profile (scripts/common/profile_hoi.py).
 
 Usage:
   python scripts/learned/d0_chain.py --run-id R00x_d0 --clips sub10_largebox_011 sub3_floorlamp_004

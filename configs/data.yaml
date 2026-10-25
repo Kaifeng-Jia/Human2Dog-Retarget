@@ -10,3 +10,11 @@ omomo_new:
 smplx_models:
   env_var: SMPLX_MODEL_ROOT
   default: ~/CS6758Project/data/smplx_models    # SMPL-X model files (licensed download)
+force:
+  env_var: FORCE_ROOT
+  default: ~/CS6758Project/data/force           # git clone of the FORCE data repository (no licence file: never commit)
+  url: https://github.com/xz6014/FORCE_dataset
+  commit: 695c8b8616f0915dd61658862751e40ec658b81c
+smplh_models:
+  env_var: SMPLH_MODEL_ROOT
+  default: ~/CS6758Project/data/smplh_models    # SMPLH_{male,female}.pkl from MANO "Models & Code" (licensed download)
