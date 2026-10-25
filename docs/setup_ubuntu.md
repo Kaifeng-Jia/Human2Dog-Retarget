@@ -55,6 +55,16 @@ pip check                      # must report no broken requirements
 export GMR_ROOT=$PWD/external/GMR
 ```
 
+**HOI-Retarget** is cloned into `external/hoi-retarget` only for its 13 OMOMO object meshes
+(`assets/objects/`, MIT, redistributed from InterMimic). It is not installed and none of its code runs.
+
+```bash
+git clone https://github.com/leggedrobotics/hoi-retarget external/hoi-retarget
+git -C external/hoi-retarget checkout b341dadde3fc745ef5ea606eaacbde9a0cbb916f
+export HOI_RETARGET_ROOT=$PWD/external/hoi-retarget
+ls external/hoi-retarget/assets/objects/objects     # 13 object folders, each <name>.obj + sample_points.npy
+```
+
 ## 4. Data locations (`configs/data.yaml`)
 
 Data never enters git. Point the project at the datasets with symlinks (or the env vars below):

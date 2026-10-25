@@ -9,8 +9,8 @@ venv*/
 external/
 
 # run outputs and datasets stay out of git
-outputs/
-data/
+/outputs/
+/data/
 *.mp4
 *.npz
 *.pkl

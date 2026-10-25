@@ -2,7 +2,38 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.1] — unreleased
+## [0.1.2] — unreleased
+
+### Added
+- [common] OMOMO_new adapter (`h2d/common/data/omomo_new.py`): typed clip, per-hand / non-hand contact
+  (a hand = wrist/palm + 15 finger bodies), per-frame contact modes (none / left / right / both / body /
+  unknown) with short-run removal, contact intervals, skeleton parents and body groups, SMPL-X parameters
+  (y-up -> z-up body-frame permutation and per-joint `[1, 2, 0]` reorder as in the HOI-Retarget reader, BSD-3).
+- [common] Object meshes (`h2d/common/data/omomo_objects.py`): the 13 InterMimic meshes shipped by
+  HOI-Retarget (MIT; new pinned external `hoi_retarget`, assets only), lowest point per frame (convex hull),
+  surface distance (exact point-triangle near the surface), tilt / yaw split relative to a reference frame.
+- [common] Descriptive interaction segments (`h2d/common/data/describe.py`): hand-contact segments with raw
+  descriptors (hands, palm vs fingers, other body parts, object clearance, displacement, tilt, yaw, human
+  root motion, heading, crouch, contact height, two-hand geometry) and coarse labels
+  (object: lifted / tilted / slid / turned / still; human: walk / stand) with thresholds in `DEFAULTS`.
+- [common] `scripts/common/profile_omomo.py`: data profile of all clips, no selection: per-clip and
+  per-segment CSVs, per-object aggregates, body-part heatmap, distributions, mesh/pose and floor checks,
+  per-object example keyframes (+ optional MP4). `h2d/common/viz_hoi.py` draws them.
+- [learned] `h2d/learned/human_to_g1.py`: GMR SMPL-X -> G1 with a convention self-check
+  (mean-shape vs recorded pelvis-relative wrists).
+- [learned] `scripts/learned/d0_chain.py`: first end-to-end chain OMOMO_new -> GMR -> G1 -> X-Morph -> B2-Z1
+  on explicitly given clips (not run yet; clips are chosen after the data profile).
+
+### Fixed
+- `.gitignore`: `data/` also matched `h2d/common/data/` and `docs/data/`, so `docs/data/omomo_new_format.md`
+  (listed under 0.1.1) never reached `main`, and the OMOMO_new adapter was missing from the PR branch.
+  Now only the top-level `/data/` and `/outputs/` are ignored.
+
+### Changed
+- Candidate screening for single-hand floor pushes was dropped before it ran: the data is profiled
+  first (R003), selection criteria come after.
+
+## [0.1.1] — 2026-10-25 (merge `e7a7f5e`)
 
 ### Fixed
 - [env] Pin `mujoco==3.11.0` instead of 3.17.0. pytorch-kinematics 0.10.0, which X-Morph inference uses to
