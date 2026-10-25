@@ -97,7 +97,8 @@ def _timeline(axs, clip: Clip, obj: ObjectMesh, seg_rows: list[dict]):
 def example_figure(clip: Clip, obj: ObjectMesh, seg_rows: list[dict], path: Path, n_keys: int = 5,
                    rng_seed: int = 0) -> None:
     rng = np.random.default_rng(rng_seed)
-    sub = obj.verts[rng.choice(len(obj.verts), size=min(2500, len(obj.verts)), replace=False)]
+    pts = obj._samples()[0]                                  # surface samples (coarse meshes have few vertices)
+    sub = pts[rng.choice(len(pts), size=min(2500, len(pts)), replace=False)]
     if seg_rows:
         r = max(seg_rows, key=lambda x: x["duration_s"])
         s, e = r["start"], r["end"]
@@ -126,7 +127,8 @@ def example_figure(clip: Clip, obj: ObjectMesh, seg_rows: list[dict], path: Path
 def example_video(clip: Clip, obj: ObjectMesh, seg_rows: list[dict], path: Path, stride: int = 2) -> bool:
     if not animation.writers.is_available("ffmpeg"):
         return False
-    sub = obj.verts[np.random.default_rng(0).choice(len(obj.verts), size=min(2500, len(obj.verts)), replace=False)]
+    pts = obj._samples()[0]
+    sub = pts[np.random.default_rng(0).choice(len(pts), size=min(2500, len(pts)), replace=False)]
     lims = _limits(clip, obj, np.arange(clip.n))
     fig = plt.figure(figsize=(10, 7))
     gs = fig.add_gridspec(2, 1, height_ratios=[4, 1])

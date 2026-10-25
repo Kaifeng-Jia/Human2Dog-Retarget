@@ -2,7 +2,33 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.2] — unreleased
+## [0.1.3] — unreleased
+
+### Added
+- [common] SMPL-H body model in numpy (`h2d/common/body/smplh.py`): loads MANO `SMPLH_*.pkl` without chumpy
+  (stub unpickler; also old-scipy sparse matrices) or an `.npz`; forward kinematics; skinning with pose blend shapes.
+- [common] FORCE adapter (`h2d/common/data/force.py`, format notes in `docs/data/force_format.md`): sequence ->
+  z-up `Clip` with the 52 bodies in InterMimic order; object scans from PLY; floor from the soles; per-body
+  contact derived from the skinned mesh (2 cm). Frame rate 60 fps (inferred from the paper's total duration).
+- [common] Generic object meshes (`h2d/common/objectmesh.py`): OBJ and PLY (ascii / binary) loading; surface
+  queries through area-weighted surface samples (works for coarse scans), two-level fast approximate distance.
+- Data locations `force` (pinned commit) and `smplh_models` in `configs/data.yaml`.
+
+### Fixed (found in R004)
+- SMPL-H loader: old scipy sparse pickles are rebuilt by their fields (csc/csr/coo/dia/lil); chumpy reordering
+  objects (`Select` for `shapedirs` in mano_v1_2) are evaluated without chumpy; unused unconvertible entries are
+  tolerated and reported.
+- FORCE root convention: the pelvis is at `smpl_trans` (authors' layer is root-relative); standard SMPL put the
+  body ~0.22 m too low and every object appeared to float (R004); R004b passes.
+
+### Changed
+- `scripts/common/profile_omomo.py` -> `scripts/common/profile_hoi.py --dataset {omomo_new,force}`; FORCE checks:
+  data at the pinned commit, derived hand contact vs the per-sequence hand annotation, contact found; frame-rate
+  information (duration vs paper, step frequency).
+- `ObjectMesh` moved from `omomo_objects.py` to `h2d/common/objectmesh.py` (re-exported); exact surface
+  distance now takes candidate faces from surface samples instead of nearest vertices.
+
+## [0.1.2] — 2026-10-25 (merge `8ab1e9b`)
 
 ### Added
 - [common] OMOMO_new adapter (`h2d/common/data/omomo_new.py`): typed clip, per-hand / non-hand contact

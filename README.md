@@ -54,7 +54,9 @@ python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 | X-Morph prior wrapper + source-origin sidecar | done (v0.1.1), GPU check in R002 |
 | OMOMO_new format inspection, GMR install | done (R002) |
 | OMOMO_new adapter, object meshes, data profile (R003); D0 chain (OMOMO → G1 → B2-Z1) | v0.1.2 |
-| Choose the interaction types and clips for the course version (from the profile) | next |
+| Course target chosen: push along the floor, low objects (from the R003 profile) | done |
+| FORCE adapter (SMPL-H, derived contacts) and profile | v0.1.3, R004b passed |
+| D0 chain on push clips (OMOMO_new low objects + FORCE box/chair) → reachability diagnostic → `m1-reachability` | next |
 | Scene registration (start-anchored / contact-fitted) | next |
 | Frozen-body reachability diagnostic (§7.1) → tag `m1-reachability` | next |
 | B1 / B2 / M arm refinement and evaluation | later |

@@ -35,7 +35,7 @@ Known caveats (to verify on our side before use):
 * Object meshes: we use the 13 InterMimic re-exports shipped by HOI-Retarget (`assets/objects/objects/
   <name>/<name>.obj`, MIT), which HOI-Retarget places with the recorded object pose directly
   (`world = R(obj_rot) · v + obj_pos`). The original OMOMO `captured_objects/` meshes may use another frame.
-  The convention is checked on every clip by `scripts/common/profile_omomo.py` (flagged hand bodies must
+  The convention is checked on every clip by `scripts/common/profile_hoi.py` (flagged hand bodies must
   lie on the transformed surface).
 * The body named after a joint is the segment distal to it: `L_Wrist` is the palm, `L_Elbow` the forearm,
   `L_Shoulder` the upper arm, `L_Hip` the thigh, `L_Knee` the shin. A hand = wrist (palm) + 15 finger

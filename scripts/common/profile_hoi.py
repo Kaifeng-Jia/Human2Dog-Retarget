@@ -1,13 +1,18 @@
 #!/usr/bin/env python
-"""Profile OMOMO_new: what interactions the data contains (descriptive only, no selection).
+"""Profile a human-object dataset: what interactions it contains (descriptive only, no selection).
+
+Datasets (``--dataset``): ``omomo_new`` (InterMimic-processed OMOMO, contact labels in the data) and ``force``
+(FORCE, SMPL-H bodies, contacts derived from the skinned hand mesh, ``h2d/common/data/force.py``).
 
 For every clip, hand-contact segments with raw descriptors and coarse labels
-(``h2d/common/data/describe.py``); per-object aggregates; which body parts touch the objects; and two
-convention checks:
+(``h2d/common/data/describe.py``); per-object aggregates; which body parts touch the objects; and checks:
 
-* mesh / pose: the bodies flagged in contact lie on the object surface when the recorded object pose
-  is applied to the InterMimic meshes (per object, median distance of the closest flagged hand body);
-* floor: objects rest at z = 0 at the clip start.
+* both: all files processed; floor at z = 0 (objects rest on the floor at the clip start);
+* omomo_new: mesh / pose convention (bodies flagged in contact lie on the transformed InterMimic mesh) and
+  contact labels informative (flagged hands much closer than free hands);
+* force: data at the pinned commit; derived hand contact agrees with the per-sequence hand annotation (L / R),
+  which also catches a mirrored body; hand contact found in most sequences. The assumed frame rate is
+  reported against the paper's total duration and the walking step frequency.
 
 Examples: for every object, the most common and second most common (hands, object state) of the
 clip's longest segment; within each, the clip whose duration is closest to the group median.
@@ -36,16 +41,20 @@ import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data.describe import DEFAULTS, HAND_LABELS, OBJECT_STATES, describe_clip  # noqa: E402
-from h2d.common.data.omomo_new import load_clip  # noqa: E402
+from h2d.common.data.omomo_new import NAME_RE, load_clip  # noqa: E402
 from h2d.common.data.omomo_objects import load_object  # noqa: E402
-from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
+from h2d.common.runinfo import ProvenanceError, _git, add_run_args, start_run  # noqa: E402
 from h2d.common.viz_hoi import example_figure, example_video  # noqa: E402
-from h2d.paths import data_path  # noqa: E402
+from h2d.paths import data_path, load_config  # noqa: E402
 
 CHECK_CONTACT_M = 0.08      # per object: median distance of the closest flagged hand body to the surface.
                             # Body positions are joint centres (the wrist joint is several cm from the palm
                             # skin); a wrong pose/mesh convention gives errors of the object size (0.2-1 m).
 CHECK_FLOOR_M = 0.03        # per object: |median lowest point height at the clip start|
+CHECK_HAND_AGREE = 0.8      # FORCE: share of L / R annotated sequences (with contact) whose more-touching hand matches
+CHECK_CONTACT_FOUND = 0.9   # FORCE: share of push/pull sequences with any derived hand contact
+FORCE_FLOOR_OBJECTS = ("box_huge", "chair")     # FORCE objects that stay on the floor (pushed / pulled)
+FORCE_PAPER_MIN, FORCE_PAPER_SEQ = 141.5, 450   # FORCE paper, Tables 3-5 and Sec. 3
 STATE_COLORS = {"lifted": "#2a78d6", "tilted": "#eb6834", "slid": "#1baf7a", "turned": "#eda100", "still": "#b5b4ad"}
 HAND_COLORS = {"left": "#2a78d6", "right": "#eb6834", "both": "#1baf7a", "mixed": "#b5b4ad"}
 INK, GRID = "#2b2b2b", "#e4e3dd"
@@ -116,10 +125,92 @@ def stacked(ax, objs, shares: dict, labels, colors, title):
     _style(ax)
 
 
+class OmomoSource:
+    name, needs, title = "omomo_new", ("hoi_retarget",), "OMOMO_new"
+
+    def __init__(self, root: Path, args):
+        self.root = root
+        self.files = sorted(root.rglob("*.pt"))
+
+    def object_of(self, f: Path) -> str | None:
+        m = NAME_RE.match(f.stem)
+        return m["object"] if m else None
+
+    def load(self, f: Path):
+        c = load_clip(f)
+        return c, load_object(c.obj), {}
+
+    def mesh(self, obj: str):
+        return load_object(obj)
+
+    def versions(self) -> dict:
+        return {}
+
+
+class ForceSource:
+    name, needs, title = "force", (), "FORCE"
+
+    def __init__(self, root: Path, args):
+        from h2d.common.data import force as fo
+
+        self.fo, self.root = fo, root
+        self.ann = fo.annotations(root)
+        self.files = [f for f in fo.sequences(root) if f.stem in self.ann]
+        self.betas, gender = fo.load_betas(root)
+        smplh_root = Path(args.smplh_root).expanduser() if args.smplh_root else data_path("smplh_models")
+        self.model_path = fo.smplh_path(smplh_root, gender)
+        self.model = fo.load_smplh(str(self.model_path))
+
+    def object_of(self, f: Path) -> str | None:
+        return self.ann[f.stem]["object"]
+
+    def load(self, f: Path):
+        c, ex = self.fo.load_sequence(f, self.root, self.model, self.betas)
+        lc = float((ex.hand_min_dist[:, 0] < ex.contact_thr_m).mean())
+        rc = float((ex.hand_min_dist[:, 1] < ex.contact_thr_m).mean())
+        p10 = np.percentile(ex.hand_min_dist, 10, axis=0)
+        h = ex.annotation["hands"]
+        ann_p10 = p10[0] if h == "L" else p10[1] if h == "R" else float(p10.max())
+        extra = {"ann_hands": ex.annotation["hands"], "ann_dir": ex.annotation["dir"],
+                 "ann_weight_kg": ex.annotation["weight_kg"], "ann_success": ex.annotation["success_code"],
+                 "frac_left_hand_contact": lc, "frac_right_hand_contact": rc,
+                 "derived_more_touching_hand": "L" if lc > rc else "R" if rc > lc else "",
+                 "hand_dist_p10_left_m": float(p10[0]), "hand_dist_p10_right_m": float(p10[1]),
+                 "annotated_hand_dist_p10_m": float(ann_p10),
+                 "obj_lowest_z_median_m": float(np.median(mesh_low(c, self.fo.load_force_object(str(self.root), c.obj)))),
+                 "floor_raw_m": ex.floor_raw_m, "step_hz": self.fo.step_frequency_hz(c),
+                 "src_frames": len(np.load(f)["smpl_trans"])}
+        return c, self.fo.load_force_object(str(self.root), c.obj), extra
+
+    def mesh(self, obj: str):
+        return self.fo.load_force_object(str(self.root), obj)
+
+    def versions(self) -> dict:
+        import hashlib
+
+        spec = load_config("data.yaml")["force"]
+        head = _git(["rev-parse", "HEAD"], self.root)
+        return {"force_commit": head, "force_commit_pinned": spec.get("commit"),
+                "force_commit_match": head == spec.get("commit"),
+                "smplh_file": self.model_path.name, "smplh_bytes": self.model_path.stat().st_size,
+                "smplh_sha256_16": hashlib.sha256(self.model_path.read_bytes()).hexdigest()[:16],
+                "smplh_joints": self.model.n_joints, "smplh_vertices": int(len(self.model.v_template)),
+                "src_fps_assumed": self.fo.SRC_FPS}
+
+
+SOURCES = {"omomo_new": OmomoSource, "force": ForceSource}
+
+
+def mesh_low(c, mesh):
+    return mesh.lowest_z(c.obj_pos, c.obj_rot_xyzw)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     add_run_args(ap)
+    ap.add_argument("--dataset", default="omomo_new", choices=sorted(SOURCES))
     ap.add_argument("--root", default=None)
+    ap.add_argument("--smplh-root", default=None, help="FORCE: folder with SMPLH_{male,female}.pkl")
     ap.add_argument("--limit", type=int, default=0, help="only the first N files (debug)")
     ap.add_argument("--objects", nargs="*", default=None, help="only these objects (debug)")
     ap.add_argument("--mesh-check-frames", type=int, default=10)
@@ -127,18 +218,20 @@ def main() -> int:
     ap.add_argument("--videos", action="store_true", help="also write an MP4 per example (needs ffmpeg)")
     args = ap.parse_args()
     try:
-        prov = start_run(args.run_id, needs=("hoi_retarget",), configs=("data.yaml", "external.yaml"),
+        prov = start_run(args.run_id, needs=SOURCES[args.dataset].needs, configs=("data.yaml", "external.yaml"),
                          allow_dirty=args.allow_dirty, allow_external_mismatch=args.allow_external_mismatch)
     except ProvenanceError as e:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
-    root = Path(args.root).expanduser() if args.root else data_path("omomo_new")
+    root = Path(args.root).expanduser() if args.root else data_path(args.dataset)
     out = Path(args.out or f"outputs/{args.run_id}")
     (out / "examples").mkdir(parents=True, exist_ok=True)
 
-    files = sorted(root.rglob("*.pt"))
+    src = SOURCES[args.dataset](root, args)
+    versions = src.versions()
+    files = src.files
     if args.objects:
-        files = [f for f in files if any(f"_{o}_" in f.stem for o in args.objects)]
+        files = [f for f in files if src.object_of(f) in args.objects]
     if args.limit:
         files = files[: args.limit]
     clips, segs, errors = [], [], []
@@ -146,8 +239,9 @@ def main() -> int:
     t0 = time.time()
     for i, f in enumerate(files):
         try:
-            c = load_clip(f)
-            d = describe_clip(c, load_object(c.obj), DEFAULTS, args.mesh_check_frames)
+            c, mesh, extra = src.load(f)
+            d = describe_clip(c, mesh, DEFAULTS, args.mesh_check_frames)
+            d["clip"].update(extra)
         except Exception as e:  # noqa: BLE001 - report and continue
             errors.append({"file": f.name, "error": f"{type(e).__name__}: {str(e)[:300]}"})
             continue
@@ -169,7 +263,7 @@ def main() -> int:
     for o in objs:
         C = [r for r in clips if r["object"] == o]
         S = [r for r in segs if r["object"] == o]
-        mesh = load_object(o)
+        mesh = src.mesh(o)
         hs, ss = share(S, "hands", HAND_LABELS), share(S, "object_state", OBJECT_STATES)
         w = np.array([r["duration_s"] for r in S]) if S else np.zeros(0)
         grp = {}
@@ -206,20 +300,60 @@ def main() -> int:
     all_contact = [v for vs in checks["contact_hand_min_m"].values() for v in vs]
     all_free = [v for vs in checks["free_hand_min_m"].values() for v in vs]
     bad_mesh = [o for o in objs if not (P[o]["check_contact_hand_median_m"] <= CHECK_CONTACT_M)]
-    bad_floor = [o for o in objs if not (abs(P[o]["floor_lowest_z_start_median_m"]) <= CHECK_FLOOR_M)]
+    if args.dataset == "force":                    # FORCE: only the pushed / pulled objects stay on the floor
+        for o in objs:
+            P[o]["floor_lowest_z_clip_median_m"] = nanmed([r["obj_lowest_z_median_m"] for r in clips if r["object"] == o])
+            C = [r for r in clips if r["object"] == o]
+            P[o]["annotated_hand_dist_p10_median_m"] = nanmed([r["annotated_hand_dist_p10_m"] for r in C])
+            P[o]["share_with_hand_contact"] = float(np.mean([max(r["frac_left_hand_contact"],
+                                                                 r["frac_right_hand_contact"]) > 0 for r in C]))
+        write_csv(out / "per_object.csv", [P[o] for o in objs])
+        floor_objs = [o for o in objs if o in FORCE_FLOOR_OBJECTS]
+        bad_floor = [o for o in floor_objs if not (abs(P[o]["floor_lowest_z_clip_median_m"]) <= CHECK_FLOOR_M)]
+    else:
+        floor_objs = objs
+        bad_floor = [o for o in objs if not (abs(P[o]["floor_lowest_z_start_median_m"]) <= CHECK_FLOOR_M)]
     check_res = {
         "all_files_processed": {"pass": not errors, "n_errors": len(errors)},
-        "mesh_pose_convention": {
-            "pass": not bad_mesh, "threshold_m": CHECK_CONTACT_M, "failing_objects": bad_mesh,
-            "median_contact_hand_m": nanmed(all_contact), "median_free_hand_m": nanmed(all_free),
-            "n_contact": len(all_contact), "n_free": len(all_free)},
-        "contact_labels_informative": {
-            "pass": bool(nanmed(all_contact) < 0.5 * nanmed(all_free)),
-            "rule": "median(contact) < 0.5 * median(free hand)"},
-        "floor_at_zero": {"pass": not bad_floor, "threshold_m": CHECK_FLOOR_M, "failing_objects": bad_floor,
+        "floor_at_zero": {"pass": not bad_floor, "threshold_m": CHECK_FLOOR_M, "objects": floor_objs,
+                          "failing_objects": bad_floor,
                           "median_lowest_z_start_m": nanmed([r["obj_lowest_z_start_m"] for r in clips]),
                           "median_toe_z_min_m": nanmed([r["toe_z_min_m"] for r in clips])},
     }
+    if args.dataset == "omomo_new":
+        check_res["mesh_pose_convention"] = {
+            "pass": not bad_mesh, "threshold_m": CHECK_CONTACT_M, "failing_objects": bad_mesh,
+            "median_contact_hand_m": nanmed(all_contact), "median_free_hand_m": nanmed(all_free),
+            "n_contact": len(all_contact), "n_free": len(all_free)}
+        check_res["contact_labels_informative"] = {
+            "pass": bool(nanmed(all_contact) < 0.5 * nanmed(all_free)),
+            "rule": "median(contact) < 0.5 * median(free hand)"}
+    else:
+        has = lambda r: max(r["frac_left_hand_contact"], r["frac_right_hand_contact"]) > 0  # noqa: E731
+        single = [r for r in clips if r["ann_hands"] in ("L", "R") and has(r)]
+        agree = [r["derived_more_touching_hand"] == r["ann_hands"] for r in single]
+        pp = [r for r in clips if r["object"] in FORCE_FLOOR_OBJECTS]
+        found = [has(r) for r in pp] or [False]
+        minutes = sum(r["src_frames"] for r in clips) / versions["src_fps_assumed"] / 60
+        expect = FORCE_PAPER_MIN * len(clips) / FORCE_PAPER_SEQ
+        check_res["force_data_pinned"] = {"pass": bool(versions["force_commit_match"]),
+                                          "actual": versions["force_commit"], "pinned": versions["force_commit_pinned"]}
+        check_res["hand_annotation_agreement"] = {
+            "pass": bool(agree) and float(np.mean(agree)) >= CHECK_HAND_AGREE, "threshold": CHECK_HAND_AGREE,
+            "agreement": float(np.mean(agree)) if agree else None, "n_single_hand_with_contact": len(single),
+            "n_single_hand_without_contact": sum(1 for r in clips if r["ann_hands"] in ("L", "R") and not has(r)),
+            "disagreeing": [r["name"] for r, a in zip(single, agree) if not a][:30]}
+        check_res["hand_contact_found"] = {"pass": float(np.mean(found)) >= CHECK_CONTACT_FOUND,
+                                           "threshold": CHECK_CONTACT_FOUND, "objects": list(FORCE_FLOOR_OBJECTS),
+                                           "share": float(np.mean(found)),
+                                           "share_by_object": {o: P[o]["share_with_hand_contact"] for o in objs},
+                                           "annotated_hand_dist_p10_by_object_m":
+                                               {o: P[o]["annotated_hand_dist_p10_median_m"] for o in objs}}
+        check_res["frame_rate_info"] = {"pass": True, "assumed_src_fps": versions["src_fps_assumed"],
+                                        "minutes_at_assumed_fps": minutes,
+                                        "paper_minutes_scaled_to_n_sequences": expect,
+                                        "median_step_hz": nanmed([r["step_hz"] for r in clips]),
+                                        "note": "informational; a wrong fps scales both numbers"}
     passed = all(v["pass"] for v in check_res.values())
 
     # ------------------------------------------------------------------ examples
@@ -236,12 +370,12 @@ def main() -> int:
     vid_ok = None
     for ex in examples:
         f = next(p for p in files if p.stem == ex["name"])
-        c = load_clip(f)
+        c, mesh, _ = src.load(f)
         rows = [r for r in segs if r["name"] == c.name]
-        example_figure(c, load_object(c.obj), rows, out / "examples" / f"{c.name}.png")
+        example_figure(c, mesh, rows, out / "examples" / f"{c.name}.png")
         if args.videos:
             (out / "videos").mkdir(exist_ok=True)
-            vid_ok = example_video(c, load_object(c.obj), rows, out / "videos" / f"{c.name}.mp4")
+            vid_ok = example_video(c, mesh, rows, out / "videos" / f"{c.name}.mp4")
             if not vid_ok:
                 print("[warn] ffmpeg writer not available: no videos", file=sys.stderr)
                 args.videos = False
@@ -272,7 +406,7 @@ def main() -> int:
                        loc="left")
     ax[1, 1].legend(fontsize=7, loc="lower center", bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False)
     _style(ax[1, 1])
-    fig.suptitle(f"OMOMO_new: {len(clips)} clips, {len(segs)} hand-contact segments", fontsize=11, color=INK)
+    fig.suptitle(f"{src.title}: {len(clips)} clips, {len(segs)} hand-contact segments", fontsize=11, color=INK)
     fig.tight_layout()
     fig.savefig(out / "overview.png", dpi=90)
     plt.close(fig)
@@ -346,7 +480,8 @@ def main() -> int:
 
     # ------------------------------------------------------------------ summary + report
     summary = {
-        "provenance": prov, "root": str(root), "n_files": len(files), "n_clips": len(clips), "n_segments": len(segs),
+        "provenance": prov, "dataset": args.dataset, "data_versions": versions, "root": str(root),
+        "n_files": len(files), "n_clips": len(clips), "n_segments": len(segs),
         "errors": errors[:50], "params": DEFAULTS, "checks": check_res, "pass": passed,
         "totals": {"hands": share(segs, "hands", HAND_LABELS), "object_state": share(segs, "object_state", OBJECT_STATES),
                    "walk_share": share(segs, "human", ("walk",))["walk"],
@@ -358,7 +493,7 @@ def main() -> int:
 
     pct = lambda v: "–" if v is None or (isinstance(v, float) and math.isnan(v)) else f"{100 * v:.0f}"  # noqa: E731
     lines = [
-        "# OMOMO_new data profile",
+        f"# {src.title} data profile",
         "",
         f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
         f"{len(clips)}/{len(files)} clips · {len(segs)} hand-contact segments · "
@@ -368,15 +503,11 @@ def main() -> int:
         "",
         "| check | value | pass |",
         "|---|---|---|",
-        f"| all files processed | {len(errors)} errors | {check_res['all_files_processed']['pass']} |",
-        f"| mesh/pose convention: median distance of closest flagged hand body ≤ {CHECK_CONTACT_M} m per object | "
-        f"overall {check_res['mesh_pose_convention']['median_contact_hand_m']:.4f} m; failing {bad_mesh} | "
-        f"{check_res['mesh_pose_convention']['pass']} |",
-        f"| contact labels informative | contact {nanmed(all_contact):.3f} m vs free hand {nanmed(all_free):.3f} m | "
-        f"{check_res['contact_labels_informative']['pass']} |",
-        f"| floor at z = 0: abs(median object lowest point at start) ≤ {CHECK_FLOOR_M} m per object | overall "
-        f"{check_res['floor_at_zero']['median_lowest_z_start_m']:+.4f} m, toe min "
-        f"{check_res['floor_at_zero']['median_toe_z_min_m']:+.3f} m; failing {bad_floor} | {check_res['floor_at_zero']['pass']} |",
+    ]
+    for k, v in check_res.items():
+        val = json.dumps(clean({kk: vv for kk, vv in v.items() if kk not in ("pass", "disagreeing")}))
+        lines.append(f"| {k} | `{val}` | {v['pass']} |")
+    lines += [
         "",
         "![checks](checks.png)",
         "",

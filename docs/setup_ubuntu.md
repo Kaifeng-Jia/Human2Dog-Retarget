@@ -74,7 +74,20 @@ mkdir -p ~/CS6758Project/data
 ln -s /home/kevin/holosoma/data       ~/CS6758Project/data/omomo_raw    # OMOMO_RAW_ROOT
 ln -s /home/kevin/holosoma/OMOMO_new  ~/CS6758Project/data/omomo_new    # OMOMO_NEW_ROOT
 # SMPL-X model files (licensed download): ~/CS6758Project/data/smplx_models  (SMPLX_MODEL_ROOT)
+# SMPL-H model files (licensed, MANO "Models & Code", mano_v1_2/models/SMPLH_{male,female}.pkl):
+#   ~/CS6758Project/data/smplh_models  (SMPLH_MODEL_ROOT)
 ```
+
+**FORCE** (Zhang et al., 3DV 2025) is a public git repository with the data inside (~560 MB). It has no
+licence file: research use only, never commit or redistribute it. Clone it at the pinned commit:
+
+```bash
+git clone https://github.com/xz6014/FORCE_dataset ~/CS6758Project/data/force          # FORCE_ROOT
+git -C ~/CS6758Project/data/force checkout 695c8b8616f0915dd61658862751e40ec658b81c
+```
+
+The SMPL-H pickles store some arrays as chumpy objects; chumpy is **not** needed (it does not install with
+numpy >= 1.24): `h2d/common/body/smplh.py` unpickles them without it.
 
 Only data files are read from those folders; no code from them is used.
 
