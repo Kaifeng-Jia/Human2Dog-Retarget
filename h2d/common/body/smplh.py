@@ -37,13 +37,21 @@ class _ChumpyStub:
 
 
 class _SparseStub:
-    """Stands in for scipy sparse matrices pickled by old scipy versions (module paths changed since)."""
+    """Stands in for scipy sparse matrices pickled by old scipy versions (module paths and attribute names
+    changed since). ``_kind`` is the pickled class name (csc_matrix, coo_matrix, ...)."""
+
+    _kind = "sparse"
 
     def __init__(self, *args, **kwargs):
         pass
 
     def __setstate__(self, state):
+        if isinstance(state, tuple) and len(state) == 2:          # (dict state, slot state)
+            state = {**(state[0] or {}), **(state[1] or {})}
         self.__dict__.update(state)
+
+
+_SPARSE_STUBS: dict[str, type] = {}
 
 
 class _Unpickler(pickle.Unpickler):
@@ -51,34 +59,68 @@ class _Unpickler(pickle.Unpickler):
         if module.split(".")[0] == "chumpy":
             return _ChumpyStub
         if module.startswith("scipy.sparse") and name.endswith("_matrix"):
-            return _SparseStub
+            if name not in _SPARSE_STUBS:
+                _SPARSE_STUBS[name] = type(f"_Stub_{name}", (_SparseStub,), {"_kind": name})
+            return _SPARSE_STUBS[name]
         return super().find_class(module, name)
+
+
+class UnconvertibleEntry(ValueError):
+    pass
+
+
+def _sparse_from_state(kind: str, d: dict) -> sp.csr_matrix:
+    """Rebuild a sparse matrix from a pickled ``__dict__`` across scipy versions."""
+    shape = d.get("_shape", d.get("shape"))
+    shape = tuple(int(x) for x in shape) if shape is not None else None
+    data = np.asarray(d["data"]) if "data" in d else None
+    fmt = d.get("format") or kind.split("_")[0]
+    if data is not None and "indptr" in d:
+        idx = next((d[k] for k in ("indices", "rowind", "colind") if k in d), None)
+        if idx is not None:
+            cls = sp.csr_matrix if fmt == "csr" or "colind" in d else sp.csc_matrix
+            return cls((data, np.asarray(idx), np.asarray(d["indptr"])), shape=shape).tocsr()
+    if data is not None and "row" in d and "col" in d:
+        return sp.coo_matrix((data, (np.asarray(d["row"]), np.asarray(d["col"]))), shape=shape).tocsr()
+    if data is not None and "offsets" in d:                        # dia
+        return sp.dia_matrix((data, np.asarray(d["offsets"])), shape=shape).tocsr()
+    if "rows" in d and data is not None:                          # lil: object arrays of lists
+        m = sp.lil_matrix(shape)
+        m.rows, m.data = np.asarray(d["rows"], dtype=object), np.asarray(d["data"], dtype=object)
+        return m.tocsr()
+    raise UnconvertibleEntry(f"cannot rebuild {kind} from pickled fields {sorted(d)}")
 
 
 def _plain(v):
     if isinstance(v, _ChumpyStub):
         if "x" in v.__dict__:
             return _plain(v.__dict__["x"])
-        raise ValueError(f"chumpy object without a stored 'x' (keys {sorted(v.__dict__)})")
+        raise UnconvertibleEntry(f"chumpy object without a stored 'x' (fields {sorted(v.__dict__)})")
     if isinstance(v, _SparseStub):
-        d = v.__dict__
-        shape = tuple(d.get("_shape") or d.get("shape"))
-        fmt = d.get("format", "csc")
-        cls = {"csc": sp.csc_matrix, "csr": sp.csr_matrix}[fmt if fmt in ("csc", "csr") else "csc"]
-        return cls((np.asarray(d["data"]), np.asarray(d["indices"]), np.asarray(d["indptr"])), shape=shape).tocsr()
+        return _sparse_from_state(v._kind, v.__dict__)
     if sp.issparse(v):
         return v.tocsr()
     return np.asarray(v) if isinstance(v, (list, tuple, np.ndarray)) else v
 
 
-def load_raw(path: str | Path) -> dict:
+def load_raw(path: str | Path, strict: tuple[str, ...] = REQUIRED) -> dict:
+    """All entries as numpy / scipy objects. Entries in ``strict`` must convert; any other entry that cannot be
+    converted is kept as an ``UnconvertibleEntry`` (the model needs only ``REQUIRED``)."""
     path = Path(path)
     if path.suffix == ".npz":
         d = dict(np.load(path, allow_pickle=True))
     else:
         with open(path, "rb") as f:
             d = _Unpickler(f, encoding="latin1").load()
-    return {k: _plain(v) for k, v in d.items()}
+    out = {}
+    for k, v in d.items():
+        try:
+            out[k] = _plain(v)
+        except (UnconvertibleEntry, KeyError, TypeError, ValueError) as e:
+            if k in strict:
+                raise UnconvertibleEntry(f"{path.name}: required entry '{k}': {e}") from e
+            out[k] = UnconvertibleEntry(str(e))
+    return out
 
 
 @dataclass
@@ -165,12 +207,15 @@ def load_model(path: str | Path) -> SMPLH:
 
 
 def describe_file(path: str | Path) -> dict:
-    """Shapes and types of a model file's entries (for run reports; no model data)."""
-    d = load_raw(path)
+    """Shapes and types of a model file's entries (for run reports; no model data). Never raises on an entry:
+    an entry that cannot be converted is reported with its pickled class and field names."""
+    d = load_raw(path, strict=())
     out = {}
     for k, v in d.items():
         if sp.issparse(v) or isinstance(v, np.ndarray):
             out[k] = {"shape": list(v.shape), "type": type(v).__name__}
+        elif isinstance(v, UnconvertibleEntry):
+            out[k] = {"type": "UNCONVERTIBLE", "detail": str(v)}
         else:
             out[k] = {"type": type(v).__name__}
     return out
