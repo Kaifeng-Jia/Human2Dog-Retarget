@@ -1,0 +1,223 @@
+{
+  "provenance": {
+    "run_id": "R001_b01",
+    "started_utc": "2026-10-25T08:32:18+00:00",
+    "h2d_version": "0.1.0",
+    "git": {
+      "commit": "2ed93af8b1fb5e911d6b38da7ffe7fe114a587e6",
+      "branch": "HEAD",
+      "describe": "2ed93af",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "96ae9f58e9c6a965",
+      "external.yaml": "2dbd75f95849fd08"
+    },
+    "command": "b01_check_tool_geometry.py --run-id R001_b01",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.17.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "checks": {
+    "A_contact_site_on_surface": {
+      "r_c_tool_frame": [
+        0.149,
+        0.0,
+        0.0
+      ],
+      "distance_to_mesh_m": {
+        "gripperStator": 0.008999999734492605,
+        "gripperMover": 1.7328167234431681e-09
+      },
+      "expected_owner": "gripperMover",
+      "pass": true
+    },
+    "B_front_face": {
+      "plane_x_m": 0.149,
+      "vertex_tol_m": 0.0001,
+      "per_body": {
+        "gripperStator": {
+          "n_triangles": 45,
+          "area_cm2": 5.863335082865562,
+          "y_range_m": [
+            -0.02665548480428584,
+            0.026655484021109784
+          ],
+          "z_range_m": [
+            -0.020004454520294424,
+            -0.008999998222123606
+          ]
+        },
+        "gripperMover": {
+          "n_triangles": 122,
+          "area_cm2": 7.346317034318111,
+          "y_range_m": [
+            -0.026883690865703164,
+            0.026883692053413587
+          ],
+          "z_range_m": [
+            -0.009000000550365206,
+            0.004717909828738209
+          ]
+        }
+      },
+      "union_y_range_m": [
+        -0.026883690865703164,
+        0.026883692053413587
+      ],
+      "union_z_range_m": [
+        -0.020004454520294424,
+        0.004717909828738209
+      ],
+      "triangle_area_over_bbox_area": 0.9937622145615599,
+      "note": "ratio ~1 means the front face fills its y-z extent (no holes)"
+    },
+    "C_convex_hull": {
+      "per_body": {
+        "gripperStator": {
+          "r_c_signed_distance_to_hull_m": 0.008220047723854491,
+          "front_vertices_max_abs_distance_to_hull_m": 2.4523587882629982e-09
+        },
+        "gripperMover": {
+          "r_c_signed_distance_to_hull_m": -1.7328167234431646e-09,
+          "front_vertices_max_abs_distance_to_hull_m": 4.344969106728769e-09
+        }
+      },
+      "note": "MuJoCo mesh-mesh / mesh-primitive collision uses the convex hull; ~0 means the hull is exact on the front face"
+    },
+    "D_fk_consistency": {
+      "n_configs": 200,
+      "bodies_compared": 27,
+      "fk_has_free_joint": false,
+      "max_body_position_error_m": 9.441996458677856e-16,
+      "max_body_rotation_error_fro": 2.4053265611835464e-15,
+      "pass": true
+    },
+    "E_jacobians": {
+      "max_rel_error": 4.798523541016397e-07,
+      "pass": true
+    },
+    "F_joint_order": {
+      "qpos_addresses": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      "pass": true
+    }
+  },
+  "collision_inventory_arm": [
+    {
+      "geom": 65,
+      "body": "z1_mount_computer",
+      "type": "mjGEOM_BOX",
+      "collides": true
+    },
+    {
+      "geom": 67,
+      "body": "link00",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 69,
+      "body": "link01",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 71,
+      "body": "link02",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 72,
+      "body": "link02",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 74,
+      "body": "link03",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 76,
+      "body": "link04",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 78,
+      "body": "link05",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 80,
+      "body": "link06",
+      "type": "mjGEOM_CYLINDER",
+      "collides": true
+    },
+    {
+      "geom": 82,
+      "body": "gripperStator",
+      "type": "mjGEOM_MESH",
+      "collides": true
+    },
+    {
+      "geom": 84,
+      "body": "gripperMover",
+      "type": "mjGEOM_MESH",
+      "collides": true
+    }
+  ],
+  "passed": [
+    "A_contact_site_on_surface",
+    "D_fk_consistency",
+    "E_jacobians",
+    "F_joint_order"
+  ],
+  "failed": []
+}
