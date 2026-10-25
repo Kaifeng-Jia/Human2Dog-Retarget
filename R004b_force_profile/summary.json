@@ -1,0 +1,678 @@
+{
+  "provenance": {
+    "run_id": "R004b_force_profile",
+    "started_utc": "2026-10-25T20:29:06+00:00",
+    "h2d_version": "0.1.3",
+    "git": {
+      "commit": "5c1e1a63eda9cb5ddcd58c7d4eabf98f6065b277",
+      "branch": "HEAD",
+      "describe": "v0.1.1-9-g5c1e1a6",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {},
+    "configs": {
+      "data.yaml": "f1b886e5ad6d93ee",
+      "external.yaml": "847b4b4bf499bd9e"
+    },
+    "command": "profile_hoi.py --dataset force --run-id R004b_force_profile --videos",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "dataset": "force",
+  "data_versions": {
+    "force_commit": "695c8b8616f0915dd61658862751e40ec658b81c",
+    "force_commit_pinned": "695c8b8616f0915dd61658862751e40ec658b81c",
+    "force_commit_match": true,
+    "smplh_file": "SMPLH_male.pkl",
+    "smplh_bytes": 130422893,
+    "smplh_sha256_16": "996338a29346b4d4",
+    "smplh_joints": 52,
+    "smplh_vertices": 6890,
+    "src_fps_assumed": 60.0
+  },
+  "root": "/home/kevin/CS6758Project/data/force",
+  "n_files": 398,
+  "n_clips": 398,
+  "n_segments": 696,
+  "errors": [],
+  "params": {
+    "min_run_s": 0.2,
+    "max_gap_s": 0.3,
+    "min_seg_s": 0.3,
+    "lift_m": 0.05,
+    "lift_frac": 0.3,
+    "tilt_deg": 15.0,
+    "slide_m": 0.1,
+    "yaw_deg": 20.0,
+    "walk_m": 0.5
+  },
+  "checks": {
+    "all_files_processed": {
+      "pass": true,
+      "n_errors": 0
+    },
+    "floor_at_zero": {
+      "pass": true,
+      "threshold_m": 0.03,
+      "objects": [
+        "chair",
+        "box_huge"
+      ],
+      "failing_objects": [],
+      "median_lowest_z_start_m": -0.013796023598860785,
+      "median_toe_z_min_m": 0.015171442053239524
+    },
+    "force_data_pinned": {
+      "pass": true,
+      "actual": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "pinned": "695c8b8616f0915dd61658862751e40ec658b81c"
+    },
+    "hand_annotation_agreement": {
+      "pass": true,
+      "threshold": 0.8,
+      "agreement": 0.88,
+      "n_single_hand_with_contact": 75,
+      "n_single_hand_without_contact": 35,
+      "disagreeing": [
+        "040723_3_1",
+        "040723_3_3",
+        "040723_4_1",
+        "040723_4_3",
+        "040723_5_1",
+        "0630_21-3",
+        "0630_50-3",
+        "260923_02_2_1",
+        "260923_02_2_2"
+      ]
+    },
+    "hand_contact_found": {
+      "pass": true,
+      "threshold": 0.9,
+      "objects": [
+        "box_huge",
+        "chair"
+      ],
+      "share": 0.9916666666666667,
+      "share_by_object": {
+        "suitcase": 0.7615894039735099,
+        "chair": 0.9846153846153847,
+        "plasticcontainer": 1.0,
+        "box_huge": 1.0,
+        "laundrybasket": 0.972972972972973,
+        "backpack": 1.0
+      },
+      "annotated_hand_dist_p10_by_object_m": {
+        "suitcase": 0.013479368621804651,
+        "chair": 0.001115849495937985,
+        "plasticcontainer": 0.001905430171981517,
+        "box_huge": 0.0012785362077048302,
+        "laundrybasket": 0.057519998559973744,
+        "backpack": 0.001365918136618651
+      }
+    },
+    "frame_rate_info": {
+      "pass": true,
+      "assumed_src_fps": 60.0,
+      "minutes_at_assumed_fps": 129.82722222222222,
+      "paper_minutes_scaled_to_n_sequences": 125.14888888888889,
+      "median_step_hz": 1.124637257943823,
+      "note": "informational; a wrong fps scales both numbers"
+    }
+  },
+  "pass": true,
+  "totals": {
+    "hands": {
+      "left": 0.2959770114942529,
+      "right": 0.3089080459770115,
+      "both": 0.20402298850574713,
+      "mixed": 0.1910919540229885
+    },
+    "object_state": {
+      "lifted": 0.6609195402298851,
+      "tilted": 0.004310344827586207,
+      "slid": 0.20977011494252873,
+      "turned": 0.0014367816091954023,
+      "still": 0.1235632183908046
+    },
+    "walk_share": 0.4454022988505747,
+    "clips_without_segments": 49,
+    "total_hours": 2.164259259259259
+  },
+  "per_object": [
+    {
+      "object": "suitcase",
+      "clips": 151,
+      "subjects": 2,
+      "size_m": "0.78x0.51x0.26",
+      "clip_s_median": 13.533333333333333,
+      "segments_per_clip": 1.2450331125827814,
+      "contact_coverage": 0.22181818181818183,
+      "segment_s_median": 2.1166666666666667,
+      "hands_left": 0.3723404255319149,
+      "hands_right": 0.23404255319148937,
+      "hands_both": 0.13297872340425532,
+      "hands_mixed": 0.26063829787234044,
+      "state_lifted": 0.8776595744680851,
+      "state_tilted": 0.005319148936170213,
+      "state_slid": 0.0,
+      "state_turned": 0.0,
+      "state_still": 0.11702127659574468,
+      "walk_share": 0.3670212765957447,
+      "body_share": 0.898936170212766,
+      "contact_z_median_m": 0.9220752655008859,
+      "obj_clear_max_median_m": 0.5117424085292644,
+      "obj_disp_xy_median_m": 0.27442496248378084,
+      "root_disp_xy_median_m": 0.3116281058809237,
+      "group_palm": 0.8960727971330948,
+      "group_fingers": 0.9658324094078132,
+      "group_forearm": 0.8582620717906702,
+      "group_upper_arm": 0.025833376004915764,
+      "group_collar": 0.0012289415740693325,
+      "group_torso": 0.7090224793896257,
+      "group_head_neck": 0.0003584412924368887,
+      "group_pelvis": 0.7306057657842183,
+      "group_thigh": 0.5964719135644426,
+      "group_shin": 0.058349121818833526,
+      "group_foot": 0.030057862665779103,
+      "check_contact_hand_median_m": 0.009068834337579238,
+      "check_free_hand_median_m": 0.0722378351610655,
+      "check_contact_body_median_m": 0.0610977964190165,
+      "floor_lowest_z_start_median_m": -0.012008853595730062,
+      "toe_z_min_median_m": 0.016040279846660847,
+      "floor_lowest_z_clip_median_m": 0.18050060691324243,
+      "annotated_hand_dist_p10_median_m": 0.013479368621804651,
+      "share_with_hand_contact": 0.7615894039735099
+    },
+    {
+      "object": "chair",
+      "clips": 65,
+      "subjects": 1,
+      "size_m": "0.97x0.66x0.53",
+      "clip_s_median": 16.066666666666666,
+      "segments_per_clip": 1.3846153846153846,
+      "contact_coverage": 0.5526315789473685,
+      "segment_s_median": 5.683333333333334,
+      "hands_left": 0.08888888888888889,
+      "hands_right": 0.07777777777777778,
+      "hands_both": 0.5888888888888889,
+      "hands_mixed": 0.24444444444444444,
+      "state_lifted": 0.0,
+      "state_tilted": 0.0,
+      "state_slid": 0.9555555555555556,
+      "state_turned": 0.0,
+      "state_still": 0.044444444444444446,
+      "walk_share": 0.8,
+      "body_share": 0.6666666666666666,
+      "contact_z_median_m": 0.7886565974000647,
+      "obj_clear_max_median_m": -0.001382456267464971,
+      "obj_disp_xy_median_m": 0.707561437346858,
+      "root_disp_xy_median_m": 1.0779691340757047,
+      "group_palm": 0.7386266887066474,
+      "group_fingers": 0.9723509578520165,
+      "group_forearm": 0.40248858562039036,
+      "group_upper_arm": 0.023330490191159507,
+      "group_collar": 0.009532888465204958,
+      "group_torso": 0.04028899703978727,
+      "group_head_neck": 0.0010034619437057852,
+      "group_pelvis": 0.010837388992022478,
+      "group_thigh": 0.0013045005268175207,
+      "group_shin": 0.0003010385831117355,
+      "group_foot": 0.005268175204455372,
+      "check_contact_hand_median_m": 0.007657124855590381,
+      "check_free_hand_median_m": 0.06988656974568574,
+      "check_contact_body_median_m": 0.1777695173555109,
+      "floor_lowest_z_start_median_m": -0.016561106287242056,
+      "toe_z_min_median_m": 0.013541249418636141,
+      "floor_lowest_z_clip_median_m": -0.017545346683629726,
+      "annotated_hand_dist_p10_median_m": 0.001115849495937985,
+      "share_with_hand_contact": 0.9846153846153847
+    },
+    {
+      "object": "plasticcontainer",
+      "clips": 57,
+      "subjects": 1,
+      "size_m": "0.63x0.49x0.43",
+      "clip_s_median": 23.8,
+      "segments_per_clip": 3.0526315789473686,
+      "contact_coverage": 0.5098314606741573,
+      "segment_s_median": 1.7833333333333332,
+      "hands_left": 0.14367816091954022,
+      "hands_right": 0.47126436781609193,
+      "hands_both": 0.1839080459770115,
+      "hands_mixed": 0.20114942528735633,
+      "state_lifted": 0.8563218390804598,
+      "state_tilted": 0.005747126436781609,
+      "state_slid": 0.005747126436781609,
+      "state_turned": 0.0,
+      "state_still": 0.13218390804597702,
+      "walk_share": 0.4540229885057471,
+      "body_share": 0.7758620689655172,
+      "contact_z_median_m": 0.996116237144278,
+      "obj_clear_max_median_m": 0.8905808063807221,
+      "obj_disp_xy_median_m": 0.3740547390462691,
+      "root_disp_xy_median_m": 0.42184861450863975,
+      "group_palm": 0.8320166192740914,
+      "group_fingers": 0.9827780179384511,
+      "group_forearm": 0.28369621963578295,
+      "group_upper_arm": 0.0005220649203083254,
+      "group_collar": 0.0,
+      "group_torso": 0.15330282836348003,
+      "group_head_neck": 0.0,
+      "group_pelvis": 0.8253232196050734,
+      "group_thigh": 0.43303749654515866,
+      "group_shin": 0.000737032828670577,
+      "group_foot": 0.006111230537726867,
+      "check_contact_hand_median_m": 0.008402376058055655,
+      "check_free_hand_median_m": 0.05969405163271509,
+      "check_contact_body_median_m": 0.09564667567132337,
+      "floor_lowest_z_start_median_m": 0.6090344346608207,
+      "toe_z_min_median_m": 0.01651651440969385,
+      "floor_lowest_z_clip_median_m": 0.7580564820684287,
+      "annotated_hand_dist_p10_median_m": 0.001905430171981517,
+      "share_with_hand_contact": 1.0
+    },
+    {
+      "object": "box_huge",
+      "clips": 55,
+      "subjects": 1,
+      "size_m": "0.65x0.65x0.35",
+      "clip_s_median": 14.766666666666667,
+      "segments_per_clip": 1.4181818181818182,
+      "contact_coverage": 0.3132137030995106,
+      "segment_s_median": 2.75,
+      "hands_left": 0.11538461538461539,
+      "hands_right": 0.2564102564102564,
+      "hands_both": 0.38461538461538464,
+      "hands_mixed": 0.24358974358974358,
+      "state_lifted": 0.0,
+      "state_tilted": 0.0,
+      "state_slid": 0.717948717948718,
+      "state_turned": 0.0,
+      "state_still": 0.28205128205128205,
+      "walk_share": 0.5384615384615384,
+      "body_share": 0.21794871794871795,
+      "contact_z_median_m": 0.6222284044060248,
+      "obj_clear_max_median_m": -0.005915974113018613,
+      "obj_disp_xy_median_m": 0.3411123270949843,
+      "root_disp_xy_median_m": 0.7956327733876869,
+      "group_palm": 0.6058795651219834,
+      "group_fingers": 0.999511352452529,
+      "group_forearm": 0.11945711945711944,
+      "group_upper_arm": 0.0,
+      "group_collar": 0.0,
+      "group_torso": 0.0,
+      "group_head_neck": 0.0,
+      "group_pelvis": 0.0,
+      "group_thigh": 0.030888030888030885,
+      "group_shin": 0.030771030771030765,
+      "group_foot": 0.005265005265005264,
+      "check_contact_hand_median_m": 0.004997907205727221,
+      "check_free_hand_median_m": 0.06384894102138719,
+      "check_contact_body_median_m": 0.20315783040493704,
+      "floor_lowest_z_start_median_m": -0.011977097973067619,
+      "toe_z_min_median_m": 0.013965198959142895,
+      "floor_lowest_z_clip_median_m": -0.012878196524715835,
+      "annotated_hand_dist_p10_median_m": 0.0012785362077048302,
+      "share_with_hand_contact": 1.0
+    },
+    {
+      "object": "laundrybasket",
+      "clips": 37,
+      "subjects": 1,
+      "size_m": "0.67x0.42x0.26",
+      "clip_s_median": 10.766666666666667,
+      "segments_per_clip": 1.4054054054054055,
+      "contact_coverage": 0.2692307692307692,
+      "segment_s_median": 2.0166666666666666,
+      "hands_left": 0.4423076923076923,
+      "hands_right": 0.36538461538461536,
+      "hands_both": 0.038461538461538464,
+      "hands_mixed": 0.15384615384615385,
+      "state_lifted": 0.75,
+      "state_tilted": 0.0,
+      "state_slid": 0.0,
+      "state_turned": 0.0,
+      "state_still": 0.25,
+      "walk_share": 0.15384615384615385,
+      "body_share": 0.6923076923076923,
+      "contact_z_median_m": 0.8260093499039486,
+      "obj_clear_max_median_m": 0.675970087782972,
+      "obj_disp_xy_median_m": 0.017906420689507083,
+      "root_disp_xy_median_m": 0.0801119390186586,
+      "group_palm": 0.8554948684847703,
+      "group_fingers": 0.9792212021525804,
+      "group_forearm": 0.6574623073013722,
+      "group_upper_arm": 0.20498051838048445,
+      "group_collar": 0.07352193799762832,
+      "group_torso": 0.6191766898187362,
+      "group_head_neck": 0.02558021345078773,
+      "group_pelvis": 0.3355920718278841,
+      "group_thigh": 0.012197187870574283,
+      "group_shin": 0.004743350838556666,
+      "group_foot": 0.04319837370828392,
+      "check_contact_hand_median_m": 0.0043584735994199875,
+      "check_free_hand_median_m": 0.07886940927906734,
+      "check_contact_body_median_m": 0.08024646065499132,
+      "floor_lowest_z_start_median_m": -0.03931256250050298,
+      "toe_z_min_median_m": 0.016735568471422844,
+      "floor_lowest_z_clip_median_m": -0.036443784106534385,
+      "annotated_hand_dist_p10_median_m": 0.057519998559973744,
+      "share_with_hand_contact": 0.972972972972973
+    },
+    {
+      "object": "backpack",
+      "clips": 33,
+      "subjects": 1,
+      "size_m": "0.54x0.43x0.36",
+      "clip_s_median": 23.733333333333334,
+      "segments_per_clip": 3.4545454545454546,
+      "contact_coverage": 0.2696629213483146,
+      "segment_s_median": 1.25,
+      "hands_left": 0.6228070175438597,
+      "hands_right": 0.37719298245614036,
+      "hands_both": 0.0,
+      "hands_mixed": 0.0,
+      "state_lifted": 0.9385964912280702,
+      "state_tilted": 0.008771929824561403,
+      "state_slid": 0.02631578947368421,
+      "state_turned": 0.008771929824561403,
+      "state_still": 0.017543859649122806,
+      "walk_share": 0.3508771929824561,
+      "body_share": 0.631578947368421,
+      "contact_z_median_m": 0.7742191049672938,
+      "obj_clear_max_median_m": 0.24870227547360435,
+      "obj_disp_xy_median_m": 0.2593374058092853,
+      "root_disp_xy_median_m": 0.3023920938449805,
+      "group_palm": 0.28602615975268647,
+      "group_fingers": 0.9922050651516654,
+      "group_forearm": 0.02101494396014944,
+      "group_upper_arm": 0.0,
+      "group_collar": 0.0,
+      "group_torso": 0.0,
+      "group_head_neck": 0.0,
+      "group_pelvis": 0.0,
+      "group_thigh": 0.18711083437110834,
+      "group_shin": 0.3527397260273973,
+      "group_foot": 0.010585305105853052,
+      "check_contact_hand_median_m": 0.016752797416839046,
+      "check_free_hand_median_m": 0.5076174414212274,
+      "check_contact_body_median_m": 0.07435462976139925,
+      "floor_lowest_z_start_median_m": 0.22327730070014346,
+      "toe_z_min_median_m": 0.015407846642414479,
+      "floor_lowest_z_clip_median_m": 0.21959961371324832,
+      "annotated_hand_dist_p10_median_m": 0.001365918136618651,
+      "share_with_hand_contact": 1.0
+    }
+  ],
+  "crosstab": {
+    "suitcase": [
+      {
+        "hands": "left",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.20212765957446807
+      },
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.18617021276595744
+      },
+      {
+        "hands": "mixed",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.1702127659574468
+      },
+      {
+        "hands": "left",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.10638297872340426
+      }
+    ],
+    "chair": [
+      {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.5222222222222223
+      },
+      {
+        "hands": "mixed",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.17777777777777778
+      },
+      {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.05555555555555555
+      },
+      {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "stand",
+        "share": 0.05555555555555555
+      }
+    ],
+    "plasticcontainer": [
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.2413793103448276
+      },
+      {
+        "hands": "both",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.16666666666666666
+      },
+      {
+        "hands": "mixed",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.14367816091954022
+      },
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.11494252873563218
+      }
+    ],
+    "box_huge": [
+      {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.20512820512820512
+      },
+      {
+        "hands": "mixed",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.15384615384615385
+      },
+      {
+        "hands": "both",
+        "object_state": "still",
+        "human": "stand",
+        "share": 0.15384615384615385
+      },
+      {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "share": 0.11538461538461539
+      }
+    ],
+    "laundrybasket": [
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.34615384615384615
+      },
+      {
+        "hands": "left",
+        "object_state": "still",
+        "human": "stand",
+        "share": 0.23076923076923078
+      },
+      {
+        "hands": "left",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.21153846153846154
+      },
+      {
+        "hands": "mixed",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.11538461538461539
+      }
+    ],
+    "backpack": [
+      {
+        "hands": "left",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.34210526315789475
+      },
+      {
+        "hands": "left",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.2543859649122807
+      },
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "stand",
+        "share": 0.24561403508771928
+      },
+      {
+        "hands": "right",
+        "object_state": "lifted",
+        "human": "walk",
+        "share": 0.09649122807017543
+      }
+    ]
+  },
+  "examples": [
+    {
+      "object": "suitcase",
+      "rank": 1,
+      "hands": "mixed",
+      "object_state": "lifted",
+      "group_share": 0.37383177570093457,
+      "name": "040723_7_2"
+    },
+    {
+      "object": "suitcase",
+      "rank": 2,
+      "hands": "left",
+      "object_state": "lifted",
+      "group_share": 0.17757009345794392,
+      "name": "0630_27-2"
+    },
+    {
+      "object": "chair",
+      "rank": 1,
+      "hands": "both",
+      "object_state": "slid",
+      "group_share": 0.71875,
+      "name": "260923_04_3_retake_2"
+    },
+    {
+      "object": "chair",
+      "rank": 2,
+      "hands": "mixed",
+      "object_state": "slid",
+      "group_share": 0.234375,
+      "name": "260923_05_1_retake_2"
+    },
+    {
+      "object": "plasticcontainer",
+      "rank": 1,
+      "hands": "mixed",
+      "object_state": "lifted",
+      "group_share": 0.3508771929824561,
+      "name": "0630_29-3"
+    },
+    {
+      "object": "plasticcontainer",
+      "rank": 2,
+      "hands": "both",
+      "object_state": "lifted",
+      "group_share": 0.3333333333333333,
+      "name": "0630_13-2"
+    },
+    {
+      "object": "box_huge",
+      "rank": 1,
+      "hands": "both",
+      "object_state": "slid",
+      "group_share": 0.2830188679245283,
+      "name": "260923_09_1_1"
+    },
+    {
+      "object": "box_huge",
+      "rank": 2,
+      "hands": "mixed",
+      "object_state": "slid",
+      "group_share": 0.2641509433962264,
+      "name": "260923_03_2_1"
+    },
+    {
+      "object": "laundrybasket",
+      "rank": 1,
+      "hands": "right",
+      "object_state": "lifted",
+      "group_share": 0.37142857142857144,
+      "name": "040723_16_3_1"
+    },
+    {
+      "object": "laundrybasket",
+      "rank": 2,
+      "hands": "left",
+      "object_state": "still",
+      "group_share": 0.22857142857142856,
+      "name": "040723_16_1_1"
+    },
+    {
+      "object": "backpack",
+      "rank": 1,
+      "hands": "left",
+      "object_state": "lifted",
+      "group_share": 0.5757575757575758,
+      "name": "0630_20-2"
+    },
+    {
+      "object": "backpack",
+      "rank": 2,
+      "hands": "right",
+      "object_state": "lifted",
+      "group_share": 0.3333333333333333,
+      "name": "0630_19-2"
+    }
+  ],
+  "videos": true
+}
