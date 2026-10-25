@@ -18,6 +18,9 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   lag) and recorded X-Morph behaviour (arm timing lag, path-length ratio, heading drift).
 - [common] `scripts/common/inspect_omomo_new.py`: read-only structure report for OMOMO_new `*.pt`.
 - Configs: `configs/learned/xmorph.yaml`, `configs/data.yaml`; extras `[xmorph]` in `pyproject.toml`.
+- [env] `constraints.txt` (numpy<2, opencv-python<4.12, mujoco 3.11.0, pytorch-kinematics 0.10.0): GMR's
+  unpinned opencv pulled numpy 2.x on Ubuntu (R002).
+- [docs] `docs/data/omomo_new_format.md`: OMOMO_new column layout, incl. per-body contact flags.
 
 ## [0.1.0] — 2026-10-25 (merge `752eaaa`)
 

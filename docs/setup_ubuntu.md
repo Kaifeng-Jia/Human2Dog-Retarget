@@ -21,7 +21,7 @@ python -c "import torch; print(torch.__version__, torch.cuda.is_available(), tor
 
 ```bash
 cd Human2Dog-Retarget
-pip install -e ".[dev,xmorph]"
+pip install -e ".[dev,xmorph]" -c constraints.txt
 python -c "import mujoco; print(mujoco.__version__)"   # must print 3.11.0
 ```
 
@@ -43,12 +43,15 @@ export XMORPH_ROOT=/home/kevin/CS6758Project/morph
 #   export XMORPH_ROOT=$PWD/external/morph
 ```
 
-**GMR** is cloned into `external/GMR` and installed editable (it pulls `mink`, `smplx`, `qpsolvers`):
+**GMR** is cloned into `external/GMR` and installed editable (it pulls `mink`, `smplx`, `qpsolvers`,
+`opencv-python`). Always pass `-c constraints.txt`: without it pip installs opencv-python 5.x, which
+upgrades numpy to 2.x and breaks this project (found in R002).
 
 ```bash
 git clone https://github.com/YanjieZe/GMR external/GMR
 git -C external/GMR checkout 25f56db79ac411258b377b6d4ccba0c8ff3372ac
-pip install -e external/GMR "mujoco==3.11.0"
+pip install -e external/GMR -c constraints.txt
+pip check                      # must report no broken requirements
 export GMR_ROOT=$PWD/external/GMR
 ```
 
