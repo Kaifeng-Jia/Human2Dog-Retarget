@@ -8,4 +8,5 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 
 | Run | Ticket | Code | Machine | Result |
 |---|---|---|---|---|
-| R000_cloud_b01 | — (lead reference run) | `2ed93af` | cloud CPU | B01 all checks pass |
+| R000_cloud_b01 | — (lead reference run) | `2ed93af` | cloud CPU, MuJoCo 3.3.7 | B01 all checks pass |
+| R000b_cloud_b01_mujoco317 | #2 (version check) | `2ed93af` | cloud CPU, MuJoCo 3.17.0 | reproduces R001 exactly (mover distance 1.7328e-9 m) |
