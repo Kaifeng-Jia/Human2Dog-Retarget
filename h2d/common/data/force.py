@@ -50,7 +50,7 @@ class ForceExtras:
     src_fps: float
     stride: int
     floor_raw_m: float                       # floor height found from the feet before shifting to z = 0
-    hand_min_dist: np.ndarray                # (T, 2) closest left / right hand vertex to the object surface [m]
+    hand_min_dist: np.ndarray                # (T, 2) closest hand vertex to the surface [m]: exact below 0.3, else a lower bound
     contact_thr_m: float
     smplh_pose: np.ndarray = field(repr=False, default=None)   # (T, 156), for the prior input later
 
@@ -97,7 +97,7 @@ def smplh_path(model_root: str | Path, gender: str) -> Path:
 
 
 def load_sequence(path: str | Path, root: str | Path, model: SMPLH, betas: np.ndarray, target_fps: float = 30.0,
-                  contact_thr_m: float = 0.02) -> tuple[Clip, ForceExtras]:
+                  contact_thr_m: float = 0.02, hand_vertex_stride: int = 2) -> tuple[Clip, ForceExtras]:
     path, root = Path(path), Path(root)
     ann = annotations(root).get(path.stem, {"object": None, "hands": "", "dir": "", "weight_kg": float("nan"),
                                             "success_code": ""})
@@ -110,34 +110,66 @@ def load_sequence(path: str | Path, root: str | Path, model: SMPLH, betas: np.nd
     o_pos = d["obj_trans"][::stride].astype(np.float64)
     T = len(pose)
 
-    out = model.forward(pose, trans, betas, vertices=True)
-    joints = out["joints"] @ C.T                                     # (T, 52, 3) z-up, SMPL-H order
-    verts = out["vertices"] @ C.T                                    # (T, V, 3)
-    jrot = R.from_matrix(np.einsum("ab,tjbc->tjac", C, out["rotations"]).reshape(-1, 3, 3))
+    fk = model.forward(pose, trans, betas)
+    joints = fk["joints"] @ C.T                                       # (T, 52, 3) z-up, SMPL-H order
+    jrot = R.from_matrix(np.einsum("ab,tjbc->tjac", C, fk["rotations"]).reshape(-1, 3, 3))
     obj_rot = YUP_TO_ZUP * o_rot
     obj_pos = o_pos @ C.T
-
+    rot_q = obj_rot.as_quat()
     vjoint = model.vertex_joint()                                    # dominant SMPL-H joint per vertex
-    foot_smplh = [SMPLH_OF_BODY[b] for b in FOOT_BODIES]
-    foot_v = np.isin(vjoint, foot_smplh)
-    floor = float(np.percentile(verts[:, foot_v, 2].min(1), 5))      # soles touch the floor most of the time
+
+    def verts_at(frames, ids):                                        # skinned, z-up, floor-shifted
+        v = model.skin(fk, frames, ids) @ C.T
+        v[..., 2] -= floor
+        return v
+
+    foot_v = np.flatnonzero(np.isin(vjoint, [SMPLH_OF_BODY[b] for b in FOOT_BODIES]))
+    floor = 0.0
+    all_t = np.arange(T)
+    foot_min = np.concatenate([verts_at(all_t[s:s + 256], foot_v)[..., 2].min(1) for s in range(0, T, 256)])
+    floor = float(np.percentile(foot_min, 5))                        # soles touch the floor most of the time
     joints[..., 2] -= floor
-    verts[..., 2] -= floor
     obj_pos[:, 2] -= floor
 
-    # derived contact: a body touches the object if one of its vertices is within contact_thr of the surface
-    loc = obj.to_local(verts, obj_pos, obj_rot.as_quat())
-    near = obj.approx_distance(loc.reshape(-1, 3), upper=contact_thr_m).reshape(T, -1) < contact_thr_m
-    contact = np.zeros((T, 52), np.int32)
-    hand_min = np.full((T, 2), np.inf)
-    for b, j in enumerate(SMPLH_OF_BODY):
+    # Derived contact: a body touches the object if one of its vertices is within contact_thr of the surface.
+    # A body's vertices are only skinned and queried in frames where its joint is closer to the surface than
+    # the body's rest radius + contact_thr + margin, which leaves the decision unchanged and saves most work.
+    dj = obj.approx_distance(obj.to_local(joints, obj_pos, rot_q).reshape(-1, 3)).reshape(T, -1)   # (T, 52)
+    v_rest, j_rest = model.rest_joints(betas)
+    radius = np.zeros(model.n_joints)
+    for j in range(model.n_joints):
         vs = vjoint == j
         if vs.any():
-            contact[:, b] = near[:, vs].any(1)
-    for k, side in enumerate(("left", "right")):                    # unbounded distance, hand vertices only
-        hj = [i for i, n in enumerate(JOINT_NAMES) if n.startswith(side) and (n.endswith("wrist") or n[-1].isdigit())]
-        hv = np.isin(vjoint, hj)
-        hand_min[:, k] = obj.approx_distance(loc[:, hv].reshape(-1, 3)).reshape(T, -1).min(1)
+            radius[j] = np.linalg.norm(v_rest[vs] - j_rest[j], axis=1).max()
+    margin = 0.05
+    hand_joints = {side: [i for i, n in enumerate(JOINT_NAMES)
+                          if n.startswith(side) and (n.endswith("wrist") or n[-1].isdigit())]
+                   for side in ("left", "right")}
+    contact_s = np.zeros((T, model.n_joints), bool)                  # SMPL-H order
+    for j in sorted(set(range(model.n_joints)) - set(sum(hand_joints.values(), []))):
+        vs = np.flatnonzero(vjoint == j)
+        fr = np.flatnonzero(dj[:, j] < radius[j] + contact_thr_m + margin)
+        if len(vs) and len(fr):
+            loc = obj.to_local(verts_at(fr, vs), obj_pos[fr], rot_q[fr])
+            d = obj.approx_distance(loc.reshape(-1, 3), upper=contact_thr_m).reshape(len(fr), -1)
+            contact_s[fr, j] = (d < contact_thr_m).any(1)
+    hand_min = np.full((T, 2), np.inf)
+    for k, side in enumerate(("left", "right")):                    # hands: one query gives contact + distance
+        hj = hand_joints[side]
+        hv = np.flatnonzero(np.isin(vjoint, hj))[::hand_vertex_stride]   # SMPL-H hand vertices are ~5-8 mm apart
+        lower = np.clip(dj[:, hj] - radius[hj], 0, None).min(1)      # joint-based bound for far frames
+        hand_min[:, k] = lower
+        fr = np.flatnonzero(lower < 0.3)
+        for s in range(0, len(fr), 256):
+            f = fr[s:s + 256]
+            loc = obj.to_local(verts_at(f, hv), obj_pos[f], rot_q[f])
+            d = obj.approx_distance(loc.reshape(-1, 3), upper=0.3).reshape(len(f), -1)
+            hand_min[f, k] = np.minimum(d.min(1), 0.3)
+            for j in hj:
+                sel = vjoint[hv] == j
+                if sel.any():
+                    contact_s[f, j] = (d[:, sel] < contact_thr_m).any(1)
+    contact = contact_s[:, SMPLH_OF_BODY].astype(np.int32)
 
     body_pos = joints[:, SMPLH_OF_BODY]
     body_rot = jrot.as_quat().reshape(T, 52, 4)[:, SMPLH_OF_BODY]

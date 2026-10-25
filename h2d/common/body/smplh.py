@@ -111,7 +111,8 @@ class SMPLH:
     def forward(self, pose: np.ndarray, trans: np.ndarray, betas: np.ndarray, vertices: bool = False,
                 vertex_ids: np.ndarray | None = None, chunk: int = 128) -> dict:
         """pose (T, 3J) axis-angle (root first), trans (T, 3) -> joints (T, J, 3), joint rotations (T, J, 3, 3),
-        and optionally skinned vertices (T, V', 3) for ``vertex_ids`` (default all), with pose blend shapes."""
+        and optionally skinned vertices (T, V', 3) for ``vertex_ids`` (default all), with pose blend shapes.
+        The result also carries what ``skin`` needs to skin any vertex subset at any frame subset later."""
         T, J = len(pose), self.n_joints
         Rm = R.from_rotvec(np.asarray(pose, float).reshape(-1, 3)).as_matrix().reshape(T, J, 3, 3)
         v_rest, Jr = self.rest_joints(betas)
@@ -125,22 +126,25 @@ class SMPLH:
             local[:, 3, 3] = 1.0
             G[:, j] = local if p < 0 else G[:, p] @ local
         trans = np.asarray(trans, float).reshape(T, 3)
-        out = {"joints": G[:, :, :3, 3] + trans[:, None], "rotations": G[:, :, :3, :3]}
+        A = G.copy()                                                             # remove rest joint offsets
+        A[:, :, :3, 3] -= np.einsum("tjab,jb->tja", G[:, :, :3, :3], Jr)
+        out = {"joints": G[:, :, :3, 3] + trans[:, None], "rotations": G[:, :, :3, :3],
+               "_A": A, "_feat": (Rm[:, 1:] - np.eye(3)).reshape(T, -1), "_trans": trans, "_v_rest": v_rest}
         if vertices:
             ids = np.arange(len(v_rest)) if vertex_ids is None else np.asarray(vertex_ids)
-            P = self.posedirs[ids].reshape(-1, self.posedirs.shape[2])          # (3V', 9(J-1))
-            W = self.weights[ids]                                                # (V', J)
-            A = G.copy()                                                         # remove rest joint offsets
-            A[:, :, :3, 3] -= np.einsum("tjab,jb->tja", G[:, :, :3, :3], Jr)
-            verts = np.empty((T, len(ids), 3))
-            for s in range(0, T, chunk):                                          # bounded memory, BLAS matmuls
-                e = min(T, s + chunk)
-                feat = (Rm[s:e, 1:] - np.eye(3)).reshape(e - s, -1)              # (t, 9(J-1))
-                v_posed = v_rest[ids][None] + (P @ feat.T).T.reshape(e - s, len(ids), 3)
-                M = np.matmul(W, A[s:e].reshape(e - s, J, 16)).reshape(e - s, len(ids), 4, 4)
-                verts[s:e] = np.einsum("tvab,tvb->tva", M[..., :3, :3], v_posed) + M[..., :3, 3]
-            out["vertices"] = verts + trans[:, None]
+            out["vertices"] = np.concatenate([self.skin(out, np.arange(s, min(T, s + chunk)), ids)
+                                              for s in range(0, T, chunk)]) if T else np.zeros((0, len(ids), 3))
         return out
+
+    def skin(self, fk: dict, frames: np.ndarray, ids: np.ndarray) -> np.ndarray:
+        """Skinned vertices ``ids`` at ``frames`` of a ``forward`` result, (len(frames), len(ids), 3)."""
+        frames, ids = np.asarray(frames), np.asarray(ids)
+        J = self.n_joints
+        P = self.posedirs[ids].reshape(-1, self.posedirs.shape[2])              # (3V', 9(J-1))
+        v_posed = fk["_v_rest"][ids][None] + (P @ fk["_feat"][frames].T).T.reshape(len(frames), len(ids), 3)
+        M = np.matmul(self.weights[ids], fk["_A"][frames].reshape(len(frames), J, 16))
+        M = M.reshape(len(frames), len(ids), 4, 4)
+        return np.einsum("tvab,tvb->tva", M[..., :3, :3], v_posed) + M[..., :3, 3] + fk["_trans"][frames][:, None]
 
 
 def load_model(path: str | Path) -> SMPLH:
