@@ -12,3 +12,8 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - [common] B01 tool / collision geometry check (`scripts/common/b01_check_tool_geometry.py`).
 - Configs: `configs/b2z1.yaml`, `configs/external.yaml` (X-Morph `a9f4a77`, GMR `25f56db`).
 - Docs: learned-line spec v0.5, versioning rules, Ubuntu setup, collaboration protocol (`CLAUDE.md`).
+
+### Changed
+- Pin `mujoco==3.17.0` (was `>=3.1`). R001 on Ubuntu (3.17.0) and the cloud reference (3.3.7) differed only
+  in gripperMover mesh distances at the 1e-9 m level; rerunning the reference with 3.17.0 reproduced the
+  Ubuntu numbers exactly. Run tickets compare against references with tolerances, not float-noise digits.

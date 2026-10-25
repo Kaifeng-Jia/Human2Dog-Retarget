@@ -11,7 +11,9 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
   "numpy>=1.24,<2",
   "scipy>=1.10",
-  "mujoco>=3.1",
+  # Pinned: mesh compilation differs across versions at the float32 level (R001: 8e-10 vs 1.7e-9 m),
+  # so all machines use the same MuJoCo. Changing it is a version bump.
+  "mujoco==3.17.0",
   "PyYAML>=6.0",
   "matplotlib>=3.7",
 ]
