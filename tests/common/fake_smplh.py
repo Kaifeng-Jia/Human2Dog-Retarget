@@ -9,8 +9,8 @@ import scipy.sparse as sp
 
 from h2d.common.body.smplh import JOINT_NAMES, SMPLH
 
-_OFF = {  # joint: (parent, offset from parent) [m]
-    "pelvis": (None, (0, 0, 0)), "spine1": ("pelvis", (0, 0.11, -0.01)), "spine2": ("spine1", (0, 0.13, 0)),
+_OFF = {  # joint: (parent, offset from parent) [m]; the pelvis rests at (0, -0.22, 0.03) as in SMPL, not at 0
+    "pelvis": (None, (0.0, -0.22, 0.03)), "spine1": ("pelvis", (0, 0.11, -0.01)), "spine2": ("spine1", (0, 0.13, 0)),
     "spine3": ("spine2", (0, 0.05, 0)), "neck": ("spine3", (0, 0.21, -0.03)), "head": ("neck", (0, 0.09, 0.05)),
 }
 for s, x in (("left", 1.0), ("right", -1.0)):

@@ -72,7 +72,7 @@ def make_force_folder(root):
     T = 60
     trans = np.tile([0.0, 1.0, 0.0], (T, 1))
     trans[:, 2] = np.linspace(0, 0.5, T)                       # walks 0.5 m along +z (its facing) in y-up
-    out = model.forward(np.zeros((1, 156)), trans[:1], np.zeros(10))
+    out = model.forward(np.zeros((1, 156)), trans[:1] - model.rest_joints(np.zeros(10))[1][0], np.zeros(10))
     tip = out["joints"][0, fo.JOINT_NAMES.index("right_middle3")]
     obj_trans = np.tile(tip + [-(BOX_HALF[0] + 0.03), 0, 0], (T, 1))   # box +x face 5 mm beyond the fingertip joint
     obj_trans[:, 2] += trans[:, 2]
@@ -97,3 +97,5 @@ def test_load_sequence_contacts_and_frames(tmp_path):
     lh = clip.contact_body[:, om.HAND_BODIES["L"]].any(1)
     assert rh.all() and not lh.any()
     assert np.allclose(R.from_quat(clip.obj_rot_xyzw).as_matrix(), fo.C)    # identity y-up pose -> C
+    expect = (fo.C @ np.array([0.0, 1.0, 0.0])) - [0, 0, ex.floor_raw_m]     # pelvis at smpl_trans (FORCE convention)
+    assert np.allclose(clip.root_pos[0], expect, atol=1e-9)
