@@ -53,7 +53,8 @@ python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 | B01 tool frame, contact site, collision geometry | done (v0.1.0) |
 | X-Morph prior wrapper + source-origin sidecar | done (v0.1.1), GPU check in R002 |
 | OMOMO_new format inspection, GMR install | done (R002) |
-| OMOMO_new adapter, candidate screening, D0 chain (OMOMO → G1 → B2-Z1) | v0.1.2, run R003 |
+| OMOMO_new adapter, object meshes, data profile (R003); D0 chain (OMOMO → G1 → B2-Z1) | v0.1.2 |
+| Choose the interaction types and clips for the course version (from the profile) | next |
 | Scene registration (start-anchored / contact-fitted) | next |
 | Frozen-body reachability diagnostic (§7.1) → tag `m1-reachability` | next |
 | B1 / B2 / M arm refinement and evaluation | later |

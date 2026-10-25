@@ -1,0 +1,221 @@
+"""Descriptive interaction segments of OMOMO_new clips (what happens, no selection).
+
+A *segment* is a maximal run of hand contact (either hand, wrist/palm or finger bodies) after removing
+flicker: per-hand runs shorter than ``min_run_s`` are dropped, gaps shorter than ``max_gap_s`` between
+runs are filled, and segments shorter than ``min_seg_s`` are dropped.
+
+Each segment gets raw descriptors (hands, palm vs fingers, other body parts, object clearance above
+the floor, horizontal object motion, tilt and yaw of the object relative to the segment start, human
+root motion, heading change, crouch depth, contact height, two-hand geometry) and two coarse labels
+whose thresholds live in ``DEFAULTS`` and are written into every report:
+
+* ``object_state`` (first match): ``lifted`` (lowest point above ``lift_m`` for at least ``lift_frac`` of
+  the segment), ``tilted`` (max tilt >= ``tilt_deg``), ``slid`` (horizontal displacement >=
+  ``slide_m``), ``turned`` (|yaw change| >= ``yaw_deg``), else ``still``;
+* ``human`` : ``walk`` if the root moves >= ``walk_m`` horizontally, else ``stand``.
+
+The labels only summarize; the raw numbers are kept so any later choice can be made on them.
+The floor is z = 0 (checked per clip through ``obj_lowest_z_start_m`` and ``toe_z_min_m``).
+"""
+
+from __future__ import annotations
+
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+from h2d.common.data.omomo_new import (
+    BODY_GROUPS, BODY_INDEX, HAND_BODIES, MODES, NON_HAND_BODIES, Clip, contact_modes, intervals, no_data,
+    remove_short_runs,
+)
+from h2d.common.data.omomo_objects import ObjectMesh, tilt_and_yaw
+
+DEFAULTS = {
+    "min_run_s": 0.2, "max_gap_s": 0.3, "min_seg_s": 0.3,
+    "lift_m": 0.05, "lift_frac": 0.3, "tilt_deg": 15.0, "slide_m": 0.10, "yaw_deg": 20.0, "walk_m": 0.5,
+}
+OBJECT_STATES = ("lifted", "tilted", "slid", "turned", "still")
+HAND_LABELS = ("left", "right", "both", "mixed")
+WRIST = {"L": BODY_INDEX["L_Wrist"], "R": BODY_INDEX["R_Wrist"]}
+
+
+# ------------------------------------------------------------------------------ segmentation
+def close_gaps(mask: np.ndarray, max_gap: int) -> np.ndarray:
+    """Fill False runs shorter than ``max_gap`` that lie between two True runs."""
+    out = np.asarray(mask, bool).copy()
+    runs = intervals(out)
+    for (_, e0), (s1, _) in zip(runs[:-1], runs[1:]):
+        if s1 - e0 < max_gap:
+            out[e0:s1] = True
+    return out
+
+
+def hand_masks(clip: Clip, p: dict = DEFAULTS) -> tuple[np.ndarray, np.ndarray]:
+    k = max(1, int(round(p["min_run_s"] * clip.fps)))
+    c = clip.contact_body == 1
+    return (remove_short_runs(c[:, HAND_BODIES["L"]].any(1), k),
+            remove_short_runs(c[:, HAND_BODIES["R"]].any(1), k))
+
+
+def segments(clip: Clip, p: dict = DEFAULTS) -> list[tuple[int, int]]:
+    L, Rr = hand_masks(clip, p)
+    m = close_gaps(L | Rr, max(1, int(round(p["max_gap_s"] * clip.fps))))
+    kmin = max(1, int(round(p["min_seg_s"] * clip.fps)))
+    return [(s, e) for s, e in intervals(m) if e - s >= kmin]
+
+
+# ------------------------------------------------------------------------------ helpers
+def heading(clip: Clip) -> np.ndarray:
+    """Unwrapped facing angle [deg] from the hip axis (convention-free), (T,)."""
+    v = clip.body_pos[:, BODY_INDEX["L_Hip"], :2] - clip.body_pos[:, BODY_INDEX["R_Hip"], :2]
+    fwd = np.stack([v[:, 1], -v[:, 0]], 1)            # forward = left x up (hip axis rotated -90 deg)
+    return np.degrees(np.unwrap(np.arctan2(fwd[:, 1], fwd[:, 0])))
+
+
+def _path(xy: np.ndarray) -> float:
+    return float(np.linalg.norm(np.diff(xy, axis=0), axis=1).sum()) if len(xy) > 1 else 0.0
+
+
+def object_state(d: dict, p: dict = DEFAULTS) -> str:
+    if d["obj_lifted_frac"] >= p["lift_frac"]:
+        return "lifted"
+    if d["obj_tilt_max_deg"] >= p["tilt_deg"]:
+        return "tilted"
+    if d["obj_disp_xy_m"] >= p["slide_m"]:
+        return "slid"
+    if abs(d["obj_yaw_end_deg"]) >= p["yaw_deg"]:
+        return "turned"
+    return "still"
+
+
+def _hand_label(left_only: float, right_only: float, both: float) -> str:
+    tot = left_only + right_only + both
+    if tot <= 0:
+        return "mixed"
+    shares = {"left": left_only / tot, "right": right_only / tot, "both": both / tot}
+    lab = max(shares, key=shares.get)
+    return lab if shares[lab] >= 0.6 else "mixed"
+
+
+# ------------------------------------------------------------------------------ per clip
+def describe_clip(clip: Clip, obj: ObjectMesh, p: dict = DEFAULTS, mesh_check_frames: int = 10) -> dict:
+    """Return {"clip": row, "segments": [rows], "check": distances} for one clip."""
+    T, fps = clip.n, clip.fps
+    flags = clip.contact_body == 1
+    L, Rr = hand_masks(clip, p)
+    segs = segments(clip, p)
+    low = obj.lowest_z(clip.obj_pos, clip.obj_rot_xyzw)                     # (T,) floor clearance
+    centroid_local = 0.5 * (obj.verts.min(0) + obj.verts.max(0))
+    centroid = R.from_quat(clip.obj_rot_xyzw).apply(centroid_local) + clip.obj_pos
+    pelvis = clip.body_pos[:, BODY_INDEX["Pelvis"]]
+    stand_z = float(np.percentile(pelvis[:, 2], 90))
+    head = heading(clip)
+    hand_c = {s: clip.body_pos[:, HAND_BODIES[s]].mean(1) for s in "LR"}
+    tilt0, yaw0 = tilt_and_yaw(clip.obj_rot_xyzw, 0)
+
+    seg_rows = []
+    for i, (s, e) in enumerate(segs):
+        sl = slice(s, e)
+        any_hand = L[sl] | Rr[sl]
+        n_hand = max(1, int(any_hand.sum()))
+        lo, ro, bo = (float((L[sl] & ~Rr[sl]).sum()) / n_hand, float((Rr[sl] & ~L[sl]).sum()) / n_hand,
+                      float((L[sl] & Rr[sl]).sum()) / n_hand)
+        palm = (flags[sl][:, [WRIST["L"], WRIST["R"]]].any(1) & any_hand).sum() / n_hand
+        fing_idx = [j for s_ in "LR" for j in HAND_BODIES[s_][1:]]
+        fing = (flags[sl][:, fing_idx].any(1) & any_hand).sum() / n_hand
+        tilt, yaw = tilt_and_yaw(clip.obj_rot_xyzw[sl], 0)
+        op = clip.obj_pos[sl]
+        hand_flags = flags[sl][:, HAND_BODIES["L"] + HAND_BODIES["R"]]
+        hz = clip.body_pos[sl][:, HAND_BODIES["L"] + HAND_BODIES["R"], 2][hand_flags]
+        rel = (clip.body_pos[sl][:, HAND_BODIES["L"] + HAND_BODIES["R"], 2] - pelvis[sl, 2:3])[hand_flags]
+        both = L[sl] & Rr[sl]
+        if both.sum() >= 3:
+            a = (hand_c["L"][sl] - centroid[sl])[both, :2]
+            b = (hand_c["R"][sl] - centroid[sl])[both, :2]
+            cosang = np.sum(a * b, 1) / np.maximum(np.linalg.norm(a, axis=1) * np.linalg.norm(b, axis=1), 1e-9)
+            two_angle = float(np.median(np.degrees(np.arccos(np.clip(cosang, -1, 1)))))
+            two_sep = float(np.median(np.linalg.norm(hand_c["L"][sl][both] - hand_c["R"][sl][both], axis=1)))
+        else:
+            two_angle = two_sep = float("nan")
+        root_disp = float(np.linalg.norm(pelvis[e - 1, :2] - pelvis[s, :2]))
+        d = {
+            "name": clip.name, "object": clip.obj, "subject": clip.subject, "seg": i,
+            "start": s, "end": e, "start_s": s / fps, "duration_s": (e - s) / fps,
+            "frac_left_only": lo, "frac_right_only": ro, "frac_both": bo,
+            "frac_palm": float(palm), "frac_fingers": float(fing),
+            "frac_body": float(flags[sl][:, NON_HAND_BODIES].any(1).mean()),
+            **{f"frac_{g}": float(flags[sl][:, idx].any(1).mean()) for g, idx in BODY_GROUPS.items()
+               if g not in ("L_hand", "R_hand")},
+            "obj_clear_start_m": float(low[s]), "obj_clear_median_m": float(np.median(low[sl])),
+            "obj_clear_max_m": float(low[sl].max()), "obj_lifted_frac": float((low[sl] > p["lift_m"]).mean()),
+            "obj_dz_origin_m": float(op[:, 2].max() - op[:, 2].min()),
+            "obj_disp_xy_m": float(np.linalg.norm(op[-1, :2] - op[0, :2])), "obj_path_xy_m": _path(op[:, :2]),
+            "obj_tilt_max_deg": float(tilt.max()), "obj_yaw_end_deg": float(yaw[-1]),
+            "obj_yaw_maxabs_deg": float(np.abs(yaw).max()),
+            "root_disp_xy_m": root_disp, "root_path_xy_m": _path(pelvis[sl, :2]),
+            "heading_change_deg": float(head[e - 1] - head[s]),
+            "crouch_m": float(stand_z - pelvis[sl, 2].min()),
+            "contact_z_median_m": float(np.median(hz)) if hz.size else float("nan"),
+            "contact_z_min_m": float(hz.min()) if hz.size else float("nan"),
+            "contact_z_rel_pelvis_median_m": float(np.median(rel)) if rel.size else float("nan"),
+            "two_hand_angle_deg": two_angle, "two_hand_sep_m": two_sep,
+            "obj_vs_root_disp": float(np.linalg.norm(op[-1, :2] - op[0, :2]) / root_disp) if root_disp > 0.1
+            else float("nan"),
+        }
+        d["hands"] = _hand_label(lo, ro, bo)
+        d["object_state"] = object_state(d, p)
+        d["human"] = "walk" if root_disp >= p["walk_m"] else "stand"
+        seg_rows.append(d)
+
+    # ---- mesh / contact-label check: distance of flagged hand bodies to the transformed object surface
+    check = {"contact_hand_min_m": [], "free_hand_min_m": [], "contact_body_min_m": []}
+    cand = np.flatnonzero(L | Rr)
+    if len(cand):
+        pick = cand[np.unique(np.linspace(0, len(cand) - 1, min(mesh_check_frames, len(cand))).astype(int))]
+        for t in pick:
+            loc = obj.to_local(clip.body_pos[t][None], clip.obj_pos[t], clip.obj_rot_xyzw[t])[0]
+            for side, m in (("L", L), ("R", Rr)):
+                idx = np.asarray(HAND_BODIES[side])
+                on = flags[t, idx]
+                if m[t] and on.any():
+                    check["contact_hand_min_m"].append(obj.min_surface_distance(loc[idx[on]]))
+                elif not m[t]:
+                    check["free_hand_min_m"].append(obj.min_surface_distance(loc[idx]))
+            nb = np.asarray(NON_HAND_BODIES)[flags[t, NON_HAND_BODIES]]
+            if len(nb):
+                check["contact_body_min_m"].append(obj.min_surface_distance(loc[nb]))
+
+    mode = contact_modes(clip, p["min_run_s"])
+    any_flag = flags.any(1)
+    toe = clip.body_pos[:, [BODY_INDEX["L_Toe"], BODY_INDEX["R_Toe"]], 2]
+    longest = max(seg_rows, key=lambda r: r["duration_s"]) if seg_rows else None
+    seg_frames = sum(e - s for s, e in segs)
+    row = {
+        "name": clip.name, "object": clip.obj, "subject": clip.subject, "frames": T, "duration_s": T / fps,
+        "dropped_first_frame": clip.dropped_first_frame,
+        **{f"mode_{m}": float(np.mean(mode == m)) for m in MODES},
+        "n_segments": len(segs), "contact_coverage": seg_frames / T,
+        "first_contact_s": segs[0][0] / fps if segs else float("nan"),
+        "last_release_s": segs[-1][1] / fps if segs else float("nan"),
+        **{f"n_{st}": sum(r["object_state"] == st for r in seg_rows) for st in OBJECT_STATES},
+        "longest_hands": longest["hands"] if longest else "",
+        "longest_state": longest["object_state"] if longest else "",
+        "longest_human": longest["human"] if longest else "",
+        "longest_duration_s": longest["duration_s"] if longest else 0.0,
+        "obj_disp_xy_m": float(np.linalg.norm(clip.obj_pos[-1, :2] - clip.obj_pos[0, :2])),
+        "obj_path_xy_m": _path(clip.obj_pos[:, :2]), "obj_clear_max_m": float(low.max()),
+        "obj_tilt_max_deg": float(tilt0.max()), "obj_yaw_end_deg": float(yaw0[-1]),
+        "root_path_xy_m": _path(pelvis[:, :2]),
+        "root_disp_xy_m": float(np.linalg.norm(pelvis[-1, :2] - pelvis[0, :2])),
+        "heading_change_deg": float(head[-1] - head[0]), "pelvis_stand_z_m": stand_z,
+        **{f"clipfrac_{g}": float(flags[:, idx].any(1).mean()) for g, idx in BODY_GROUPS.items()},
+        "frac_no_data": float(no_data(clip).mean()),
+        "frac_contact_obj": float((clip.contact_obj == 1).mean()), "frac_any_body_flag": float(any_flag.mean()),
+        "contact_obj_agreement": float(np.mean((clip.contact_obj == 1) == any_flag)),
+        "obj_lowest_z_start_m": float(low[0]), "obj_lowest_z_min_m": float(low.min()),
+        "toe_z_min_m": float(toe.min()),
+        "check_contact_hand_median_m": float(np.median(check["contact_hand_min_m"])) if check["contact_hand_min_m"]
+        else float("nan"),
+        "check_free_hand_median_m": float(np.median(check["free_hand_min_m"])) if check["free_hand_min_m"]
+        else float("nan"),
+    }
+    return {"clip": row, "segments": seg_rows, "check": check}

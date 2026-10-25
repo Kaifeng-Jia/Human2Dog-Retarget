@@ -11,3 +11,8 @@ gmr:
   url: https://github.com/YanjieZe/GMR
   commit: 25f56db79ac411258b377b6d4ccba0c8ff3372ac
   env_var: GMR_ROOT             # default external/GMR (needed from the prior-wrapper step on)
+
+hoi_retarget:
+  url: https://github.com/leggedrobotics/hoi-retarget
+  commit: b341dadde3fc745ef5ea606eaacbde9a0cbb916f
+  env_var: HOI_RETARGET_ROOT    # default external/hoi-retarget; only its object meshes are used (MIT, via InterMimic)

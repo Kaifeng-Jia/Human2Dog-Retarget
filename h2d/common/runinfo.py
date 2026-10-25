@@ -37,7 +37,7 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
-_DEFAULT_DIRS = {"xmorph": "morph", "gmr": "GMR"}
+_DEFAULT_DIRS = {"xmorph": "morph", "gmr": "GMR", "hoi_retarget": "hoi-retarget"}
 
 
 def _external(name: str, spec: dict) -> dict:

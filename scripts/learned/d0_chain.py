@@ -8,16 +8,16 @@ at the human hand vs the prior's gripper.
 
 Pass/fail per clip: chain completes; frame counts consistent; pelvis height z-up sane;
 convention self-check (pelvis-relative wrist error, mean shape vs recorded) median <= 0.08 m.
+The figure follows the clip's longest hand-contact segment (h2d/common/data/describe.py).
+Clips are chosen explicitly, after looking at the data profile (scripts/common/profile_omomo.py).
 
 Usage:
-  python scripts/learned/d0_chain.py --run-id R003_d0 --candidates outputs/R003_screen/candidates.csv --top 3
-  python scripts/learned/d0_chain.py --run-id R003_d0 --clips sub10_largebox_011 sub3_floorlamp_004
+  python scripts/learned/d0_chain.py --run-id R00x_d0 --clips sub10_largebox_011 sub3_floorlamp_004
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -30,9 +30,9 @@ import numpy as np  # noqa: E402
 from scipy.spatial.transform import Rotation as R  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from h2d.common.data.omomo_new import (  # noqa: E402
-    BODY_INDEX, HAND_BODIES, clip_stats, contact_modes, hand_contact, body_contact, intervals, load_clip, smplx_params,
-)
+from h2d.common.data.describe import describe_clip  # noqa: E402
+from h2d.common.data.omomo_new import BODY_INDEX, HAND_BODIES, body_contact, hand_contact, load_clip, smplx_params  # noqa: E402
+from h2d.common.data.omomo_objects import load_object  # noqa: E402
 from h2d.common.robot import B2Z1Robot  # noqa: E402
 from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.learned.human_to_g1 import retarget_to_g1  # noqa: E402
@@ -62,8 +62,10 @@ def gripper_world(motion, robot: B2Z1Robot) -> np.ndarray:
 
 def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, robot: B2Z1Robot, ax_row) -> dict:
     clip = load_clip(root / f"{name}.pt")
-    stats = clip_stats(clip)
-    mode = contact_modes(clip)
+    desc = describe_clip(clip, load_object(clip.obj))
+    stats = desc["clip"]
+    segs = desc["segments"]
+    best = max(segs, key=lambda r: r["duration_s"]) if segs else None
     rec: dict = {"name": name, "object": clip.obj, "frames": clip.n, "dropped_first_frame": clip.dropped_first_frame,
                  "stats": stats}
 
@@ -76,13 +78,13 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
 
     g1, b2 = load_motion(g1_pkl), load_motion(b2_pkl)
     grip = gripper_world(b2, robot)
-    best = stats["longest_single_hand"]
-    hand_side = {"right": "R", "left": "L"}.get(best["side"]) if best else "R"
+    hand_side = {"right": "R", "left": "L"}.get(best["hands"], "R") if best else "R"
     hc = hand_center(clip, hand_side)
     hc_obj = to_object_frame(clip, hc)
     if best:
         s, e = best["start"], best["end"]
-        rec["contact_interval"] = {"side": best["side"], "start": s, "end": e,
+        rec["contact_interval"] = {"hands": best["hands"], "object_state": best["object_state"],
+                                   "human": best["human"], "drawn_hand": hand_side, "start": s, "end": e,
                                    "hand_height_m": [float(hc[s:e, 2].min()), float(hc[s:e, 2].max())],
                                    "gripper_height_prior_m": [float(grip[s:e, 2].min()), float(grip[s:e, 2].max())],
                                    "hand_in_object_frame_start_m": hc_obj[s].tolist()}
@@ -97,7 +99,7 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
     wrist = g1_info["convention_check_pelvis_relative_wrist_error"]
     checks = {
         "frames_consistent": g1_info["frames_g1"] == clip.n and side["out_n_frames"] == g1_info["frames_g1"],
-        "pelvis_z_sane": 0.6 <= stats["pelvis_z_median_m"] <= 1.2,
+        "pelvis_z_sane": 0.6 <= stats["pelvis_stand_z_m"] <= 1.2,
         "convention_wrist_median_ok": max(w["median_m"] for w in wrist.values()) <= WRIST_TOL_M,
     }
     rec["checks"] = checks
@@ -110,8 +112,8 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
     ax[0].fill_between(t, 0, hcont[:, 0], step="mid", alpha=0.5, label="left hand")
     ax[0].fill_between(t, 1.2, 1.2 + hcont[:, 1], step="mid", alpha=0.5, label="right hand")
     ax[0].fill_between(t, 2.4, 2.4 + body_contact(clip), step="mid", alpha=0.5, label="non-hand body")
-    for s_, e_ in intervals(mode == best["side"]) if best else []:
-        ax[0].axvspan(s_ / clip.fps, e_ / clip.fps, color="k", alpha=0.08)
+    for r in segs:
+        ax[0].axvspan(r["start"] / clip.fps, r["end"] / clip.fps, color="k", alpha=0.08)
     ax[0].set_yticks([])
     ax[0].set_title(f"{name}: contact flags", fontsize=9)
     ax[0].legend(fontsize=7, loc="upper right")
@@ -143,28 +145,18 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
 def main() -> int:
     ap = argparse.ArgumentParser()
     add_run_args(ap)
-    ap.add_argument("--clips", nargs="*", default=None)
-    ap.add_argument("--candidates", default=None, help="candidates.csv from screen_omomo_clips.py")
-    ap.add_argument("--top", type=int, default=3)
-    ap.add_argument("--side", default="right", choices=["right", "left", "any"])
+    ap.add_argument("--clips", nargs="+", required=True)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--root", default=None)
     args = ap.parse_args()
     try:
-        prov = start_run(args.run_id, needs=("xmorph", "gmr"),
+        prov = start_run(args.run_id, needs=("xmorph", "gmr", "hoi_retarget"),
                          configs=("b2z1.yaml", "external.yaml", "learned/xmorph.yaml", "data.yaml"),
                          allow_dirty=args.allow_dirty, allow_external_mismatch=args.allow_external_mismatch)
     except ProvenanceError as e:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
-    names = list(args.clips or [])
-    if args.candidates:
-        with open(args.candidates, newline="", encoding="utf-8") as f:
-            rows = [r for r in csv.DictReader(f) if args.side == "any" or r["side"] == args.side]
-        names += [r["name"] for r in rows[: args.top]]
-    if not names:
-        print("no clips given", file=sys.stderr)
-        return 1
+    names = list(args.clips)
     root = Path(args.root).expanduser() if args.root else data_path("omomo_new")
     smplx_root = data_path("smplx_models")
     out = Path(args.out or f"outputs/{args.run_id}")
@@ -191,7 +183,7 @@ def main() -> int:
         "",
         f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · device `{args.device}`",
         "",
-        "| clip | frames | contact (side, s) | wrist err median L/R [m] | hand height in contact [m] | Z1 site height (prior) in contact [m] | path G1/B2 [m] | turn G1/B2 [deg] | pass |",
+        "| clip | frames | longest contact (hands, object, s) | wrist err median L/R [m] | hand height in contact [m] | Z1 site height (prior) in contact [m] | path G1/B2 [m] | turn G1/B2 [deg] | pass |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for name, r in results["clips"].items():
@@ -203,7 +195,7 @@ def main() -> int:
         dur = (ci["end"] - ci["start"]) / 30.0 if ci else 0
         fmt = lambda v: f"{v[0]:.2f}–{v[1]:.2f}" if v else "–"  # noqa: E731
         lines.append(
-            f"| {name} | {r['frames']} | {ci.get('side', '–')}, {dur:.1f} | {w['left_wrist']['median_m']:.3f} / "
+            f"| {name} | {r['frames']} | {ci.get('hands', '–')}, {ci.get('object_state', '–')}, {dur:.1f} | {w['left_wrist']['median_m']:.3f} / "
             f"{w['right_wrist']['median_m']:.3f} | {fmt(ci.get('hand_height_m'))} | {fmt(ci.get('gripper_height_prior_m'))} | "
             f"{r['prior']['path_g1_m']:.2f} / {r['prior']['path_b2_m']:.2f} | {r['prior']['turn_g1_deg']:.0f} / "
             f"{r['prior']['turn_b2_deg']:.0f} | {r['pass']} |"

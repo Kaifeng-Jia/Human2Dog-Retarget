@@ -55,15 +55,6 @@ def test_modes_both_hands():
     assert (mode[20:40] == "both").all() and (mode[40:50] == "left").all()
 
 
-def test_clip_stats_longest_interval():
-    s = om.clip_stats(make_clip(right=(10, 40), obj_dx=0.29))
-    b = s["longest_single_hand"]
-    assert b["side"] == "right" and (b["start"], b["end"]) == (10, 40)
-    assert abs(b["duration_s"] - 1.0) < 1e-9
-    assert 0.13 < b["obj_disp_xy_m"] < 0.15        # 30 of 60 frames of a 0.29 m ramp
-    assert b["obj_dz_m"] == 0.0 and b["obj_max_rot_deg"] == 0.0
-
-
 def test_smplx_params_root_frame_permutation():
     c = make_clip()
     p = om.smplx_params(c)
@@ -78,3 +69,12 @@ def test_smplx_params_root_frame_permutation():
     p2 = om.smplx_params(om.parse_array(a, "x"))
     i = om.SMPLX_BODY_JOINTS.index("left_knee")
     assert np.allclose(p2["pose_body"][0, 3 * i:3 * i + 3], [0.2, 0.3, 0.1])
+
+
+def test_skeleton_and_groups():
+    assert om.BODY_PARENTS[0] == -1 and all(0 <= p < i for i, p in enumerate(om.BODY_PARENTS) if i)
+    assert om.BODY_NAMES[om.BODY_PARENTS[om.BODY_INDEX["R_Thumb3"]]] == "R_Thumb2"
+    assert om.BODY_NAMES[om.BODY_PARENTS[om.BODY_INDEX["L_Index1"]]] == "L_Wrist"
+    assert len(om.HAND_BODIES["L"]) == 16 and om.HAND_BODIES["L"][0] == om.BODY_INDEX["L_Wrist"]
+    grouped = sorted(i for idx in om.BODY_GROUPS.values() for i in idx)
+    assert grouped == list(range(52))
