@@ -16,4 +16,4 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R002_b01_mj311 | #4 | `2c616eb` | Ubuntu RTX 5070, MuJoCo 3.11.0 | B01 all checks pass; max diff vs R000c 8.9e-16 (mover distance 8.36e-10 m) |
 | R002_xmorph_smoke | #4 | `2c616eb` | Ubuntu RTX 5070 (cuda:0), MuJoCo 3.11.0 | X-Morph smoke pass on 2 clips; frames and root lag (2 / 0) same as R000d; path / turn rel. diff vs R000d ≤ 5.4e-5; 2.0 s per clip |
 | R002_omomo_new_format | #4 | `2c616eb` | Ubuntu, read-only | 4421 files, 17 subjects, 13 objects; each file one float32 tensor [T, 591] (weights_only=True) |
-| R003_profile | #6 | `09ef090` | Ubuntu, CPU | **pass=false**: floor_at_zero fails for suitcase only (median lowest z at start +0.0318 m > 0.03 m); other 3 checks pass. Only checks.png and per_object.csv pushed, awaiting lead |
+| R003_profile | #6 | `09ef090` | Ubuntu, CPU | pass=false：suitcase 网格底部比记录高约 3 cm，其余检查通过；作为数据概况保留，见 #6 |
