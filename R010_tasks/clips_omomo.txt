@@ -1,0 +1,8 @@
+sub12_largebox_000
+sub12_largebox_065
+sub1_suitcase_008
+sub5_largetable_030
+sub6_largetable_033
+sub6_trashcan_003
+sub7_largebox_041
+sub7_smallbox_041

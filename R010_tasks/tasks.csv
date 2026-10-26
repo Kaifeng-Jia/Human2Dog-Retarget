@@ -1,0 +1,10 @@
+id,dataset,clip,object,mode,start,end,confirmed,pass,failed,contact_frames,proxy_surface_dist_median_m,patch_coherence_median,normal_spread_p90_deg,target_equals_c_bar_in_contact_m,d_max_m,target_step_max_m,palm_offset_m,target_on_face_m,height_shift_m,robot_contact_z_m,in_band,approach_angle_deg,retreat_angle_deg,normal_tilt_deg,contact_z_m
+trashcan_side,omomo_new,sub6_trashcan_003,trashcan,R,24,160,True,True,,136,0.0363,0.9702,7.5741,0.0,0.4501,0.0367,0.0409,0.0027,0.0,0.1488,False,74.3325,45.2794,4.7552,0.1488
+smallbox_top,omomo_new,sub7_smallbox_041,smallbox,R,41,120,True,True,,79,0.0212,0.9909,2.0166,0.0,0.6449,0.0752,0.0494,0.0033,0.0,0.1544,False,30.8468,24.4638,84.1257,0.1544
+largebox_top,omomo_new,sub7_largebox_041,largebox,R,35,120,True,True,,85,0.0061,0.992,2.8574,0.0,0.4949,0.0901,0.0336,0.0034,0.0,0.3504,True,42.3021,31.6465,87.4075,0.3504
+c01_sub6_largetable_033,omomo_new,sub6_largetable_033,largetable,B,3,150,False,True,,147,0.0157,1.0,0.7024,0.0,0.0,0.0298,-0.0119,0.0026,0.0,0.4711,True,,147.6824,89.1791,0.4711
+c02_sub12_largebox_000,omomo_new,sub12_largebox_000,largebox,B,0,234,False,True,,234,0.0195,0.9947,1.435,0.0,0.0,0.0151,0.0013,0.0041,0.0,0.3522,True,,145.094,86.2544,0.3522
+c03_sub5_largetable_030,omomo_new,sub5_largetable_030,largetable,B,17,136,False,True,,119,0.012,1.0,2.8677,0.0,0.0,0.0472,-0.0121,0.0044,0.0,0.471,True,133.7887,139.6198,87.3092,0.471
+c04_sub12_largebox_065,omomo_new,sub12_largebox_065,largebox,R,23,176,False,True,,153,0.0195,0.9959,3.7984,0.0,0.3619,0.0787,0.0511,0.0071,0.0,0.3541,True,19.7054,64.77,88.0067,0.3541
+c05_sub1_suitcase_008,omomo_new,sub1_suitcase_008,suitcase,R,5,89,False,True,,84,0.0204,0.9872,1.4443,0.0,0.0,0.03,-0.0019,0.0038,0.0,0.5499,True,126.2315,130.9274,84.3078,0.5499
+c06_0630_61-2,force,0630_61-2,backpack,R,472,523,False,True,,51,0.032,0.8722,17.2393,0.0,0.1566,0.057,0.0809,0.0104,0.0,0.4695,False,127.8942,57.587,57.0164,0.4695

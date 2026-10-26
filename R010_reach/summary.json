@@ -1,0 +1,1675 @@
+{
+  "provenance": {
+    "run_id": "R010_reach",
+    "started_utc": "2026-10-26T07:07:49+00:00",
+    "h2d_version": "0.1.5",
+    "git": {
+      "commit": "f6899c20dbad6cc2e10136a670dfa554eb01a0a0",
+      "branch": "HEAD",
+      "describe": "v0.1.3-11-gf6899c2",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      },
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "96ae9f58e9c6a965",
+      "external.yaml": "847b4b4bf499bd9e",
+      "learned/reach.yaml": "bd57dca77e2f8db1",
+      "registration.yaml": "f79a16bd35fbb4ef",
+      "push_candidates.yaml": "7e52b023332ddb84"
+    },
+    "command": "reach_diag.py --run-id R010_reach --tasks-dir outputs/R010_tasks/tasks --d0-dir outputs/R010_d0 --tasks-csv outputs/R010_tasks/tasks.csv --max-tasks 8",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "config": {
+    "pos_tol_m": 0.01,
+    "max_angle_deg": 15.0,
+    "budget_deg": 20.0,
+    "n_random_starts": 16,
+    "full_search_every": 10,
+    "avoid_margin_m": 0.01,
+    "penetration_tol_m": 0.002,
+    "scene_body_depth_m": 0.02,
+    "joint_speed_limit_rad_s": [
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416
+    ],
+    "registration_residual_suspect_m": 0.3,
+    "prev_weight_m_per_rad": 0.01
+  },
+  "registration_config": {
+    "lambda_psi": 0.08,
+    "min_target_spread_m": 0.05,
+    "psi_grid_deg": 0.25
+  },
+  "reach_bound_m": 0.9395286488664946,
+  "reach_sampled_max_m": 0.938784186311356,
+  "checks": {
+    "all_tasks_processed": {
+      "pass": true,
+      "n_errors": 0
+    }
+  },
+  "pass": true,
+  "errors": [],
+  "tasks": {
+    "c01_sub6_largetable_033": {
+      "clip": "sub6_largetable_033",
+      "object": "largetable",
+      "mode": "B",
+      "labels": {
+        "contact_fit/pos": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir_budget": "no_feasible_solution_within_budget",
+        "start_anchored/pos": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [],
+      "registration": {
+        "contact_fit": {
+          "psi": 0.006507321925916187,
+          "b": [
+            -0.23346441794824657,
+            1.4539133752746303
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.7179327087715401,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 0.036351321239632285,
+            "residual_xy_rms_m": 0.26238733580003,
+            "residual_xy_max_m": 0.40102837231375865,
+            "n_frames": 147
+          },
+          "psi_deg": 0.3728420822879401
+        },
+        "start_anchored": {
+          "psi": 0.005872871682834457,
+          "b": [
+            -0.16137856569508108,
+            0.9112696755755456
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.6070119722751902,
+            "residual_xy_max_m": 0.9378845512668506
+          },
+          "psi_deg": 0.33649076104830783
+        }
+      },
+      "contact_fit": {
+        "scene_body_depth_max_m": 0.04474331496862063,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.32292852559440416,
+          0.9279609649439375
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.65459861110582,
+          0.7785462161422749
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.782312925170068,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 29,
+            "angle": 0,
+            "self_collision": 32,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.064193841725465,
+          "pos_err_median_m": 7.987664952771761e-05,
+          "angle_max_deg": 163.52064473887194,
+          "angle_median_deg": 114.97715675625916,
+          "arm_change_max_deg": [
+            146.84571753138013,
+            84.4629505851342,
+            168.52928478629318,
+            56.197258932648566,
+            80.10918470831241,
+            118.85551503630212
+          ],
+          "arm_change_rms_deg": 61.371205419331616,
+          "speed_ratio_max": 27.794381793112247,
+          "speed_violations": 11,
+          "jump_to_prior_at_ends_deg": [
+            117.35458370797191,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.02810313491981478,
+          "starts": {
+            "random0": 5,
+            "previous": 112,
+            "random13": 1,
+            "prior": 13,
+            "random1": 5,
+            "random15": 1,
+            "random9": 1,
+            "random2": 9
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 65,
+            "floor": 0,
+            "arm_object": 2
+          },
+          "pos_err_max_m": 0.06887908757477601,
+          "pos_err_median_m": 0.03820904489599911,
+          "angle_max_deg": 134.2884804257477,
+          "angle_median_deg": 95.85278125303543,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            154.58119772439983,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.03598682057609898,
+          "starts": {
+            "random12": 1,
+            "random7": 2,
+            "random0": 35,
+            "random8": 1,
+            "random11": 1,
+            "random13": 4,
+            "prior": 55,
+            "random1": 21,
+            "random3": 2,
+            "random5": 1,
+            "random14": 1,
+            "random6": 1,
+            "random2": 22
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.44727242507529474,
+          "pos_err_median_m": 0.2865807235455162,
+          "angle_max_deg": 148.22750276346255,
+          "angle_median_deg": 126.41523541506749,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 1,
+            "random7": 1,
+            "random0": 36,
+            "random8": 1,
+            "random11": 1,
+            "random15": 3,
+            "prior": 40,
+            "random4": 3,
+            "random1": 33,
+            "random14": 2,
+            "random2": 26
+          }
+        }
+      },
+      "start_anchored": {
+        "scene_body_depth_max_m": 0.22124201941792007,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.22261892328327773,
+          0.45032150283234657
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6485017897527932,
+          1.1023313640228904
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.42857142857142855,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 81,
+            "angle": 0,
+            "self_collision": 83,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.13261648372669435,
+          "pos_err_median_m": 0.019523315172363723,
+          "angle_max_deg": 179.74462650768334,
+          "angle_median_deg": 132.79520704406247,
+          "arm_change_max_deg": [
+            120.27227505719786,
+            80.95863465756344,
+            209.0857661720541,
+            134.8282932107945,
+            73.37228428781366,
+            167.03630046596984
+          ],
+          "arm_change_rms_deg": 81.37856780733149,
+          "speed_ratio_max": 11.232715778400399,
+          "speed_violations": 5,
+          "jump_to_prior_at_ends_deg": [
+            123.94379688117888,
+            132.63901137604094
+          ],
+          "tool_obj_depth_max_m": 0.04086156268409256,
+          "starts": {
+            "random12": 1,
+            "random7": 1,
+            "random0": 23,
+            "random11": 1,
+            "previous": 58,
+            "prior": 17,
+            "random1": 24,
+            "random5": 1,
+            "random15": 2,
+            "random6": 1,
+            "random4": 1,
+            "random2": 17
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 115,
+            "floor": 0,
+            "arm_object": 1
+          },
+          "pos_err_max_m": 0.1345146679408196,
+          "pos_err_median_m": 0.04846121452045953,
+          "angle_max_deg": 178.8882304174004,
+          "angle_median_deg": 109.49277109873354,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            107.1618356541543,
+            180.935331352395
+          ],
+          "tool_obj_depth_max_m": 0.04135446784653927,
+          "starts": {
+            "random7": 1,
+            "random0": 39,
+            "random8": 1,
+            "random11": 1,
+            "random13": 1,
+            "prior": 21,
+            "random1": 39,
+            "random3": 1,
+            "random5": 1,
+            "random14": 1,
+            "random6": 1,
+            "random9": 2,
+            "random2": 38
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.918548873323974,
+          "pos_err_median_m": 0.5741610273726809,
+          "angle_max_deg": 145.05760331059662,
+          "angle_median_deg": 120.77315578294942,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 1,
+            "random0": 40,
+            "random11": 2,
+            "random13": 1,
+            "prior": 31,
+            "random4": 3,
+            "random1": 37,
+            "random10": 1,
+            "random15": 1,
+            "random14": 1,
+            "random6": 1,
+            "random2": 28
+          }
+        }
+      },
+      "runtime_s": 251.78057408332825
+    },
+    "c02_sub12_largebox_000": {
+      "clip": "sub12_largebox_000",
+      "object": "largebox",
+      "mode": "B",
+      "labels": {
+        "contact_fit/pos": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir_budget": "no_feasible_solution_within_budget",
+        "start_anchored/pos": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [],
+      "registration": {
+        "contact_fit": {
+          "psi": -0.018612689464372334,
+          "b": [
+            0.2997779696638312,
+            1.201727107030608
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.27645412359727206,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -0.27753685112514537,
+            "residual_xy_rms_m": 0.16067896868943518,
+            "residual_xy_max_m": 0.7585739793264067,
+            "n_frames": 234
+          },
+          "psi_deg": -1.0664285516961476
+        },
+        "start_anchored": {
+          "psi": -0.013768757616621219,
+          "b": [
+            0.43928201504547537,
+            0.6506382477923425
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.5909124390923488,
+            "residual_xy_max_m": 0.7159419749083761
+          },
+          "psi_deg": -0.7888917005710022
+        }
+      },
+      "contact_fit": {
+        "scene_body_depth_max_m": 0.06261975789019421,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.5873066609126524,
+          0.9299358443980971
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6336621552690329,
+          1.3146258960681103
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0811965811965812,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 194,
+            "angle": 0,
+            "self_collision": 208,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4820823106702702,
+          "pos_err_median_m": 0.0636858709275947,
+          "angle_max_deg": 166.31897066241683,
+          "angle_median_deg": 154.67162787958998,
+          "arm_change_max_deg": [
+            179.78636177337907,
+            115.32103688990034,
+            197.78635105888938,
+            15.196418072576275,
+            72.24641015387874,
+            170.1862394234335
+          ],
+          "arm_change_rms_deg": 115.84306552682078,
+          "speed_ratio_max": 1.0842471014706379,
+          "speed_violations": 1,
+          "jump_to_prior_at_ends_deg": [
+            157.94391876804477,
+            159.69069943117853
+          ],
+          "tool_obj_depth_max_m": 0.03566268299148437,
+          "starts": {
+            "random12": 2,
+            "random7": 2,
+            "random0": 38,
+            "random8": 2,
+            "previous": 18,
+            "prior": 60,
+            "random1": 45,
+            "random3": 5,
+            "random5": 1,
+            "random6": 3,
+            "random9": 3,
+            "random2": 55
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 234,
+            "self_collision": 189,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.20167328334104986,
+          "pos_err_median_m": 0.062023604945352376,
+          "angle_max_deg": 160.1636645481023,
+          "angle_median_deg": 150.440299210802,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            154.6076857696939,
+            159.5440860891115
+          ],
+          "tool_obj_depth_max_m": 0.009481318025355456,
+          "starts": {
+            "random12": 2,
+            "random7": 2,
+            "random0": 43,
+            "random8": 1,
+            "random11": 3,
+            "random13": 2,
+            "prior": 90,
+            "random1": 42,
+            "random3": 1,
+            "random5": 3,
+            "random10": 1,
+            "random6": 1,
+            "random2": 43
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 234,
+            "self_collision": 16,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.1566062252084426,
+          "pos_err_median_m": 0.4818401391999396,
+          "angle_max_deg": 148.67691996289045,
+          "angle_median_deg": 129.3763031713805,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 2,
+            "random7": 1,
+            "random0": 52,
+            "random8": 1,
+            "random13": 2,
+            "prior": 50,
+            "random1": 56,
+            "random3": 1,
+            "random5": 3,
+            "random10": 5,
+            "random14": 1,
+            "random6": 1,
+            "random9": 1,
+            "random2": 58
+          }
+        }
+      },
+      "start_anchored": {
+        "scene_body_depth_max_m": 0.13239802341728643,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.32883895922359146,
+          0.6435817670345277
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6276858907908901,
+          1.2739579543480737
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.09401709401709402,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 212,
+            "angle": 0,
+            "self_collision": 135,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.35337720653216587,
+          "pos_err_median_m": 0.11577481047743084,
+          "angle_max_deg": 176.1877844518474,
+          "angle_median_deg": 149.61575134843375,
+          "arm_change_max_deg": [
+            117.94442742026686,
+            120.43464324676069,
+            218.8055134406932,
+            74.10065000275986,
+            20.089352291637873,
+            131.45661723150513
+          ],
+          "arm_change_rms_deg": 71.07614737526606,
+          "speed_ratio_max": 35.485050654559835,
+          "speed_violations": 9,
+          "jump_to_prior_at_ends_deg": [
+            192.9437484265463,
+            228.8676452715067
+          ],
+          "tool_obj_depth_max_m": 0.040595423218516224,
+          "starts": {
+            "random12": 1,
+            "random0": 59,
+            "random8": 2,
+            "random11": 1,
+            "previous": 18,
+            "random13": 1,
+            "random15": 2,
+            "prior": 20,
+            "random4": 2,
+            "random1": 65,
+            "random3": 2,
+            "random5": 2,
+            "random10": 1,
+            "random14": 4,
+            "random9": 1,
+            "random2": 53
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 234,
+            "self_collision": 145,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4287587081951917,
+          "pos_err_median_m": 0.11166798371442502,
+          "angle_max_deg": 176.01533100026163,
+          "angle_median_deg": 146.20574742040716,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            192.9437484265463,
+            132.7405199422918
+          ],
+          "tool_obj_depth_max_m": 0.010914758587210083,
+          "starts": {
+            "random12": 1,
+            "random7": 1,
+            "random0": 63,
+            "random8": 1,
+            "random11": 1,
+            "random13": 7,
+            "prior": 26,
+            "random1": 64,
+            "random3": 1,
+            "random5": 1,
+            "random6": 1,
+            "random4": 3,
+            "random2": 64
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 234,
+            "self_collision": 17,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.1737519014684108,
+          "pos_err_median_m": 0.7433248240786847,
+          "angle_max_deg": 173.25961899781421,
+          "angle_median_deg": 129.0874787740214,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 2,
+            "random7": 3,
+            "random0": 68,
+            "random8": 2,
+            "random13": 4,
+            "prior": 41,
+            "random4": 5,
+            "random1": 46,
+            "random5": 1,
+            "random15": 1,
+            "random14": 1,
+            "random9": 2,
+            "random2": 58
+          }
+        }
+      },
+      "runtime_s": 412.9221348762512
+    },
+    "c03_sub5_largetable_030": {
+      "clip": "sub5_largetable_030",
+      "object": "largetable",
+      "mode": "B",
+      "labels": {
+        "contact_fit/pos": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir_budget": "no_feasible_solution_within_budget",
+        "start_anchored/pos": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [],
+      "registration": {
+        "contact_fit": {
+          "psi": 0.029715000464217933,
+          "b": [
+            -0.02643625495409148,
+            1.6009704606542878
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.5614553943195775,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 1.5599355696267607,
+            "residual_xy_rms_m": 0.1853091725949898,
+            "residual_xy_max_m": 0.42780716479417025,
+            "n_frames": 119
+          },
+          "psi_deg": 1.7025441148289695
+        },
+        "start_anchored": {
+          "psi": 0.0024889886552577067,
+          "b": [
+            0.0773737108310186,
+            1.114668149079158
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.5279900531291531,
+            "residual_xy_max_m": 0.9014643826508076
+          },
+          "psi_deg": 0.14260854520220884
+        }
+      },
+      "contact_fit": {
+        "scene_body_depth_max_m": 0.04211429267444597,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.3025044132749977,
+          0.8586514995945813
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.5333137065507803,
+          0.7193208410517035
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.9831932773109243,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 2,
+            "angle": 0,
+            "self_collision": 1,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.01749532662053295,
+          "pos_err_median_m": 5.1787409934494035e-06,
+          "angle_max_deg": 172.55772069339557,
+          "angle_median_deg": 154.961287315398,
+          "arm_change_max_deg": [
+            128.7635007757924,
+            81.12079527473001,
+            201.09283571711757,
+            125.71363372722058,
+            49.740494434732774,
+            107.26749349702646
+          ],
+          "arm_change_rms_deg": 67.16872488166472,
+          "speed_ratio_max": 5.945151343014939,
+          "speed_violations": 3,
+          "jump_to_prior_at_ends_deg": [
+            200.04855083417897,
+            92.82131328218009
+          ],
+          "tool_obj_depth_max_m": 0.02459600733199875,
+          "starts": {
+            "random0": 1,
+            "random11": 1,
+            "previous": 115,
+            "prior": 1,
+            "random2": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 119,
+            "self_collision": 11,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.06539682521361236,
+          "pos_err_median_m": 0.034563476350975196,
+          "angle_max_deg": 109.35408280061154,
+          "angle_median_deg": 86.51792717592825,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            156.31647907169608,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.03404053126188962,
+          "starts": {
+            "random0": 25,
+            "random11": 3,
+            "random13": 1,
+            "prior": 49,
+            "random4": 2,
+            "random1": 20,
+            "random15": 2,
+            "random2": 17
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 119,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.3563439886597246,
+          "pos_err_median_m": 0.21701599765294938,
+          "angle_max_deg": 140.12992117218073,
+          "angle_median_deg": 122.84979835999349,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random7": 1,
+            "random0": 33,
+            "random8": 1,
+            "prior": 13,
+            "random4": 1,
+            "random1": 27,
+            "random3": 1,
+            "random5": 3,
+            "random15": 1,
+            "random9": 3,
+            "random2": 35
+          }
+        }
+      },
+      "start_anchored": {
+        "scene_body_depth_max_m": 0.1681999856656785,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.13230494870181014,
+          0.3879396949573685
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.4973507984046353,
+          1.0409692069781813
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.33613445378151263,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 79,
+            "angle": 0,
+            "self_collision": 71,
+            "floor": 0,
+            "arm_object": 1
+          },
+          "pos_err_max_m": 0.05181076188279118,
+          "pos_err_median_m": 0.017520285436026684,
+          "angle_max_deg": 177.94499782798286,
+          "angle_median_deg": 144.81030070849243,
+          "arm_change_max_deg": [
+            146.58936403019507,
+            67.29333811550173,
+            77.0784497114928,
+            123.79336787361393,
+            61.50545481934169,
+            159.81337601787453
+          ],
+          "arm_change_rms_deg": 77.2010448496171,
+          "speed_ratio_max": 4.026407487993183,
+          "speed_violations": 8,
+          "jump_to_prior_at_ends_deg": [
+            157.6836489228859,
+            156.49192907045057
+          ],
+          "tool_obj_depth_max_m": 0.04968725148218994,
+          "starts": {
+            "random7": 2,
+            "random0": 18,
+            "previous": 37,
+            "random13": 1,
+            "prior": 16,
+            "random4": 1,
+            "random1": 24,
+            "random3": 1,
+            "random5": 1,
+            "random6": 1,
+            "random9": 1,
+            "random2": 16
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 118,
+            "angle": 119,
+            "self_collision": 69,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.07751342200729303,
+          "pos_err_median_m": 0.04148949487949331,
+          "angle_max_deg": 176.6740936530063,
+          "angle_median_deg": 101.36984039626675,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            146.1439832848242
+          ],
+          "tool_obj_depth_max_m": 0.03872141256236214,
+          "starts": {
+            "random12": 1,
+            "random0": 35,
+            "prior": 23,
+            "random1": 28,
+            "random3": 1,
+            "random5": 3,
+            "random10": 2,
+            "random15": 2,
+            "random6": 1,
+            "random2": 23
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 119,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.8080398482573786,
+          "pos_err_median_m": 0.5589563046904739,
+          "angle_max_deg": 142.14505898725855,
+          "angle_median_deg": 111.3170816509374,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 2,
+            "random0": 41,
+            "random13": 1,
+            "prior": 6,
+            "random1": 32,
+            "random5": 2,
+            "random10": 1,
+            "random14": 1,
+            "random9": 3,
+            "random2": 30
+          }
+        }
+      },
+      "runtime_s": 200.05658650398254
+    },
+    "c04_sub12_largebox_065": {
+      "clip": "sub12_largebox_065",
+      "object": "largebox",
+      "mode": "R",
+      "labels": {
+        "contact_fit/pos": "feasible",
+        "contact_fit/pos_dir": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir_budget": "no_feasible_solution_within_budget",
+        "start_anchored/pos": "feasible",
+        "start_anchored/pos_dir": "feasible",
+        "start_anchored/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [],
+      "registration": {
+        "contact_fit": {
+          "psi": -0.09083412137418634,
+          "b": [
+            -0.7772133957572566,
+            0.5403666274406975
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.3561982685140369,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -7.096624796372676,
+            "residual_xy_rms_m": 0.12664312442595116,
+            "residual_xy_max_m": 0.20755787247178736,
+            "n_frames": 153
+          },
+          "psi_deg": -5.204411790519939
+        },
+        "start_anchored": {
+          "psi": 0.033025347101188984,
+          "b": [
+            -0.700124896717272,
+            -0.037572637985182886
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.6028193673833803,
+            "residual_xy_max_m": 0.7961630894753956
+          },
+          "psi_deg": 1.8922130058527364
+        }
+      },
+      "contact_fit": {
+        "scene_body_depth_max_m": 0.046974986382101624,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.4807467082503495,
+          0.6919598930071971
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.5960294461813416,
+          0.9121290767115556
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.006394127637555451,
+          "pos_err_median_m": 5.717388979509049e-06,
+          "angle_max_deg": 72.11273169310088,
+          "angle_median_deg": 54.56114037140385,
+          "arm_change_max_deg": [
+            173.2588659543063,
+            101.86949487729419,
+            203.0533517768614,
+            43.0106594922584,
+            56.82044921062332,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 113.45658717902708,
+          "speed_ratio_max": 28.248747123717266,
+          "speed_violations": 2,
+          "jump_to_prior_at_ends_deg": [
+            203.0533517768614,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.03377050060993361,
+          "starts": {
+            "random0": 1,
+            "previous": 151,
+            "prior": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.9934640522875817,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 1,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.007927646757244902,
+          "pos_err_median_m": 0.0004479967016537621,
+          "angle_max_deg": 16.553079068474123,
+          "angle_median_deg": 0.9659255387538817,
+          "arm_change_max_deg": [
+            23.92653196291191,
+            106.9151448330148,
+            78.47380305165186,
+            65.77901263034828,
+            11.337132651728462,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 83.18666895689829,
+          "speed_ratio_max": 0.6964523685886986,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.011333434138708298,
+          "starts": {
+            "random0": 1,
+            "random1": 1,
+            "previous": 151
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 153,
+            "angle": 153,
+            "self_collision": 13,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4402351637593443,
+          "pos_err_median_m": 0.3442296525145355,
+          "angle_max_deg": 56.672906310675266,
+          "angle_median_deg": 40.2698304915736,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random0": 43,
+            "random8": 1,
+            "random15": 1,
+            "random13": 2,
+            "prior": 24,
+            "random4": 2,
+            "random1": 32,
+            "random5": 3,
+            "random10": 1,
+            "random14": 2,
+            "random2": 42
+          }
+        }
+      },
+      "start_anchored": {
+        "scene_body_depth_max_m": 0.02925637425227809,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.5672702100237816,
+          0.7216318584885015
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.7017454029996144,
+          1.1691101055532898
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.8768094532038817e-05,
+          "pos_err_median_m": 3.1209333888507036e-06,
+          "angle_max_deg": 36.75674354458007,
+          "angle_median_deg": 21.398295568624004,
+          "arm_change_max_deg": [
+            122.97184155042126,
+            77.63858961554699,
+            230.82214575927972,
+            27.35044282013647,
+            21.37507215768089,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 117.08463600869841,
+          "speed_ratio_max": 0.33817920449191174,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            216.6654500255384,
+            230.82214575927972
+          ],
+          "tool_obj_depth_max_m": 0.02417617001061584,
+          "starts": {
+            "random0": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.005505031226081193,
+          "pos_err_median_m": 0.0002914766834904467,
+          "angle_max_deg": 11.766230900687104,
+          "angle_median_deg": 0.6276843490521071,
+          "arm_change_max_deg": [
+            95.3738481321088,
+            111.79089565000957,
+            104.27351170788575,
+            82.83605797239481,
+            10.273206506175933,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 92.71253318012377,
+          "speed_ratio_max": 1.4749117180870437,
+          "speed_violations": 3,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.011677414062825686,
+          "starts": {
+            "random0": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 153,
+            "angle": 153,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.6939349681752801,
+          "pos_err_median_m": 0.49070863769072426,
+          "angle_max_deg": 59.567881169039026,
+          "angle_median_deg": 46.09928643404566,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random12": 1,
+            "random7": 1,
+            "random0": 16,
+            "random11": 2,
+            "random13": 1,
+            "prior": 100,
+            "random1": 17,
+            "random3": 2,
+            "random5": 1,
+            "random14": 1,
+            "random6": 1,
+            "random9": 1,
+            "random2": 9
+          }
+        }
+      },
+      "runtime_s": 102.748619556427
+    },
+    "c05_sub1_suitcase_008": {
+      "clip": "sub1_suitcase_008",
+      "object": "suitcase",
+      "mode": "R",
+      "labels": {
+        "contact_fit/pos": "feasible",
+        "contact_fit/pos_dir": "no_feasible_solution_within_budget",
+        "contact_fit/pos_dir_budget": "no_feasible_solution_within_budget",
+        "start_anchored/pos": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir": "no_feasible_solution_within_budget",
+        "start_anchored/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [],
+      "registration": {
+        "contact_fit": {
+          "psi": 0.22091022401357785,
+          "b": [
+            -1.5060548079336835,
+            0.05946156190514307
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.5491907685360901,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 13.25536321613317,
+            "residual_xy_rms_m": 0.22552599322724698,
+            "residual_xy_max_m": 0.3900959262174041,
+            "n_frames": 84
+          },
+          "psi_deg": 12.657223487267581
+        },
+        "start_anchored": {
+          "psi": -0.010439507655690683,
+          "b": [
+            -1.299690621242737,
+            -0.3039900118745882
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.5441996311018189,
+            "residual_xy_max_m": 0.6407331276811832
+          },
+          "psi_deg": -0.5981397288655883
+        }
+      },
+      "contact_fit": {
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.4740493952357362,
+          0.8413858729739885
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.4333524686386538,
+          0.6880993826935884
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0007909353338714518,
+          "pos_err_median_m": 1.1715336855760505e-05,
+          "angle_max_deg": 129.3706201824575,
+          "angle_median_deg": 105.36594196751554,
+          "arm_change_max_deg": [
+            22.281874395348733,
+            91.62753434243108,
+            71.21004537408979,
+            31.968227271162103,
+            75.737056730411,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 76.93573833577783,
+          "speed_ratio_max": 0.8210045661065177,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.036891532855481246,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 84,
+            "angle": 84,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.044223821429181166,
+          "pos_err_median_m": 0.03383558173821335,
+          "angle_max_deg": 124.1553111678668,
+          "angle_median_deg": 85.98854436532974,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            155.24779184294945,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.04055972989454401,
+          "starts": {
+            "random12": 2,
+            "random7": 2,
+            "random0": 15,
+            "random8": 1,
+            "prior": 23,
+            "random1": 23,
+            "random5": 1,
+            "random6": 1,
+            "random2": 16
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 84,
+            "angle": 84,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4111367861612986,
+          "pos_err_median_m": 0.13085004933045416,
+          "angle_max_deg": 145.74015117158535,
+          "angle_median_deg": 128.66267352075,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random0": 21,
+            "random13": 2,
+            "prior": 19,
+            "random1": 21,
+            "random5": 1,
+            "random9": 2,
+            "random2": 18
+          }
+        }
+      },
+      "start_anchored": {
+        "scene_body_depth_max_m": 0.1310460970976673,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.1996990210078344,
+          0.7214773265702507
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6509610856541793,
+          0.8677195947712912
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.8452380952380952,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 13,
+            "angle": 0,
+            "self_collision": 11,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.051678072627749684,
+          "pos_err_median_m": 2.0732992528525856e-05,
+          "angle_max_deg": 175.85199713676514,
+          "angle_median_deg": 148.80632131620376,
+          "arm_change_max_deg": [
+            77.90513882423399,
+            77.53398524737247,
+            82.45725384930384,
+            100.84949322067642,
+            62.81438591568706,
+            171.0796392659286
+          ],
+          "arm_change_rms_deg": 64.94156888856428,
+          "speed_ratio_max": 5.987246879384289,
+          "speed_violations": 13,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            82.75835456876288
+          ],
+          "tool_obj_depth_max_m": 0.03290584512941683,
+          "starts": {
+            "random0": 3,
+            "previous": 69,
+            "prior": 8,
+            "random4": 1,
+            "random1": 1,
+            "random2": 2
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 84,
+            "angle": 84,
+            "self_collision": 19,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0740585587854625,
+          "pos_err_median_m": 0.03378587675034303,
+          "angle_max_deg": 159.5251463295681,
+          "angle_median_deg": 89.38071535312845,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            208.76443992255085,
+            207.76441882105416
+          ],
+          "tool_obj_depth_max_m": 0.04527074776822457,
+          "starts": {
+            "random12": 1,
+            "random7": 1,
+            "random0": 18,
+            "random8": 1,
+            "random13": 1,
+            "prior": 18,
+            "random1": 20,
+            "random5": 1,
+            "random9": 2,
+            "random4": 1,
+            "random2": 20
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 84,
+            "angle": 84,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.5563623028851863,
+          "pos_err_median_m": 0.37516922969840316,
+          "angle_max_deg": 145.10665308777644,
+          "angle_median_deg": 129.6917958972901,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "random7": 1,
+            "random0": 21,
+            "prior": 33,
+            "random1": 15,
+            "random3": 2,
+            "random5": 1,
+            "random15": 2,
+            "random2": 9
+          }
+        }
+      },
+      "runtime_s": 288.1684067249298
+    }
+  },
+  "elapsed_s": 1255.6836347579956
+}

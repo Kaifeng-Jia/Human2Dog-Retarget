@@ -25,3 +25,8 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R007_d0 | #13 | `04e7eab` | Ubuntu RTX 5070 (cuda:0) | **failed**: all 14 OMOMO_new clips stop in GMR load_smplx_file (einsum shape 26 vs 20; exported betas are 10-dim); see #13 |
 | R008_d0 | #14 | `80c2a7a` | Ubuntu RTX 5070 (cuda:0) | pass=true; X-Morph prior for all 14 OMOMO_new clips (16 SMPL-X betas); prior Z1 site 0.74–1.24 m vs human hand 0.09–0.62 m in contact |
 | R008_reach | #14 | `80c2a7a` | Ubuntu, CPU | pass=true (4/4 tasks, 0 errors); feasible only for largebox_top contact_fit pos / pos_dir; smallbox_top and c07 labelled coordinate_or_tool_offset_error |
+| R010_workspace | #16 | `f6899c2` | Ubuntu, CPU | reachable contact z (root 0.5 m): side 0.5–1.3 m, top 0.3–0.8 m (y 0) / 0.2–0.8 m (y 0.2 m); summary.json has no `pass` field |
+| R010_candidates | #16 | `f6899c2` | Ubuntu, CPU, SMPL-H male | pass=true; 6 candidates (all tier C; 5 top-face pushes), 12 segments pass all criteria |
+| R010_tasks | #16 | `f6899c2` | Ubuntu, CPU | pass=true; 9 tasks (3 confirmed + 6 candidates), 0 errors |
+| R010_d0 | #16 | `f6899c2` | Ubuntu RTX 5070 (cuda:0) | pass=true; X-Morph prior for 8 OMOMO_new clips |
+| R010_reach | #16 | `f6899c2` | Ubuntu, CPU | pass=true (5/5 tasks, 0 errors); feasible: c04 sub12_largebox_065 (contact_fit pos; start_anchored pos, pos_dir), c05 sub1_suitcase_008 (contact_fit pos) |
