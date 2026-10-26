@@ -14,7 +14,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   tables, sheets (both hands drawn behind the midpoint) and gallery; 16 candidates by default.
 - Test clip: `push_hands` = R / B (both on one face) / squeeze (opposite faces).
 
-## [0.1.4] — unreleased
+## [0.1.4] — 2026-10-25 (merge `8dfde27`)
 
 ### Added
 - [common] Push candidates for the reachability diagnostic (spec §7.1 step 1; `docs/data/push_candidates.md`):
