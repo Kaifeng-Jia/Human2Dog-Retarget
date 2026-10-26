@@ -45,4 +45,10 @@ and palm; the contact on the object seen from the hand and from the side with th
 timeline of contacts, speeds and push alignment; the numbers), `summary.json` (criteria, funnel per dataset,
 candidates with frame ranges and source-file hashes).
 
-The three confirmed segments will be recorded in a config file, so later runs read them instead of re-ranking.
+## R005 result and the confirmed segments
+
+R005 (`01985ab`): 11 segments pass all criteria (OMOMO_new 10, FORCE 1), 8 proposed after the caps, none in tier A.
+People bring the hand down onto the face from above (30-75 deg from the normal), and single right-hand pushes of
+low boxes are mostly on the top face; FORCE box / chair pushes are mostly two-handed or turn the object.
+Kevin confirmed three OMOMO_new segments (one side-face, two top-face pushes; contact at 0.14, 0.17, 0.36 m),
+recorded in `configs/push_candidates.yaml` with the deviation note; later runs read them from there.

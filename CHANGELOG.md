@@ -15,6 +15,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - [common] `ObjectMesh.center`, `face_normals`, `closest_face`, `patch_normals` (normals signed towards the query
   point: the meshes' winding is inconsistent).
 - [common] `viz_hoi.candidate_figure`, `viz_hoi.gallery`.
+- `configs/push_candidates.yaml`: the three segments confirmed by Kevin from R005, with the deviation from §7.1 step 1.
 
 ### Fixed (found in R005)
 - Candidate sheet: the side view of a top-face contact looked along the normal (the object collapsed to a line);
