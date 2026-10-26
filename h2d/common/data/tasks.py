@@ -134,7 +134,8 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
     (elbow -> wrist, the direction the human pushes along), turned into a ``tool_max_deg`` cone about the inward
     normal of the robot's contact (the inward normal itself if the forearm points away from the object); the roll
     follows the hand (``gripper_axes``) when the palm faces the human's contact within ``palm_max_deg`` (else, e.g.
-    a flipped hand, no roll target)."""
+    a flipped hand, no roll target). The palm side is the side that touches: a hand whose points give the palm
+    facing away (> 90 deg) is mirrored first (``palm_flipped``)."""
     s, e = int(seg[0]), int(seg[1])
     fps = clip.fps
     w0, w1 = max(0, s - round(pre_s * fps)), min(clip.n, e + round(post_s * fps))
@@ -183,6 +184,9 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
     palm_n, across, fore = (_unit(_smooth(to_obj.apply(v), smooth)) for v in hand_frame(clip, mode, fr))
     deg = lambda a, b: float(np.degrees(np.arccos(np.clip(np.median(a @ b), -1, 1))))  # noqa: E731
     palm_face, fore_face = deg(palm_n[contact], -n_bar), deg(fore[contact], -n_robot)
+    palm_flipped = palm_face > 90.0         # the palm is the side that touches (R014: 149-173 deg on all two-hand
+    if palm_flipped:                        # pushes, a mirrored hand convention in the data or flipped hands)
+        palm_n, across, palm_face = -palm_n, -across, 180.0 - palm_face
     palm_used, fore_used = palm_face <= palm_max_deg, fore_face <= 90.0
     tool_x = clamp_cone(fore, -n_robot, tool_max_deg) if fore_used else np.tile(-n_robot, (len(fr), 1))
     tool_z = gripper_axes(tool_x, across)[1] if palm_used else np.full((len(fr), 3), np.nan)
@@ -196,6 +200,7 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
         "normal_spread_deg": np.degrees(np.arccos(np.clip(n @ n_bar, -1, 1))),
         "c_bar_human_local": c_human, "height": height, "target_on_face_m": on_face,
         "grip": grip, "palm_normal_local": palm_n, "palm_face_deg": palm_face, "palm_used": bool(palm_used),
+        "palm_flipped": bool(palm_flipped),
         "forearm_local": fore, "forearm_face_deg": fore_face, "forearm_used": bool(fore_used),
         "tool_x_local": tool_x, "tool_z_local": tool_z,
         "body_world": clip.body_pos[fr][:, [BODY_INDEX[b] for b in BODY_POINTS]],     # interaction mesh (spec §5.5)
@@ -224,6 +229,7 @@ def task_checks(task: dict) -> dict:
         "contact_moved": task.get("height", {}).get("contact_moved", ""),
         "palm_face_deg": task.get("palm_face_deg", float("nan")),
         "palm_used": task.get("palm_used", False),
+        "palm_flipped": task.get("palm_flipped", False),
         "forearm_face_deg": task.get("forearm_face_deg", float("nan")),
         "forearm_used": task.get("forearm_used", False),
     }

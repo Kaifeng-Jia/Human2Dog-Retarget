@@ -222,7 +222,7 @@ def test_top_push_moves_to_the_robots_side():
 
 
 @needs_mesh
-def test_flipped_hand_has_no_roll_target():
+def test_mirrored_hand_takes_the_palm_side_from_the_contact():
     from synthetic_hoi import make_clip
 
     from h2d.common.data.omomo_new import BODY_INDEX
@@ -233,8 +233,10 @@ def test_flipped_hand_has_no_roll_target():
     i, k = BODY_INDEX["R_Index1"], BODY_INDEX["R_Pinky1"]
     c.body_pos[:, [i, k]] = c.body_pos[:, [k, i]]                     # mirrored palm: faces away from the box
     t = build_task(c, BOX, (s, e), "R")
-    assert not t["palm_used"] and t["palm_face_deg"] > 150 and np.isnan(t["tool_z_local"]).all()
-    assert t["forearm_used"]                                          # the approach still follows the forearm
+    assert t["palm_flipped"] and t["palm_used"] and t["palm_face_deg"] < 30 and t["forearm_used"]
+    k = np.flatnonzero(t["in_contact"])[0]
+    rot = R.from_quat(t["obj_rot_xyzw"][k])
+    assert rot.apply(t["tool_z_local"][k]) @ [0, 0, 1] > 0.98                # the same roll as the unmirrored hand
 
 
 @needs_mesh

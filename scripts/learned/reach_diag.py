@@ -81,7 +81,9 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
         out["notes"].append(f"forearm points away ({float(task['forearm_face_deg']):.0f}° from the inward normal): "
                             "approach = inward normal")
     if "palm_used" in task and not task["palm_used"]:
-        out["notes"].append(f"palm faces away ({float(task['palm_face_deg']):.0f}°): no roll target")
+        out["notes"].append(f"palm {float(task['palm_face_deg']):.0f}° off the contact: no roll target")
+    if task.get("palm_flipped"):
+        out["notes"].append("palm side taken from the contact (the hand's points gave it mirrored)")
     hull = ObjectHull.from_vertices(obj.hull_verts)
     arm_idx = slice(12, 18)
 

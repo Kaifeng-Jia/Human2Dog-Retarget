@@ -16,7 +16,9 @@ by frame, so that the dog keeps the human's body-object relations and not only t
     Directions come from the human, the distance from the dog's arm: the edge directions alone would pull the
     body to human-like distances (object samples span the box), too far for the arm (dry run on the test push);
   - clearance: trunk and legs outside the object hull by a margin (hinge);
-  - smoothness (first difference) and a weak pull to the constant registration.
+  - smoothness: how far a placement change moves the trunk (and 0.5 m x the turn) between frames; the placement
+    turns about the world origin, so the parameters' own differences under-weight a turn far from it (R014:
+    extra foot slide 0.4-0.7 m/s); and a weak pull to the constant registration.
 """
 
 from __future__ import annotations
@@ -124,7 +126,8 @@ class InteractionMesh:
         c, x = self.cfg, x.reshape(-1, 3)
         k = self.terms(x[:, 0], x[:, 1:])
         relu = lambda v: np.maximum(v, 0.0)  # noqa: E731
-        dx = np.c_[np.diff(x[:, 1:], axis=0), 0.5 * wrap(np.diff(x[:, 0]))]
+        tr = self.pp.trunk[1:, :2]
+        dx = np.c_[se2(tr, x[1:, 0], x[1:, 1:]) - se2(tr, x[:-1, 0], x[:-1, 1:]), 0.5 * wrap(np.diff(x[:, 0]))]
         return np.concatenate([
             c["w_mesh"] * k["edge"].ravel(), c["w_heading"] * k["heading"].ravel(),
             c["w_reach"] * relu(k["reach"] - c["r_max_m"]), c["w_reach"] * relu(c["r_min_m"] - k["reach"]),

@@ -148,7 +148,7 @@ def main() -> int:
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(rows)}/{len(todo)} segments · {len(errors)} errors · **{'PASS' if passed else 'FAIL'}**", "",
              "| id | confirmed | hand | dataset / clip | frames | contact z human → robot [m] | face tilt [°] | proxy–surface [m] | "
-             "coherence | spread p90 [°] | approach / retreat [°] | d max [m] | grip | forearm / palm vs face [°] | pass |",
+             "coherence | spread p90 [°] | approach / retreat [°] | d max [m] | grip | forearm / palm vs face [°] (~ palm mirrored, ! not used) | pass |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         lines.append(f"| {r['id']} | {r['confirmed']} | {r['mode']} | {r['dataset']} / {r['clip']} | {r['start']}–{r['end']} | "
@@ -157,7 +157,7 @@ def main() -> int:
                      f"{f2(r['patch_coherence_median'])} | {f2(r['normal_spread_p90_deg'], 1)} | "
                      f"{f2(r['approach_angle_deg'], 0)} / {f2(r['retreat_angle_deg'], 0)} | {f2(r['d_max_m'])} | "
                      f"{r['grip']} | {f2(r['forearm_face_deg'], 0)}{'' if r['forearm_used'] else '!'} / "
-                     f"{f2(r['palm_face_deg'], 0)}{'' if r['palm_used'] else '!'} | {r['pass']} |")
+                     f"{f2(r['palm_face_deg'], 0)}{'~' if r['palm_flipped'] else ''}{'' if r['palm_used'] else '!'} | {r['pass']} |")
     (out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"pass={passed}  tasks={len(rows)}  -> {out}")
     return 0 if passed else 1
