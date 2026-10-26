@@ -21,6 +21,8 @@ from __future__ import annotations
 import json
 
 import numpy as np
+from scipy.spatial import cKDTree
+from scipy.spatial.transform import Rotation as R
 
 from h2d.common.data.describe import contact_point, palm_point
 from h2d.common.data.omomo_new import Clip
@@ -40,8 +42,46 @@ def _smooth(x: np.ndarray, k: int) -> np.ndarray:
     return (c[k:] - c[:-k]) / k
 
 
+def adapt_height(obj: ObjectMesh, c_bar: np.ndarray, n_bar: np.ndarray, pos0, rot0, z_human: float, band: dict,
+                 margin: float = 0.05) -> tuple[np.ndarray, dict]:
+    """Move the contact targets up or down the same flat face so the robot contacts it inside the arm's height band
+    (spec v0.7 §5.1, Kevin: pushing a tall object at the human's chest height keeps its meaning lower down). Same
+    face, same normal, same position along the face; a constant in-plane shift in the object frame. Top faces keep
+    their height. Returns the shifted targets and a record."""
+    from h2d.common.data.candidates import face_of
+
+    Rm = R.from_quat(rot0).as_matrix()
+    n_w = Rm @ n_bar
+    tilt = float(np.degrees(np.arcsin(min(1.0, abs(n_w[2])))))
+    face = face_of(tilt)
+    fp = obj.face_points(np.median(c_bar, 0), n_bar)
+    fz = (fp @ Rm.T + np.asarray(pos0))[:, 2] if len(fp) else np.zeros(1)
+    rec = {"face": face, "face_z_range_m": [float(fz.min()), float(fz.max())], "human_contact_z_m": float(z_human),
+           "height_shift_m": 0.0, "robot_contact_z_m": float(z_human), "height_adapted": False, "in_band": True}
+    lo, hi = band.get(face, (-np.inf, np.inf))
+    if face == "top":
+        rec["in_band"] = bool(lo <= z_human <= hi)
+        return c_bar, rec
+    a, b = max(lo, fz.min() + margin), min(hi, fz.max() - margin)
+    if a > b:
+        rec["in_band"] = False
+        return c_bar, rec
+    z_star = float(min(max(z_human, a), b))
+    if abs(z_star - z_human) < 1e-6:
+        return c_bar, rec
+    up_w = np.array([0.0, 0.0, 1.0]) - n_w[2] * n_w
+    up_w /= np.linalg.norm(up_w)
+    shift_local = Rm.T @ up_w * ((z_star - z_human) / up_w[2])
+    c0 = np.median(c_bar, 0)
+    moved = c_bar + shift_local
+    moved -= np.outer((moved - c0) @ n_bar, n_bar)                  # stay on the face plane
+    rec.update(height_shift_m=z_star - z_human, robot_contact_z_m=z_star, height_adapted=True)
+    return moved, rec
+
+
 def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre_s: float = 1.0,
-               post_s: float = 1.0, smooth: int = 5, patch_m: float = 0.03) -> dict:
+               post_s: float = 1.0, smooth: int = 5, patch_m: float = 0.03, band: dict | None = None) -> dict:
+    """``band`` ({face: [z_lo, z_hi]}): adapt the contact height to the arm (``adapt_height``)."""
     s, e = int(seg[0]), int(seg[1])
     fps = clip.fps
     w0, w1 = max(0, s - round(pre_s * fps)), min(clip.n, e + round(post_s * fps))
@@ -55,6 +95,15 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
     n_bar = n.mean(0)
     n_bar /= max(float(np.linalg.norm(n_bar)), 1e-12)
     c_bar = obj.closest_face(_smooth(q, smooth))[1]
+    c_human = c_bar.copy()
+    z_human = float(np.median([obj.world_points(pos[contact][i], rot[contact][i], c_bar[i][None])[0, 2]
+                               for i in range(len(c_bar))]))
+    height = {"face": "", "human_contact_z_m": z_human, "robot_contact_z_m": z_human, "height_shift_m": 0.0,
+              "height_adapted": False, "in_band": True}
+    if band:
+        c_bar, height = adapt_height(obj, c_bar, n_bar, pos[contact][0], rot[contact][0], z_human, band)
+    fp = obj.face_points(np.median(c_bar, 0), n_bar)
+    on_face = float(cKDTree(fp).query(c_bar)[0].max()) if len(fp) else float("nan")
 
     palm = palm_point(clip, mode, fr)
     palm_loc = obj.to_local(palm[:, None], pos, rot)[:, 0]
@@ -76,6 +125,7 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
         "target_local": target_local, "target_world": target_world, "palm_world": palm,
         "proxy_surface_dist_m": dist, "patch_coherence": coh,
         "normal_spread_deg": np.degrees(np.arccos(np.clip(n @ n_bar, -1, 1))),
+        "c_bar_human_local": c_human, "height": height, "target_on_face_m": on_face,
     }
 
 
@@ -93,6 +143,10 @@ def task_checks(task: dict) -> dict:
         "d_max_m": float(task["d"].max()),
         "target_step_max_m": float(step.max()) if step.size else 0.0,
         "palm_offset_m": task["palm_offset_m"],
+        "target_on_face_m": task.get("target_on_face_m", 0.0),
+        "height_shift_m": task.get("height", {}).get("height_shift_m", 0.0),
+        "robot_contact_z_m": task.get("height", {}).get("robot_contact_z_m", float("nan")),
+        "in_band": task.get("height", {}).get("in_band", True),
     }
 
 

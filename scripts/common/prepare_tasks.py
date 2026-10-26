@@ -36,7 +36,7 @@ from h2d.paths import REPO_ROOT, data_path  # noqa: E402
 
 LIMITS = {"proxy_surface_dist_median_m": ("<=", 0.08), "patch_coherence_median": (">=", 0.8),
           "normal_spread_p90_deg": ("<=", 20.0), "target_equals_c_bar_in_contact_m": ("<=", 1e-6),
-          "contact_frames": (">", 0)}
+          "contact_frames": (">", 0), "target_on_face_m": ("<=", 0.02)}
 
 
 def task_ok(ck: dict) -> tuple[bool, list[str]]:
@@ -73,7 +73,10 @@ def main() -> int:
     ap.add_argument("--smplh-root", default=None)
     ap.add_argument("--pre-s", type=float, default=1.0)
     ap.add_argument("--post-s", type=float, default=1.0)
+    ap.add_argument("--selection", default=None,
+                    help="selection config with reach_band: adapt contact heights on side faces to the arm (spec v0.7)")
     args = ap.parse_args()
+    band = yaml.safe_load(Path(args.selection).read_text()).get("reach_band") if args.selection else None
     todo = segments_to_do(Path(args.config), Path(args.candidates) if args.candidates else None)
     datasets = sorted({t["dataset"] for t in todo})
     needs = tuple(sorted({n for d in datasets for n in SOURCES[d].needs}))
@@ -98,7 +101,7 @@ def main() -> int:
             src = srcs[t["dataset"]]
             f = next(p for p in src.files if p.stem == t["clip"])
             clip, mesh, _ = src.load(f)
-            task = build_task(clip, mesh, (t["start"], t["end"]), t["mode"], args.pre_s, args.post_s)
+            task = build_task(clip, mesh, (t["start"], t["end"]), t["mode"], args.pre_s, args.post_s, band=band)
             ck = task_checks(task)
             ok, bad = task_ok(ck)
             task.update({"dataset": t["dataset"], "id": t["id"], "confirmed": t["confirmed"]})
@@ -133,7 +136,7 @@ def main() -> int:
                                  "failing": [r["id"] for r in confirmed if not r["pass"]]},
     }
     passed = all(c["pass"] for c in checks.values())
-    summary = {"provenance": prov, "task_version": TASK_VERSION, "limits": LIMITS, "window_s": [args.pre_s, args.post_s],
+    summary = {"provenance": prov, "task_version": TASK_VERSION, "limits": LIMITS, "reach_band": band, "window_s": [args.pre_s, args.post_s],
                "checks": checks, "pass": passed, "errors": errors, "tasks": rows,
                "data_versions": {d: s.versions() for d, s in srcs.items()}, "elapsed_s": time.time() - t0}
     (out / "summary.json").write_text(json.dumps(clean(summary), indent=2), encoding="utf-8")
@@ -141,12 +144,12 @@ def main() -> int:
     lines = ["# Task targets (spec learned v0.6 §4 step 1)", "",
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(rows)}/{len(todo)} segments · {len(errors)} errors · **{'PASS' if passed else 'FAIL'}**", "",
-             "| id | confirmed | hand | dataset / clip | frames | contact z [m] | face tilt [°] | proxy–surface [m] | "
+             "| id | confirmed | hand | dataset / clip | frames | contact z human → robot [m] | face tilt [°] | proxy–surface [m] | "
              "coherence | spread p90 [°] | approach / retreat [°] | d max [m] | pass |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         lines.append(f"| {r['id']} | {r['confirmed']} | {r['mode']} | {r['dataset']} / {r['clip']} | {r['start']}–{r['end']} | "
-                     f"{f2(r['contact_z_m'])} | {f2(r['normal_tilt_deg'], 0)} | {f2(r['proxy_surface_dist_median_m'], 3)} | "
+                     f"{f2(r['contact_z_m'] - r['height_shift_m'])} → {f2(r['robot_contact_z_m'])}{'' if r['in_band'] else ' (out of band)'} | {f2(r['normal_tilt_deg'], 0)} | {f2(r['proxy_surface_dist_median_m'], 3)} | "
                      f"{f2(r['patch_coherence_median'])} | {f2(r['normal_spread_p90_deg'], 1)} | "
                      f"{f2(r['approach_angle_deg'], 0)} / {f2(r['retreat_angle_deg'], 0)} | {f2(r['d_max_m'])} | "
                      f"{r['pass']} |")

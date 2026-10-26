@@ -63,10 +63,31 @@ def face_of(tilt_deg) -> str:
     return "side" if tilt_deg < VERTICAL_FACE_DEG else "top" if tilt_deg > 60.0 else "slant"
 
 
-def in_band(row: dict, band: dict) -> bool:
-    lo, hi = band.get(face_of(row.get("normal_tilt_median_deg")), (np.inf, -np.inf))
+EDGE_MARGIN_M = 0.05
+
+
+def adapted_height(row: dict, band: dict, margin: float = EDGE_MARGIN_M) -> float:
+    """Contact height the robot uses (spec v0.7 §5.1, Kevin): on a side or slant face the contact may move up or down
+    the same face into the arm's band (same face, same push direction, same position along the face); a top face
+    keeps its height. NaN when the band and the face do not overlap."""
+    face = face_of(row.get("normal_tilt_median_deg"))
+    lo, hi = band.get(face, (np.inf, -np.inf))
     z = row.get("contact_z_median_m")
-    return z is not None and not math.isnan(z) and lo <= z <= hi
+    if z is None or math.isnan(z):
+        return float("nan")
+    if face == "top":
+        return float(z) if lo <= z <= hi else float("nan")
+    zmin, zmax = row.get("face_z_min_m", float("nan")), row.get("face_z_max_m", float("nan"))
+    if zmin is None or zmax is None or math.isnan(zmin) or math.isnan(zmax):    # face extent unknown: no adaptation
+        return float(z) if lo <= z <= hi else float("nan")
+    a, b = max(lo, zmin + margin), min(hi, zmax - margin)
+    if a > b:
+        return float("nan")
+    return float(min(max(z, a), b))
+
+
+def in_band(row: dict, band: dict) -> bool:
+    return not math.isnan(adapted_height(row, band))
 
 
 def criteria(max_yaw_deg: float = 20.0, band: dict | None = None) -> tuple[list, list]:

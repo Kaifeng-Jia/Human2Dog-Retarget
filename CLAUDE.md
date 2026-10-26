@@ -8,7 +8,7 @@ Human2Dog：把 OMOMO 的人-物示范迁移到 B2-Z1（Unitree B2 + Z1 机械�
 - `learned`：学习式线（冻结 X-Morph 先验 + 只修 Z1 机械臂），**当前在做**；
 - `fullopt`：全优化线（不用 X-Morph），以后做。
 
-方法规格见 `docs/spec/`（当前为 `docs/spec/learned/v0.6_zh.md`）。几何约定以 `configs/b2z1.yaml` 为准，第三方代码的固定提交以 `configs/external.yaml` 为准。**版本管理规则见 `docs/versioning.md`，所有人都必须遵守。**
+方法规格见 `docs/spec/`（当前为 `docs/spec/learned/v0.7_zh.md`）。几何约定以 `configs/b2z1.yaml` 为准，第三方代码的固定提交以 `configs/external.yaml` 为准。**版本管理规则见 `docs/versioning.md`，所有人都必须遵守。**
 
 ## 分工
 

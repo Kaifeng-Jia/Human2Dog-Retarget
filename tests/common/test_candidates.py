@@ -2,6 +2,8 @@
 
 import math
 
+import numpy as np
+
 import pytest
 
 from h2d.common.data import candidates as cd
@@ -99,5 +101,10 @@ def test_criteria_with_yaw_limit_and_reach_band():
         r["in_reach_band"] = cd.in_band(r, band)
     assert cd.failed(low_side, seg + push) == ["reach_band"] and cd.failed(high_top, seg + push) == []
     assert "small_yaw" in cd.failed(high_top)                       # the default 20 deg limit still applies
+    # a side contact at 0.25 m on a tall face (up to 1.0 m) moves up into the band; on a short face it cannot
+    tall = dict(low_side, face_z_min_m=0.0, face_z_max_m=1.0)
+    short = dict(low_side, face_z_min_m=0.0, face_z_max_m=0.4)
+    assert cd.adapted_height(tall, band) == 0.5 and np.isnan(cd.adapted_height(short, band))
+    assert cd.adapted_height(dict(tall, contact_z_median_m=1.4), band) == 0.95       # chest-high push lowered
     names = [n for n, _ in cd.funnel([low_side, high_top], (seg, push))]
     assert names[-1] == "reach_band" and [c["name"] for c in cd.criteria_table((seg, push))][-1] == "reach_band"

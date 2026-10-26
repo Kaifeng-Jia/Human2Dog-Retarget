@@ -23,6 +23,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
 
 ### Added
+- Contact height adaptation (spec v0.7 §5.1, Kevin): on side / slant faces the robot's contact moves up or down the
+  same face into the arm's band (same face, normal and position along the face); `tasks.adapt_height`,
+  `prepare_tasks.py --selection`, `ObjectMesh.face_points`, descriptors `face_z_min_m / face_z_max_m`,
+  `candidates.adapted_height` (selection uses the adapted height).
 - Candidate selection for reachable cases (Kevin: low objects are out): `configs/candidate_selection.yaml` (yaw
   limit 45 deg; contact-height band per face class: side 0.5-1.2 m, top 0.3-0.8 m), `push_candidates.py
   --selection`, `candidates.criteria / face_of / in_band`; `scripts/learned/workspace_map.py` (where the Z1 can

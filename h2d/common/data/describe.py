@@ -283,7 +283,8 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
       the per-frame normals around it (one face or several), tilt of the mean from the horizontal (0 = vertical
       face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner);
       ``hands_face_angle_deg``: for "B", median angle between the patch normals under the two hands while both
-      touch (0 = same face, 180 = opposite faces, i.e. squeezing); 0 for one hand.
+      touch (0 = same face, 180 = opposite faces, i.e. squeezing); 0 for one hand; ``face_z_min_m`` /
+      ``face_z_max_m``: height range of the touched flat face in the world at first contact.
       ``contact_surface_dist_*``: distance of the contact proxy to the surface (body positions are joint
       centres, so a few cm is normal; tens of cm means the proxy is not on the object).
     * ``approach_*`` / ``retreat_*``: the last ``path_m`` of palm path before first contact and the first
@@ -324,6 +325,11 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
         "contact_surface_dist_median_m": float(np.median(dist)), "contact_surface_dist_max_m": float(dist.max()),
         "approach_available_s": s / fps, "retreat_available_s": (clip.n - e) / fps,
     }
+    # extent of the touched face in the world at first contact (height adaptation, spec v0.7 §5.1)
+    fp = obj.face_points(np.median(loc, 0), n_mean)
+    fz = obj.world_points(clip.obj_pos[s], clip.obj_rot_xyzw[s], fp)[:, 2] if len(fp) else np.zeros(0)
+    out["face_z_min_m"] = float(fz.min()) if fz.size else float("nan")
+    out["face_z_max_m"] = float(fz.max()) if fz.size else float("nan")
     k = int(round(search_s * fps))
     for name, fr, ref, nrm in (("approach", np.arange(s - 1, max(-1, s - 1 - k), -1), s, -n_mean),
                                ("retreat", np.arange(e, min(clip.n, e + k)), e - 1, n_mean)):

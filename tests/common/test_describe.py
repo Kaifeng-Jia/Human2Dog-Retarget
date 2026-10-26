@@ -166,3 +166,28 @@ def test_task_targets(tmp_path, face, hands):
     save_task(t, tmp_path / "t.npz")
     back = load_task(tmp_path / "t.npz")
     assert back["clip"] == c.name and np.allclose(back["target_world"], t["target_world"])
+
+
+@needs_mesh
+def test_task_height_adaptation_moves_along_the_same_face():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.tasks import build_task, task_checks
+
+    c = make_clip()                                         # right palm on the -x face, contact ~0.25 m high
+    s, e = segments(c)[0]
+    plain = build_task(c, BOX, (s, e), "R")
+    z_h = plain["height"]["human_contact_z_m"]
+    t = build_task(c, BOX, (s, e), "R", band={"side": [z_h + 0.06, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]})
+    h = t["height"]
+    assert h["face"] == "side" and h["height_adapted"] and abs(h["height_shift_m"] - 0.06) < 1e-6
+    tw = t["target_world"][t["in_contact"]]
+    assert abs(np.median(tw[:, 2]) - (z_h + 0.06)) < 0.005                               # robot contacts 6 cm higher
+    pw = plain["target_world"][plain["in_contact"]]
+    assert np.allclose(tw[:, :2], pw[:, :2], atol=0.01)                                  # same place on the face
+    assert np.allclose(t["n_bar_local"], plain["n_bar_local"])
+    ck = task_checks(t)
+    assert ck["target_on_face_m"] < 0.02 and ck["in_band"]
+    # the band above the face's top: no overlap, flagged, targets unchanged
+    t2 = build_task(c, BOX, (s, e), "R", band={"side": [0.9, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]})
+    assert not t2["height"]["in_band"] and not t2["height"]["height_adapted"]

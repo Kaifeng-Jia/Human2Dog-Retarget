@@ -43,13 +43,13 @@ POOL_COLS = ["dataset", "object", "name", "subject", "seg", "start", "end", "sta
              "mode", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "contact_z_median_m", "root_disp_xy_m",
              "push_alignment", "moving_frac", "normal_spread_p90_deg", "normal_tilt_median_deg",
-             "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "approach_angle_deg",
-             "approach_time_s",
+             "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "face_z_min_m",
+             "face_z_max_m", "robot_contact_z_m", "approach_angle_deg", "approach_time_s",
              "retreat_angle_deg", "retreat_time_s", "approach_available_s", "retreat_available_s",
              "ann_hands", "ann_dir", "ann_weight_kg"]
 CAND_COLS = ["rank", "tier", "mode", "face"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
              "normal_spread_p90_deg", "normal_tilt_median_deg", "patch_coherence_median", "hands_face_angle_deg",
-             "approach_angle_deg", "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "contact_surface_dist_median_m",
+             "approach_angle_deg", "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "robot_contact_z_m", "contact_surface_dist_median_m",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "root_disp_xy_m", "human", "obj_size_m",
              "normal_local", "start", "end", "ann_hands", "ann_dir", "ann_weight_kg"]
 
@@ -105,7 +105,11 @@ def main() -> int:
                         r["mode"] = MODE_OF_HANDS[r["hands"]]
                         r.update(push_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
                         r["face"] = cd.face_of(r.get("normal_tilt_median_deg"))
-                        r["in_reach_band"] = cd.in_band(r, sel["reach_band"]) if sel.get("reach_band") else True
+                        if sel.get("reach_band"):
+                            r["robot_contact_z_m"] = cd.adapted_height(r, sel["reach_band"])
+                            r["in_reach_band"] = not math.isnan(r["robot_contact_z_m"])
+                        else:
+                            r["in_reach_band"] = True
                         fail = cd.failed(r, crit[1])
                     r["failed"] = ";".join(fail)
                     r["passed"] = not fail
