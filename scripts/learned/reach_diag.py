@@ -250,7 +250,8 @@ def main() -> int:
 
         with open(args.tasks_csv, newline="", encoding="utf-8") as fh:
             rows = [r for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"
-                    and r["dataset"] == "omomo_new"]                  # the prior chain covers OMOMO_new only
+                    and r["dataset"] == "omomo_new"                    # the prior chain covers OMOMO_new only
+                    and r.get("grip", "press") != "grasp"]             # grasping needs the jaw site (not yet)
         ids = [r["id"] for r in rows][: args.max_tasks]
     else:
         ids = args.ids or [s["id"] for s in

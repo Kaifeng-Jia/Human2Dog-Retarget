@@ -16,7 +16,7 @@ Ranking of the passing segments: tier first, then a vertical contact face, then 
 * tier C: approach or retreat observed at more than ``NEAR_NORMAL_DEG`` (sliding in or out sideways: spec §5.2
   "当前路径模板未覆盖"; kept, ranked last).
 
-At most ``per_object`` candidates per (dataset, object) and one per clip.
+At most ``per_object`` candidates per (dataset, object, interaction) and one per clip.
 """
 
 from __future__ import annotations
@@ -70,12 +70,12 @@ def adapted_height(row: dict, band: dict, margin: float = EDGE_MARGIN_M) -> floa
     """Contact height the robot uses (spec v0.7 §5.1, Kevin): on a side or slant face the contact may move up or down
     the same face into the arm's band (same face, same push direction, same position along the face); a top face
     keeps its height. NaN when the band and the face do not overlap."""
-    face = face_of(row.get("normal_tilt_median_deg"))
+    face = "grasp" if row.get("grip") == "grasp" else face_of(row.get("normal_tilt_median_deg"))
     lo, hi = band.get(face, (np.inf, -np.inf))
     z = row.get("contact_z_median_m")
     if z is None or math.isnan(z):
         return float("nan")
-    if face == "top":
+    if face in ("top", "grasp"):                    # a top face or a grasped part keeps its height
         return float(z) if lo <= z <= hi else float("nan")
     zmin, zmax = row.get("face_z_min_m", float("nan")), row.get("face_z_max_m", float("nan"))
     if zmin is None or zmax is None or math.isnan(zmin) or math.isnan(zmax):    # face extent unknown: no adaptation
@@ -90,12 +90,34 @@ def in_band(row: dict, band: dict) -> bool:
     return not math.isnan(adapted_height(row, band))
 
 
-def criteria(max_yaw_deg: float = 20.0, band: dict | None = None) -> tuple[list, list]:
+def interaction_of(row: dict, thr: float = 0.7) -> str:
+    a = row.get("push_alignment")
+    if a is None or (isinstance(a, float) and math.isnan(a)):
+        return ""
+    return "push" if a >= thr else "pull" if a <= -thr else ""
+
+
+def contact_shape_ok(row: dict) -> bool:
+    """A grasp wraps a handle or an edge (several normals by design); a press needs one flat face."""
+    if row.get("grip") == "grasp":
+        return True
+    return _ok(row.get("normal_spread_p90_deg"), "<=", 20.0) and _ok(row.get("patch_coherence_median"), ">=", 0.8)
+
+
+def criteria(max_yaw_deg: float = 20.0, band: dict | None = None,
+             interactions: tuple[str, ...] = ("push",)) -> tuple[list, list]:
     """Criteria lists; ``max_yaw_deg`` replaces the yaw limit, ``band`` ({face: [z_lo, z_hi]}) adds a push criterion
-    on the contact height (the field ``in_reach_band`` is set by the caller with ``in_band``)."""
+    on the contact height (the field ``in_reach_band`` is set by the caller with ``in_band``). ``interactions``
+    other than push only: the push criterion becomes ``interaction in interactions`` (fields ``interaction`` from
+    ``interaction_of``) and one_face / flat_patch become ``contact_shape`` (``contact_shape_ok``: a grasp may wrap)."""
     seg = [c if c[0] != "small_yaw" else ("small_yaw", "obj_yaw_maxabs_deg", "<", float(max_yaw_deg),
                                          f"object turns less than {max_yaw_deg:g} deg about z") for c in SEGMENT_CRITERIA]
     push = list(PUSH_CRITERIA)
+    if tuple(interactions) != ("push",):
+        push = [c for c in push if c[0] not in ("push", "one_face", "flat_patch")]
+        push += [("interaction", "interaction", "in", tuple(interactions),
+                  f"object moves away from (push) or towards (pull) the hand, abs(cos) >= 0.7: {'/'.join(interactions)}"),
+                 ("contact_shape", "contact_shape_ok", "==", True, "one flat face (press), or a grasp")]
     if band:
         desc = ", ".join(f"{k} {v[0]:g}-{v[1]:g} m" for k, v in band.items())
         push.append(("reach_band", "in_reach_band", "==", True, f"contact height within the arm's band ({desc})"))
@@ -125,7 +147,7 @@ def select(rows: list[dict], top: int = 12, per_object: int = 2) -> list[dict]:
     ok = sorted((dict(r, tier=tier(r)) for r in rows if r.get("passed")), key=rank_key)
     out, n_obj, clips = [], {}, set()
     for r in ok:
-        k = (r["dataset"], r["object"])
+        k = (r["dataset"], r["object"], r.get("interaction", "push"))
         if n_obj.get(k, 0) >= per_object or (r["dataset"], r["name"]) in clips:
             continue
         n_obj[k] = n_obj.get(k, 0) + 1

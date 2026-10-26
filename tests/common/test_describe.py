@@ -191,3 +191,28 @@ def test_task_height_adaptation_moves_along_the_same_face():
     # the band above the face's top: no overlap, flagged, targets unchanged
     t2 = build_task(c, BOX, (s, e), "R", band={"side": [0.9, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]})
     assert not t2["height"]["in_band"] and not t2["height"]["height_adapted"]
+
+
+@needs_mesh
+def test_grip_press_vs_grasp_and_finger_motion():
+    from synthetic_hoi import face_point, face_yaw_deg, make_clip
+
+    from h2d.common.data import omomo_new as om
+    from h2d.common.data.describe import finger_motion_std_m, grip_descriptors
+
+    c = make_clip()
+    s, e = segments(c)[0]
+    assert grip_descriptors(c, BOX, (s, e), "R")["grip"] == "press"       # flat palm on one face
+    assert finger_motion_std_m(make_clip(push=False, carry=False), "R") < 1e-6   # fixed hand shape: 0
+    assert finger_motion_std_m(c, "R") > 0.01                                     # the test hand changes shape
+    # thumb on the +y face, the other fingers on the -y face: wraps the box (opposite normals) = grasp
+    q = R.from_euler("z", face_yaw_deg("largebox"), degrees=True)
+    for side_dir, names in (([0, 1, 0], ("Thumb1", "Thumb2", "Thumb3")),
+                            ([0, -1, 0], ("Index1", "Index2", "Index3", "Middle1", "Middle2", "Middle3"))):
+        p = q.apply(face_point(q.inv().apply(side_dir))) + 0.01 * np.array(side_dir)
+        for nm in names:
+            j = om.BODY_INDEX[f"R_{nm}"]
+            c.body_pos[s:e, j] = c.obj_pos[s:e] + p
+            c.contact_body[s:e, j] = 1
+    g = grip_descriptors(c, BOX, (s, e), "R")
+    assert g["grip"] == "grasp" and g["grasp_frac"] > 0.9

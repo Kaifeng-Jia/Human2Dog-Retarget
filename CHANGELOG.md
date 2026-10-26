@@ -23,6 +23,11 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
 
 ### Added
+- Pulls (Kevin): `interactions: [push, pull]` in `configs/candidate_selection.yaml`; `describe.grip_descriptors`
+  (grasp = thumb and fingers on opposite-facing patches, else press), `finger_motion_std_m` (is there real finger
+  capture? FORCE: none on chair / box_huge, ~0.02 rad on suitcase), `candidates.interaction_of / contact_shape_ok`,
+  `reach_band.grasp`; caps per (dataset, object, interaction); tasks carry interaction / grip; `reach_diag` skips
+  grasps until the jaw site exists.
 - Reach-point registration and body tracking (found in R010; Kevin: the dog's body has to move with the
   interaction): `registration.reach_points / track / SE2Track`, `configs/registration.yaml` (reach point 0.6 /
   0.75 / 0.7 m ahead for top / side / slant faces; 1 s smoothing). Fitting the prior's contact site placed the

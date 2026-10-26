@@ -345,3 +345,46 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
                 dt = j / fps
         out[f"{name}_angle_deg"], out[f"{name}_time_s"] = ang, dt
     return out
+
+
+
+# ------------------------------------------------------------------------------ grip (push / press vs grasp)
+THUMB = ("Thumb1", "Thumb2", "Thumb3")
+FINGERS4 = tuple(f"{f}{k}" for f in ("Index", "Middle", "Ring", "Pinky") for k in (1, 2, 3))
+TIPS = ("Index3", "Middle3", "Ring3", "Pinky3", "Thumb3")
+
+
+def finger_motion_std_m(clip: Clip, side: str = "R") -> float:
+    """Mean over the fingertips of the std of the tip position in the wrist frame (m). ~0 when the data carries a
+    fixed hand shape (no finger capture), several mm to cm with real finger motion."""
+    w = BODY_INDEX[f"{side}_Wrist"]
+    Rw = R.from_quat(clip.body_rot_xyzw[:, w])
+    out = []
+    for tip in TIPS:
+        rel = clip.body_pos[:, BODY_INDEX[f"{side}_{tip}"]] - clip.body_pos[:, w]
+        out.append(np.linalg.norm(Rw.inv().apply(rel).std(0)))
+    return float(np.mean(out))
+
+
+def grip_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: str, patch_m: float = 0.03) -> dict:
+    """Does the hand wrap the object (grasp) or lie on it (press)? Per contact frame of each hand of the mode, the
+    thumb and the other fingers both flagged, on surface patches whose normals point apart by more than 90 deg
+    (thumb and fingers on opposite sides of a handle or an edge) = grasp. ``grasp_frac``: share of the segment's
+    frames where some hand of the mode grasps; ``grip`` = "grasp" when >= 0.5, else "press"."""
+    s, e = seg
+    sides = ("L", "R") if side == "B" else (side,)
+    fl = clip.contact_body[s:e] == 1
+    grasp = np.zeros(e - s, bool)
+    for sd in sides:
+        th = [BODY_INDEX[f"{sd}_{b}"] for b in THUMB]
+        fi = [BODY_INDEX[f"{sd}_{b}"] for b in FINGERS4]
+        both = fl[:, th].any(1) & fl[:, fi].any(1)
+        for i in np.flatnonzero(both):
+            t = s + i
+            pt = clip.body_pos[t, th][fl[i, th]].mean(0)
+            pf = clip.body_pos[t, fi][fl[i, fi]].mean(0)
+            loc = obj.to_local(np.stack([pt, pf])[None], clip.obj_pos[t], clip.obj_rot_xyzw[t])[0]
+            n = obj.patch_normals(loc, patch_m)[2]
+            grasp[i] |= bool(n[0] @ n[1] < 0.0)
+    frac = float(grasp.mean()) if e > s else 0.0
+    return {"grasp_frac": frac, "grip": "grasp" if frac >= 0.5 else "press"}

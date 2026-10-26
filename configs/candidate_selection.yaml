@@ -15,3 +15,8 @@ reach_band:
   side: [0.5, 1.2]
   top: [0.3, 0.8]
   slant: [0.4, 1.2]
+  grasp: [0.3, 1.2]    # a grasped handle / edge keeps its height; the gripper closes on it from the side or above
+
+# Kevin (2026-10-26): pulls too. push: object moves away from the hand; pull: towards it (|cos| >= 0.7). A grasp
+# (thumb and fingers on opposite sides of a part) is exempt from the one-flat-face criteria.
+interactions: [push, pull]

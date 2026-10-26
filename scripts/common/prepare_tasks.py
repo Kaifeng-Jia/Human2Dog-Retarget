@@ -48,7 +48,8 @@ def task_ok(ck: dict) -> tuple[bool, list[str]]:
 def segments_to_do(config: Path, cand_csv: Path | None) -> list[dict]:
     cfg = yaml.safe_load(config.read_text())
     out = [{"id": s["id"], "dataset": s["dataset"], "clip": s["clip"], "object": s["object"], "mode": s["mode"],
-            "start": int(s["frames"][0]), "end": int(s["frames"][1]), "confirmed": True} for s in cfg["segments"]]
+            "start": int(s["frames"][0]), "end": int(s["frames"][1]), "confirmed": True,
+            "interaction": s.get("interaction", "push"), "grip": s.get("grip", "press")} for s in cfg["segments"]]
     seen = {(r["dataset"], r["clip"], r["start"], r["end"]) for r in out}
     if cand_csv:
         with open(cand_csv, newline="", encoding="utf-8") as f:
@@ -59,7 +60,8 @@ def segments_to_do(config: Path, cand_csv: Path | None) -> list[dict]:
                 seen.add(key)
                 out.append({"id": f"c{int(r['rank']):02d}_{r['name']}", "dataset": r["dataset"], "clip": r["name"],
                             "object": r["object"], "mode": r["mode"], "start": key[2], "end": key[3],
-                            "confirmed": False})
+                            "confirmed": False, "interaction": r.get("interaction") or "push",
+                            "grip": r.get("grip") or "press"})
     return out
 
 

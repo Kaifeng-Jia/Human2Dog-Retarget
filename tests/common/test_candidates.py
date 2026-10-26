@@ -108,3 +108,20 @@ def test_criteria_with_yaw_limit_and_reach_band():
     assert cd.adapted_height(dict(tall, contact_z_median_m=1.4), band) == 0.95       # chest-high push lowered
     names = [n for n, _ in cd.funnel([low_side, high_top], (seg, push))]
     assert names[-1] == "reach_band" and [c["name"] for c in cd.criteria_table((seg, push))][-1] == "reach_band"
+
+
+def test_pull_and_grasp_criteria():
+    band = {"side": [0.5, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2], "grasp": [0.3, 1.2]}
+    seg, push = cd.criteria(45.0, band, ("push", "pull"))
+    names = [c[0] for c in push]
+    assert "push" not in names and "interaction" in names and "contact_shape" in names and "one_face" not in names
+    pull = _row(push_alignment=-0.9, normal_spread_p90_deg=60.0, patch_coherence_median=0.4, grip="grasp",
+                contact_z_median_m=0.55, normal_tilt_median_deg=40.0)
+    pull["interaction"], pull["contact_shape_ok"] = cd.interaction_of(pull), cd.contact_shape_ok(pull)
+    pull["in_reach_band"] = cd.in_band(pull, band)
+    assert pull["interaction"] == "pull" and pull["contact_shape_ok"] and cd.failed(pull, seg + push) == []
+    assert cd.adapted_height(pull, band) == 0.55                     # a grasped part keeps its height
+    press = dict(pull, grip="press")
+    press["contact_shape_ok"] = cd.contact_shape_ok(press)
+    assert "contact_shape" in cd.failed(press, push)                 # a press still needs one flat face
+    assert cd.interaction_of(_row(push_alignment=0.2)) == ""

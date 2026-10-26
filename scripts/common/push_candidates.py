@@ -30,7 +30,9 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data import candidates as cd  # noqa: E402
-from h2d.common.data.describe import DEFAULTS, MODE_OF_HANDS, describe_clip, push_descriptors  # noqa: E402
+from h2d.common.data.describe import (  # noqa: E402
+    DEFAULTS, MODE_OF_HANDS, describe_clip, finger_motion_std_m, grip_descriptors, push_descriptors,
+)
 from h2d.common.data.sources import SOURCES  # noqa: E402
 from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.common.tables import clean, nanmed, write_csv  # noqa: E402
@@ -40,14 +42,14 @@ from h2d.paths import data_path  # noqa: E402
 MIN_CANDIDATES = 3
 CHECK_ON_SURFACE_M = 0.08
 POOL_COLS = ["dataset", "object", "name", "subject", "seg", "start", "end", "start_s", "duration_s", "hands",
-             "mode", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
+             "mode", "interaction", "grip", "grasp_frac", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "contact_z_median_m", "root_disp_xy_m",
              "push_alignment", "moving_frac", "normal_spread_p90_deg", "normal_tilt_median_deg",
              "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "face_z_min_m",
              "face_z_max_m", "robot_contact_z_m", "approach_angle_deg", "approach_time_s",
              "retreat_angle_deg", "retreat_time_s", "approach_available_s", "retreat_available_s",
-             "ann_hands", "ann_dir", "ann_weight_kg"]
-CAND_COLS = ["rank", "tier", "mode", "face"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
+             "ann_hands", "ann_dir", "ann_weight_kg", "finger_motion_std_m"]
+CAND_COLS = ["rank", "tier", "mode", "interaction", "grip", "face"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
              "normal_spread_p90_deg", "normal_tilt_median_deg", "patch_coherence_median", "hands_face_angle_deg",
              "approach_angle_deg", "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "robot_contact_z_m", "contact_surface_dist_median_m",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "root_disp_xy_m", "human", "obj_size_m",
@@ -70,7 +72,7 @@ def main() -> int:
                     help="selection config (e.g. configs/candidate_selection.yaml): yaw limit and contact-height band")
     args = ap.parse_args()
     sel = yaml.safe_load(Path(args.selection).read_text()) if args.selection else {}
-    crit = cd.criteria(sel.get("max_yaw_deg", 20.0), sel.get("reach_band"))
+    crit = cd.criteria(sel.get("max_yaw_deg", 20.0), sel.get("reach_band"), tuple(sel.get("interactions", ["push"])))
     needs = tuple(sorted({n for d in args.datasets for n in SOURCES[d].needs}))
     try:
         prov = start_run(args.run_id, needs=needs, configs=("data.yaml", "external.yaml"),
@@ -95,15 +97,19 @@ def main() -> int:
             try:
                 c, mesh, extra = src.load(f)
                 d = describe_clip(c, mesh, DEFAULTS, mesh_check_frames=0)
+                fm = max(finger_motion_std_m(c, "L"), finger_motion_std_m(c, "R"))
                 size = "x".join(f"{v:.2f}" for v in mesh.extents)
                 for r in d["segments"]:
                     n_segs[ds] += 1
                     r = {"dataset": ds, **r, **{k: v for k, v in extra.items() if k.startswith("ann_")},
-                         "obj_size_m": size, "file": f.name}
+                         "obj_size_m": size, "file": f.name, "finger_motion_std_m": fm}
                     fail = cd.failed(r, crit[0])
                     if not fail:
                         r["mode"] = MODE_OF_HANDS[r["hands"]]
                         r.update(push_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
+                        r.update(grip_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
+                        r["interaction"] = cd.interaction_of(r)
+                        r["contact_shape_ok"] = cd.contact_shape_ok(r)
                         r["face"] = cd.face_of(r.get("normal_tilt_median_deg"))
                         if sel.get("reach_band"):
                             r["robot_contact_z_m"] = cd.adapted_height(r, sel["reach_band"])
@@ -184,6 +190,12 @@ def main() -> int:
                                                      "top": args.top, "per_object": args.per_object},
         "funnel": {ds: dict(f) for ds, f in funnels.items()}, "by_object": by_object,
         "passed_by_mode": dict(Counter(f"{r['dataset']}/{r['mode']}" for r in pool if r["passed"])),
+        "passed_by_interaction_grip": dict(Counter(f"{r['dataset']}/{r.get('interaction', 'push')}/{r.get('grip', '')}"
+                                                   for r in pool if r["passed"])),
+        "reached_by_interaction_grip": dict(Counter(f"{r['dataset']}/{r.get('interaction', '')}/{r.get('grip', '')}"
+                                                    for r in pool if "grip" in r)),
+        "finger_motion_std_m_median": {ds: nanmed([r["finger_motion_std_m"] for r in pool if r["dataset"] == ds])
+                                       for ds in args.datasets},
         "checks": checks, "pass": passed,
         "candidates": [{k: c.get(k) for k in CAND_COLS + ["figure", "file", "file_sha256_16"]} for c in chosen],
         "elapsed_s": time.time() - t0,
@@ -214,12 +226,18 @@ def main() -> int:
               "per object, one per clip.", "",
               "Passing segments by virtual-hand mode (R = right hand, L = left hand, B = both hands on one face): "
               + ", ".join(f"{m} {n}" for m, n in sorted(Counter(r["mode"] for r in pool if r["passed"]).items())),
+              "", "Passing segments by interaction / grip: "
+              + ", ".join(f"{m} {n}" for m, n in sorted(Counter(f"{r['dataset']}/{r.get('interaction', 'push')}/"
+                                                                 f"{r.get('grip', '')}" for r in pool if r["passed"]).items())),
+              "", "Finger motion (median std of fingertips in the wrist frame; ~0 = fixed hand shape): "
+              + ", ".join(f"{ds} {1000 * v:.1f} mm" for ds, v in summary["finger_motion_std_m_median"].items()),
               "", "## Candidates", "", "![gallery](gallery.png)", "",
-              "| # | tier | mode | dataset / object | clip | segment [s] | moves [m] | push | spread p90 [°] | face tilt [°] "
+              "| # | tier | mode | interaction / grip | dataset / object | clip | segment [s] | moves [m] | push | spread p90 [°] | face tilt [°] "
               "| approach / retreat [°] | contact z [m] | figure |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for c in chosen:
-        lines.append(f"| {c['rank']} | {c['tier']} | {c['mode']} | {c['dataset']} / {c['object']} | {c['name']} | "
+        lines.append(f"| {c['rank']} | {c['tier']} | {c['mode']} | {c.get('interaction', 'push')} / {c.get('grip', '')} | "
+                     f"{c['dataset']} / {c['object']} | {c['name']} | "
                      f"{c['start_s']:.1f}–{c['start_s'] + c['duration_s']:.1f} | {f1(c['obj_disp_xy_m'], 2)} | "
                      f"{f1(c['push_alignment'], 2)} | {f1(c['normal_spread_p90_deg'])} | "
                      f"{f1(c['normal_tilt_median_deg'])} | {f1(c['approach_angle_deg'])} / "
