@@ -216,6 +216,8 @@ def main() -> int:
     ap.add_argument("--tasks-dir", required=True)
     ap.add_argument("--d0-dir", required=True)
     ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: confirmed ids in configs/push_candidates.yaml)")
+    ap.add_argument("--tasks-csv", default=None, help="tasks.csv of prepare_tasks.py: take its passing candidates in order")
+    ap.add_argument("--max-tasks", type=int, default=8, help="with --tasks-csv: at most this many")
     args = ap.parse_args()
     try:
         prov = start_run(args.run_id, needs=("xmorph", "hoi_retarget"),
@@ -226,7 +228,16 @@ def main() -> int:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
     cfg, reg_cfg = load_config("learned/reach.yaml"), load_config("registration.yaml")["contact_fit"]
-    ids = args.ids or [s["id"] for s in yaml.safe_load((REPO_ROOT / "configs" / "push_candidates.yaml").read_text())["segments"]]
+    if args.tasks_csv:
+        import csv
+
+        with open(args.tasks_csv, newline="", encoding="utf-8") as fh:
+            rows = [r for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"
+                    and r["dataset"] == "omomo_new"]                  # the prior chain covers OMOMO_new only
+        ids = [r["id"] for r in rows][: args.max_tasks]
+    else:
+        ids = args.ids or [s["id"] for s in
+                           yaml.safe_load((REPO_ROOT / "configs" / "push_candidates.yaml").read_text())["segments"]]
     out_dir = Path(args.out or f"outputs/{args.run_id}")
     (out_dir / "tasks").mkdir(parents=True, exist_ok=True)
     (out_dir / "solutions").mkdir(exist_ok=True)

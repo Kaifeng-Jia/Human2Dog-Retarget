@@ -24,6 +24,8 @@ from __future__ import annotations
 import math
 import operator
 
+import numpy as np
+
 # (name, key, op, value, meaning). Values are development initial values for the selection, not evaluation
 # thresholds (the evaluation's tool-axis threshold is 15 deg, spec §5.2 / §7.1).
 SEGMENT_CRITERIA = [
@@ -52,6 +54,31 @@ def _ok(v, op: str, ref) -> bool:
     if v is None or (isinstance(v, float) and math.isnan(v)):
         return False
     return bool(_OPS[op](v, ref))
+
+
+def face_of(tilt_deg) -> str:
+    """Contact face class from the normal's tilt above the horizontal: side (< 30 deg), top (> 60 deg), slant."""
+    if tilt_deg is None or (isinstance(tilt_deg, float) and math.isnan(tilt_deg)):
+        return ""
+    return "side" if tilt_deg < VERTICAL_FACE_DEG else "top" if tilt_deg > 60.0 else "slant"
+
+
+def in_band(row: dict, band: dict) -> bool:
+    lo, hi = band.get(face_of(row.get("normal_tilt_median_deg")), (np.inf, -np.inf))
+    z = row.get("contact_z_median_m")
+    return z is not None and not math.isnan(z) and lo <= z <= hi
+
+
+def criteria(max_yaw_deg: float = 20.0, band: dict | None = None) -> tuple[list, list]:
+    """Criteria lists; ``max_yaw_deg`` replaces the yaw limit, ``band`` ({face: [z_lo, z_hi]}) adds a push criterion
+    on the contact height (the field ``in_reach_band`` is set by the caller with ``in_band``)."""
+    seg = [c if c[0] != "small_yaw" else ("small_yaw", "obj_yaw_maxabs_deg", "<", float(max_yaw_deg),
+                                         f"object turns less than {max_yaw_deg:g} deg about z") for c in SEGMENT_CRITERIA]
+    push = list(PUSH_CRITERIA)
+    if band:
+        desc = ", ".join(f"{k} {v[0]:g}-{v[1]:g} m" for k, v in band.items())
+        push.append(("reach_band", "in_reach_band", "==", True, f"contact height within the arm's band ({desc})"))
+    return seg, push
 
 
 def failed(row: dict, criteria=SEGMENT_CRITERIA) -> list[str]:
@@ -88,15 +115,14 @@ def select(rows: list[dict], top: int = 12, per_object: int = 2) -> list[dict]:
     return out
 
 
-def funnel(rows: list[dict]) -> list[tuple[str, int]]:
+def funnel(rows: list[dict], crit: tuple[list, list] = (SEGMENT_CRITERIA, PUSH_CRITERIA)) -> list[tuple[str, int]]:
     """Segments left after each criterion in order (all criteria, both groups)."""
     left, out = list(rows), [("all segments", len(rows))]
-    for name, key, op, ref, _ in SEGMENT_CRITERIA + PUSH_CRITERIA:
+    for name, key, op, ref, _ in crit[0] + crit[1]:
         left = [r for r in left if _ok(r.get(key), op, ref)]
         out.append((name, len(left)))
     return out
 
 
-def criteria_table() -> list[dict]:
-    return [{"name": n, "key": k, "op": op, "value": v, "meaning": m}
-            for n, k, op, v, m in SEGMENT_CRITERIA + PUSH_CRITERIA]
+def criteria_table(crit: tuple[list, list] = (SEGMENT_CRITERIA, PUSH_CRITERIA)) -> list[dict]:
+    return [{"name": n, "key": k, "op": op, "value": v, "meaning": m} for n, k, op, v, m in crit[0] + crit[1]]

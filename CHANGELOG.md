@@ -23,6 +23,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
 
 ### Added
+- Candidate selection for reachable cases (Kevin: low objects are out): `configs/candidate_selection.yaml` (yaw
+  limit 45 deg; contact-height band per face class: side 0.5-1.2 m, top 0.3-0.8 m), `push_candidates.py
+  --selection`, `candidates.criteria / face_of / in_band`; `scripts/learned/workspace_map.py` (where the Z1 can
+  push around a level B2), `reach_diag.py --tasks-csv --max-tasks`.
 - [common] Task targets (`h2d/common/data/tasks.py`, `scripts/common/prepare_tasks.py`; spec v0.6 §4 step 1,
   §5.2): per segment the object trajectory, contact frames, object-local contact target on the surface, one
   normal, approach / retreat distance d_t (palm-thickness zeroed) and the world target path; `tasks/<id>.npz`,

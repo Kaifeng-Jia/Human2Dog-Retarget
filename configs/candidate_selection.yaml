@@ -1,0 +1,17 @@
+# Candidate selection for the reachability work (spec learned v0.6 §7.1 step 1), shared by both lines.
+# Used with scripts/common/push_candidates.py --selection configs/candidate_selection.yaml (R010 onwards).
+# Kevin (2026-10-26): low objects are out; pick cases the robot can reach.
+
+# R007: 501 slid segments with hand contact >= 0.3 m failed the 20 deg yaw limit (tables, chairs, suitcases,
+# FORCE box_huge / chair). The contact targets live in the object frame, so object rotation is not a problem
+# for the method; the limit is relaxed.
+max_yaw_deg: 45
+
+# Contact height [m] the Z1 can push with a level B2 (root 0.5 m, standing legs), per face class (normal tilt above
+# the horizontal: side < 30 deg, top > 60 deg, slant otherwise). From scripts/learned/workspace_map.py (cloud,
+# 2026-10-26): side faces reachable at 0.5-1.2 m (0.5-1.0 m ahead of the base), top faces at 0.3-0.8 m
+# (0.5-0.7 m ahead); nothing below 0.5 m on a side face (the upper arm hits the trunk).
+reach_band:
+  side: [0.5, 1.2]
+  top: [0.3, 0.8]
+  slant: [0.4, 1.2]

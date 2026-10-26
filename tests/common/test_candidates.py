@@ -86,3 +86,18 @@ def test_candidate_sheet_and_gallery(tmp_path, face, hands):
     candidate_figure(c, BOX, cand, tmp_path / "c.png", side=hands)
     gallery([(c, BOX, cand)], tmp_path / "g.png")
     assert (tmp_path / "c.png").stat().st_size > 20_000 and (tmp_path / "g.png").stat().st_size > 5_000
+
+
+def test_criteria_with_yaw_limit_and_reach_band():
+    band = {"side": [0.5, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]}
+    seg, push = cd.criteria(45.0, band)
+    assert [c for c in seg if c[0] == "small_yaw"][0][3] == 45.0 and push[-1][0] == "reach_band"
+    assert cd.face_of(5.0) == "side" and cd.face_of(85.0) == "top" and cd.face_of(45.0) == "slant"
+    low_side = _row(obj_yaw_maxabs_deg=30.0, contact_z_median_m=0.25, normal_tilt_median_deg=5.0)
+    high_top = _row(obj_yaw_maxabs_deg=30.0, contact_z_median_m=0.45, normal_tilt_median_deg=85.0)
+    for r in (low_side, high_top):
+        r["in_reach_band"] = cd.in_band(r, band)
+    assert cd.failed(low_side, seg + push) == ["reach_band"] and cd.failed(high_top, seg + push) == []
+    assert "small_yaw" in cd.failed(high_top)                       # the default 20 deg limit still applies
+    names = [n for n, _ in cd.funnel([low_side, high_top], (seg, push))]
+    assert names[-1] == "reach_band" and [c["name"] for c in cd.criteria_table((seg, push))][-1] == "reach_band"

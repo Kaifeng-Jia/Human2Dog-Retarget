@@ -26,6 +26,8 @@ import time
 from collections import Counter
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data import candidates as cd  # noqa: E402
 from h2d.common.data.describe import DEFAULTS, MODE_OF_HANDS, describe_clip, push_descriptors  # noqa: E402
@@ -38,14 +40,14 @@ from h2d.paths import data_path  # noqa: E402
 MIN_CANDIDATES = 3
 CHECK_ON_SURFACE_M = 0.08
 POOL_COLS = ["dataset", "object", "name", "subject", "seg", "start", "end", "start_s", "duration_s", "hands",
-             "mode", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
+             "mode", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "contact_z_median_m", "root_disp_xy_m",
              "push_alignment", "moving_frac", "normal_spread_p90_deg", "normal_tilt_median_deg",
              "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "approach_angle_deg",
              "approach_time_s",
              "retreat_angle_deg", "retreat_time_s", "approach_available_s", "retreat_available_s",
              "ann_hands", "ann_dir", "ann_weight_kg"]
-CAND_COLS = ["rank", "tier", "mode"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
+CAND_COLS = ["rank", "tier", "mode", "face"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
              "normal_spread_p90_deg", "normal_tilt_median_deg", "patch_coherence_median", "hands_face_angle_deg",
              "approach_angle_deg", "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "contact_surface_dist_median_m",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "root_disp_xy_m", "human", "obj_size_m",
@@ -64,7 +66,11 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0, help="only the first N files per dataset (debug)")
     ap.add_argument("--objects", nargs="*", default=None, help="only these objects (debug)")
     ap.add_argument("--videos", action="store_true", help="also write an MP4 per candidate (needs ffmpeg)")
+    ap.add_argument("--selection", default=None,
+                    help="selection config (e.g. configs/candidate_selection.yaml): yaw limit and contact-height band")
     args = ap.parse_args()
+    sel = yaml.safe_load(Path(args.selection).read_text()) if args.selection else {}
+    crit = cd.criteria(sel.get("max_yaw_deg", 20.0), sel.get("reach_band"))
     needs = tuple(sorted({n for d in args.datasets for n in SOURCES[d].needs}))
     try:
         prov = start_run(args.run_id, needs=needs, configs=("data.yaml", "external.yaml"),
@@ -94,11 +100,13 @@ def main() -> int:
                     n_segs[ds] += 1
                     r = {"dataset": ds, **r, **{k: v for k, v in extra.items() if k.startswith("ann_")},
                          "obj_size_m": size, "file": f.name}
-                    fail = cd.failed(r, cd.SEGMENT_CRITERIA)
+                    fail = cd.failed(r, crit[0])
                     if not fail:
                         r["mode"] = MODE_OF_HANDS[r["hands"]]
                         r.update(push_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
-                        fail = cd.failed(r, cd.PUSH_CRITERIA)
+                        r["face"] = cd.face_of(r.get("normal_tilt_median_deg"))
+                        r["in_reach_band"] = cd.in_band(r, sel["reach_band"]) if sel.get("reach_band") else True
+                        fail = cd.failed(r, crit[1])
                     r["failed"] = ";".join(fail)
                     r["passed"] = not fail
                     pool.append(r)
@@ -114,7 +122,7 @@ def main() -> int:
     slid = [r for r in pool if r["object_state"] == "slid"]
     write_csv(out / "pool.csv", slid, POOL_COLS)
     write_csv(out / "candidates.csv", chosen, CAND_COLS)
-    funnels = {ds: cd.funnel([r for r in pool if r["dataset"] == ds]) for ds in args.datasets}
+    funnels = {ds: cd.funnel([r for r in pool if r["dataset"] == ds], crit) for ds in args.datasets}
     by_object = {}
     for ds in args.datasets:
         rows = [r for r in pool if r["dataset"] == ds and r["object_state"] == "slid"]
@@ -148,7 +156,7 @@ def main() -> int:
         gallery(items, out / "gallery.png")
 
     # ---------------------------------------------------------------- checks, summary, report
-    reached = [r for r in pool if not cd.failed(r, cd.SEGMENT_CRITERIA)]
+    reached = [r for r in pool if not cd.failed(r, crit[0])]
     on_surf = nanmed([r.get("contact_surface_dist_median_m") for r in reached])
     checks = {
         "all_files_processed": {"pass": not errors, "n_errors": len(errors)},
@@ -167,7 +175,7 @@ def main() -> int:
         "provenance": prov, "datasets": args.datasets, "data_versions": versions,
         "n_files": {ds: len(files[ds]) for ds in args.datasets}, "n_segments": dict(n_segs),
         "n_slid_segments": len(slid), "errors": errors[:50], "segment_params": DEFAULTS,
-        "criteria": cd.criteria_table(), "ranking": {"near_normal_deg": cd.NEAR_NORMAL_DEG,
+        "criteria": cd.criteria_table(crit), "selection": sel, "ranking": {"near_normal_deg": cd.NEAR_NORMAL_DEG,
                                                      "vertical_face_deg": cd.VERTICAL_FACE_DEG,
                                                      "top": args.top, "per_object": args.per_object},
         "funnel": {ds: dict(f) for ds, f in funnels.items()}, "by_object": by_object,
@@ -193,7 +201,7 @@ def main() -> int:
         "|---|---|---|" + "---|" * len(args.datasets),
         "| all segments | | | " + " | ".join(str(dict(funnels[ds])["all segments"]) for ds in args.datasets) + " |",
     ]
-    for c in cd.criteria_table():
+    for c in cd.criteria_table(crit):
         lines.append(f"| {c['name']} | `{c['key']} {c['op']} {c['value']}` | {c['meaning']} | "
                      + " | ".join(str(dict(funnels[ds])[c["name"]]) for ds in args.datasets) + " |")
     lines += ["", f"Ranking: tier (A = approach and retreat observed and within {cd.NEAR_NORMAL_DEG:.0f}° of the "
