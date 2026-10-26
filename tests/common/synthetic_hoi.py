@@ -65,7 +65,10 @@ def hand_offsets(side: str) -> np.ndarray:
     return base[idx] - base[om.BODY_INDEX[f"{side}_Wrist"]]
 
 
-def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bool = True) -> np.ndarray:
+def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bool = True,
+               push_face: str = "side") -> np.ndarray:
+    """``push_face``: "side" = palm on the -x face, in and out along x; "top" = palm on the top face 10 cm from
+    its -x edge (pushing by friction, as many OMOMO_new low-box pushes do), in and out along z."""
     t = np.arange(T) / 30.0
     a = np.zeros((T + 1, om.DIM), np.float32)            # + an all-zero first frame, as in the dataset
     pose = standing_pose()
@@ -81,18 +84,25 @@ def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bo
     rpush = (t >= 1.0) & (t < 3.0) & push
     lift = (t >= 4.0) & (t < 6.5) & carry
     rh = om.HAND_BODIES["R"]
-    on_face = lambda i: box[i] + q.apply(face_point(q.inv().apply([-1, 0, 0]), obj)) + [-0.012, 0, 0]  # noqa: E731
+    if push_face == "side":
+        d_out, shift = np.array([-1.0, 0, 0]), np.zeros(3)
+    else:
+        top = face_point(q.inv().apply([0, 0, 1]), obj)
+        edge = q.apply(face_point(q.inv().apply([-1, 0, 0]), obj))[0]
+        d_out, shift = np.array([0, 0, 1.0]), np.array([edge + 0.10 - q.apply(top)[0], 0, 0])
+    on_face = lambda i: (box[i] + q.apply(face_point(q.inv().apply(d_out), obj)) + shift  # noqa: E731
+                         + 0.012 * d_out)
     hand = lambda p: p + hand_offsets("R") * np.array([1, 1, -1]) * 0.8              # noqa: E731
     for i in np.flatnonzero(rpush):
-        # palm on the box's -x face, fingers pointing up
+        # palm on the chosen face
         body[i, rh] = hand(on_face(i))
         flags[i, rh[:4]] = 1
-    if push:                                     # straight in along the inward normal (+x), straight out after
+    if push:                                     # straight in along the inward normal, straight out after
         i0, i1 = int(np.flatnonzero(rpush)[0]), int(np.flatnonzero(rpush)[-1])
         for i in np.flatnonzero((t >= 0.5) & (t < 1.0)):
-            body[i, rh] = hand(on_face(i0) - [0.25 * (i0 - i) / 15, 0, 0])
+            body[i, rh] = hand(on_face(i0) + d_out * 0.25 * (i0 - i) / 15)
         for i in np.flatnonzero((t >= 3.0) & (t < 4.0)):
-            body[i, rh] = hand(on_face(i1) - [0.25 * min(1.0, (i - i1) / 15), 0, 0])
+            body[i, rh] = hand(on_face(i1) + d_out * 0.25 * min(1.0, (i - i1) / 15))
     for i in np.flatnonzero(lift):
         for side, y in (("L", 1), ("R", -1)):
             idx = om.HAND_BODIES[side]

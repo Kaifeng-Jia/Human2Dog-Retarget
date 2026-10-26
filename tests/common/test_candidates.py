@@ -67,13 +67,14 @@ def test_funnel_counts_in_order():
 
 
 @needs_mesh
-def test_candidate_sheet_and_gallery(tmp_path):
+@pytest.mark.parametrize("face", ["side", "top"])
+def test_candidate_sheet_and_gallery(tmp_path, face):
     from synthetic_hoi import make_clip
 
     from h2d.common.data.describe import describe_clip, push_descriptors
     from h2d.common.viz_hoi import candidate_figure, gallery
 
-    c = make_clip()
+    c = make_clip(push_face=face)
     seg = describe_clip(c, BOX)["segments"][0]
     r = {"dataset": "omomo_new", **seg, **push_descriptors(c, BOX, (seg["start"], seg["end"]), "R")}
     r["passed"] = not cd.failed(r, cd.SEGMENT_CRITERIA + cd.PUSH_CRITERIA)

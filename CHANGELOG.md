@@ -16,6 +16,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   point: the meshes' winding is inconsistent).
 - [common] `viz_hoi.candidate_figure`, `viz_hoi.gallery`.
 
+### Fixed (found in R005)
+- Candidate sheet: the side view of a top-face contact looked along the normal (the object collapsed to a line);
+  it now looks across the push. Numbers unchanged. Test clip gained a top-face push variant.
+
 ### Changed
 - Dataset sources (`OmomoSource`, `ForceSource`) moved from `profile_hoi.py` to `h2d/common/data/sources.py`;
   CSV / JSON helpers to `h2d/common/tables.py`.

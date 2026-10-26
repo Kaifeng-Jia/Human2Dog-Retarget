@@ -267,16 +267,26 @@ def candidate_figure(clip: Clip, obj: ObjectMesh, cand: dict, path: Path, side: 
     pa = to_s(palm_point(clip, side, np.arange(ka, s + 1)), np.arange(ka, s + 1))
     pr = to_s(palm_point(clip, side, np.arange(e - 1, kr + 1)), np.arange(e - 1, kr + 1))
     depth = (P - cs) @ nw0
-    for j, (ax_u, ax_name) in enumerate(((u, "along the face [m]"), (nw0, "out of the face, towards the hand [m]"))):
+    zz = np.array([0.0, 0.0, 1.0])
+    hn = nw0 - zz * nw0[2]
+    if np.linalg.norm(hn) > 0.3:                               # side face: look along it
+        h, h_name = hn / np.linalg.norm(hn), "horizontal, out of the face towards the hand [m]"
+    else:                                                      # top / bottom face: look across the push
+        dv = np.r_[cen[seg][-1, :2] - cen[seg][0, :2], 0.0] if seg.sum() > 1 else u
+        h = dv / np.linalg.norm(dv) if np.linalg.norm(dv) > 1e-6 else u
+        h_name = "horizontal, along the push [m]"
+    vertical = abs(nw0[2]) < 0.7
+    views = (("contact seen from the hand (object frame at first contact)", u, v, "along the face [m]",
+              "up along the face [m]" if vertical else "across the face [m]"),
+             ("seen from the side (green = outward normal)", h, zz, h_name, "up [m]"))
+    for j, (ttl, ax_u, ax_v, xl, yl) in enumerate(views):
         a = fig.add_subplot(g1[0, 1 + j])
-        X = (P - cs) @ ax_u
-        Y = (P - cs) @ (v if j == 0 else np.array([0.0, 0.0, 1.0]))
-        order = np.argsort(depth) if j == 0 else np.arange(len(P))
+        X, Y = (P - cs) @ ax_u, (P - cs) @ ax_v
         if j == 0:                                         # darker = closer to the hand
+            order = np.argsort(depth)
             a.scatter(X[order], Y[order], s=1.0, c=depth[order], cmap="Greys", alpha=0.5, linewidths=0)
         else:
             a.scatter(X, Y, s=1.0, c=C_OBJ, alpha=0.4, linewidths=0)
-        ax_v = v if j == 0 else np.array([0.0, 0.0, 1.0])
 
         def f(Q, ax_u=ax_u, ax_v=ax_v):
             return (Q - cs) @ ax_u, (Q - cs) @ ax_v
@@ -285,15 +295,14 @@ def candidate_figure(clip: Clip, obj: ObjectMesh, cand: dict, path: Path, side: 
         a.plot(*f(pr), color=C_FOURTH, lw=1.2, ls=":", label="palm, retreat")
         sc = a.scatter(*f(cp), s=6, c=np.arange(len(cp)) / fps, cmap="viridis", linewidths=0, label="contact proxy")
         if j == 1:
-            a.annotate("", xy=(0.25 + float((cp[0] - cs) @ nw0), float(cp[0, 2] - cs[2])),
-                       xytext=(float((cp[0] - cs) @ nw0), float(cp[0, 2] - cs[2])),
+            x0, y0 = f(cp[:1])
+            a.annotate("", xy=(x0[0] + 0.25 * nw0 @ ax_u, y0[0] + 0.25 * nw0 @ ax_v), xytext=(x0[0], y0[0]),
                        arrowprops={"arrowstyle": "-|>", "color": C_THIRD, "lw": 1.5})
             fig.colorbar(sc, ax=a, fraction=0.04, pad=0.01).set_label("time in contact [s]", fontsize=7)
         a.set_aspect("equal", adjustable="datalim")
-        a.set_xlabel(ax_name, fontsize=7)
-        a.set_ylabel("up [m]" if j else "up along the face [m]", fontsize=7)
-        a.set_title("contact seen from the hand (object frame at first contact)" if j == 0 else
-                    "seen from the side (green = outward normal)", fontsize=8, loc="left")
+        a.set_xlabel(xl, fontsize=7)
+        a.set_ylabel(yl, fontsize=7)
+        a.set_title(ttl, fontsize=8, loc="left")
         if j == 0:
             a.legend(fontsize=6.5, frameon=False, loc="lower left", markerscale=3)
         _clean_axes(a, "both")

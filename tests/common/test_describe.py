@@ -99,3 +99,18 @@ def test_push_descriptors_time_reversed_is_a_pull():
     d = push_descriptors(c, BOX, (seg["start"], seg["end"]), "R")
     assert d["push_alignment"] < -0.9
     assert d["approach_angle_deg"] < 3 and d["retreat_angle_deg"] < 3   # in and out swap, both along the normal
+
+
+@needs_mesh
+def test_push_descriptors_top_face():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import push_descriptors
+
+    c = make_clip(push_face="top")
+    s, e = segments(c)[0]
+    d = push_descriptors(c, BOX, (s, e), "R")
+    assert d["normal_tilt_median_deg"] > 75 and d["push_alignment"] > 0.9       # top face, still a push
+    # the hand goes straight down and up in the world; the mesh's top is ~9 deg off level in this test world
+    off = 90.0 - d["normal_tilt_median_deg"]
+    assert abs(d["approach_angle_deg"] - off) < 1 and abs(d["retreat_angle_deg"] - off) < 1
