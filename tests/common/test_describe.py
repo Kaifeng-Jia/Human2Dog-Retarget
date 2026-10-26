@@ -5,7 +5,7 @@ import pytest
 from scipy.spatial.transform import Rotation as R
 
 from h2d.common.data import omomo_objects as oo
-from h2d.common.data.describe import close_gaps, describe_clip, segments
+from h2d.common.data.describe import alignment_series, close_gaps, describe_clip, segments
 
 try:
     BOX = oo.load_object("largebox")
@@ -62,3 +62,40 @@ def test_describe_synthetic_push_then_carry():
     assert np.nanmin(d["check"]["free_hand_min_m"]) > 0.1
     row = d["clip"]
     assert row["n_segments"] == 2 and abs(row["obj_lowest_z_start_m"]) < 1e-6
+
+
+@needs_mesh
+def test_push_descriptors_on_synthetic_push():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import push_descriptors
+
+    c = make_clip()
+    s, e = segments(c)[0]
+    d = push_descriptors(c, BOX, (s, e), "R")
+    assert d["push_alignment"] > 0.9                          # box moves away from the hand (+x, hand on -x face)
+    assert d["normal_spread_p90_deg"] < 5 and d["normal_tilt_median_deg"] < 5 and d["patch_coherence_median"] > 0.9
+    n_world = R.from_quat(c.obj_rot_xyzw[s]).apply(d["normal_local"])
+    assert n_world[0] < -0.99                                 # the face the palm is on, pointing to the hand
+    assert abs(d["approach_available_s"] - 1.0) < 0.05
+    assert d["approach_angle_deg"] < 3 and d["retreat_angle_deg"] < 3      # straight in, straight out
+    assert abs(d["approach_time_s"] - 0.2) < 0.05                        # last 0.10 m of a 0.25 m / 0.5 s path
+    assert d["contact_surface_dist_median_m"] < 0.05
+    a = alignment_series(c, BOX, slice(s, e), "R")
+    assert len(a) == e - s and np.nanmin(a) > 0.9
+
+
+@needs_mesh
+def test_push_descriptors_time_reversed_is_a_pull():
+    from synthetic_hoi import make_array
+
+    from h2d.common.data import omomo_new as om
+    from h2d.common.data.describe import push_descriptors
+
+    a = make_array()
+    a[1:] = a[1:][::-1].copy()                  # the box now moves towards the hand on its -x face
+    c = om.parse_array(a, "sub1_largebox_002")
+    seg = next(r for r in describe_clip(c, BOX)["segments"] if r["hands"] == "right")
+    d = push_descriptors(c, BOX, (seg["start"], seg["end"]), "R")
+    assert d["push_alignment"] < -0.9
+    assert d["approach_angle_deg"] < 3 and d["retreat_angle_deg"] < 3   # in and out swap, both along the normal

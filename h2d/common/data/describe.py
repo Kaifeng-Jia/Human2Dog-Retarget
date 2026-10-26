@@ -219,3 +219,93 @@ def describe_clip(clip: Clip, obj: ObjectMesh, p: dict = DEFAULTS, mesh_check_fr
         else float("nan"),
     }
     return {"clip": row, "segments": seg_rows, "check": check}
+
+
+# ------------------------------------------------------------------------------ push descriptors
+PALM = ("Wrist", "Index1", "Middle1", "Pinky1", "Ring1")
+
+
+def palm_point(clip: Clip, side: str, frames) -> np.ndarray:
+    """Palm centre (n, 3): mean of the wrist and the four finger base bodies."""
+    return clip.body_pos[frames][:, [BODY_INDEX[f"{side}_{n}"] for n in PALM]].mean(1)
+
+
+def contact_point(clip: Clip, side: str, frames: slice) -> np.ndarray:
+    """Per-frame hand contact proxy (n, 3): mean of the hand's flagged bodies, else the palm centre."""
+    idx = HAND_BODIES[side]
+    pos = clip.body_pos[frames][:, idx]
+    fl = (clip.contact_body[frames][:, idx] == 1).astype(float)
+    palm = palm_point(clip, side, frames)
+    k = fl.sum(1, keepdims=True)
+    return np.where(k > 0, (pos * fl[..., None]).sum(1) / np.maximum(k, 1), palm)
+
+
+def alignment_series(clip: Clip, obj: ObjectMesh, frames: slice, side: str, min_speed: float = 0.05) -> np.ndarray:
+    """Per frame: cos(object horizontal velocity, object centre - hand contact point), horizontal. +1 = the object
+    moves away from the hand (push), -1 = towards it (pull); NaN where the object moves slower than ``min_speed``."""
+    pos = clip.obj_pos[frames]
+    n = len(pos)
+    if n < 2:
+        return np.full(n, np.nan)
+    cp = contact_point(clip, side, frames)
+    cen = R.from_quat(clip.obj_rot_xyzw[frames]).apply(obj.center) + pos
+    v = np.gradient(pos[:, :2], axis=0) * clip.fps
+    d = cen[:, :2] - cp[:, :2]
+    sp = np.linalg.norm(v, axis=1)
+    cos = np.sum(v * d, 1) / np.maximum(sp * np.linalg.norm(d, axis=1), 1e-9)
+    return np.where(sp > min_speed, cos, np.nan)
+
+
+def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: str, min_speed: float = 0.05,
+                     path_m: float = 0.10, search_s: float = 2.0, patch_m: float = 0.03) -> dict:
+    """How one hand moves the object in a segment: push vs pull, which face, how the hand came in.
+
+    * ``push_alignment``: mean of ``alignment_series`` over the segment frames where the object moves faster than
+      ``min_speed`` (``moving_frac`` of the segment).
+    * ``normal_*``: normal of the surface patch (radius ``patch_m``) under the contact proxy, pointing to the
+      hand (``ObjectMesh.patch_normals``); ``normal_local`` = its segment mean in the object frame, spread of
+      the per-frame normals around it (one face or several), tilt of the mean from the horizontal (0 = vertical
+      face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner).
+      ``contact_surface_dist_*``: distance of the contact proxy to the surface (body positions are joint
+      centres, so a few cm is normal; tens of cm means the proxy is not on the object).
+    * ``approach_*`` / ``retreat_*``: the last ``path_m`` of palm path before first contact and the first
+      ``path_m`` after release, in the object frame (searched up to ``search_s``); angle to the inward
+      (approach) or outward (retreat) normal: 0 = straight in / out along the normal, 90 = sliding in sideways.
+      NaN when not observable (the clip starts or ends too close to the contact, or the palm moves less).
+    """
+    s, e = seg
+    sl = slice(s, e)
+    fps = clip.fps
+    cosv = alignment_series(clip, obj, sl, side, min_speed)
+    mov = ~np.isnan(cosv)
+    cp = contact_point(clip, side, sl)
+    loc = obj.to_local(cp[:, None], clip.obj_pos[sl], clip.obj_rot_xyzw[sl])[:, 0]
+    _, dist, n_loc, coh = obj.patch_normals(loc, patch_m)
+    n_mean = n_loc.mean(0)
+    n_mean /= max(np.linalg.norm(n_mean), 1e-9)
+    spread = np.degrees(np.arccos(np.clip(n_loc @ n_mean, -1, 1)))
+    n_world = R.from_quat(clip.obj_rot_xyzw[sl]).apply(n_mean)
+    tilt = np.degrees(np.arcsin(np.clip(np.abs(n_world[:, 2]), 0, 1)))
+    out = {
+        "push_alignment": float(np.mean(cosv[mov])) if mov.any() else float("nan"), "moving_frac": float(mov.mean()),
+        "normal_spread_median_deg": float(np.median(spread)), "normal_spread_p90_deg": float(np.percentile(spread, 90)),
+        "normal_tilt_median_deg": float(np.median(tilt)), "normal_local": n_mean.tolist(),
+        "patch_coherence_median": float(np.median(coh)),
+        "contact_surface_dist_median_m": float(np.median(dist)), "contact_surface_dist_max_m": float(dist.max()),
+        "approach_available_s": s / fps, "retreat_available_s": (clip.n - e) / fps,
+    }
+    k = int(round(search_s * fps))
+    for name, fr, ref, nrm in (("approach", np.arange(s - 1, max(-1, s - 1 - k), -1), s, -n_mean),
+                               ("retreat", np.arange(e, min(clip.n, e + k)), e - 1, n_mean)):
+        ang, dt = float("nan"), float("nan")
+        if len(fr):
+            pl = obj.to_local(palm_point(clip, side, np.r_[ref, fr])[:, None], clip.obj_pos[np.r_[ref, fr]],
+                              clip.obj_rot_xyzw[np.r_[ref, fr]])[:, 0]
+            far = np.flatnonzero(np.linalg.norm(pl[1:] - pl[0], axis=1) >= path_m)
+            if far.size:
+                j = int(far[0]) + 1
+                d = pl[j] - pl[0] if name == "retreat" else pl[0] - pl[j]
+                ang = float(np.degrees(np.arccos(np.clip(d @ nrm / np.linalg.norm(d), -1, 1))))
+                dt = j / fps
+        out[f"{name}_angle_deg"], out[f"{name}_time_s"] = ang, dt
+    return out
