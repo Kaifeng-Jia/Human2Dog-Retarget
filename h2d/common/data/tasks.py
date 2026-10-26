@@ -25,10 +25,11 @@ from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation as R
 
 from h2d.common.data.describe import contact_point, hand_frame, palm_point
-from h2d.common.data.omomo_new import Clip
+from h2d.common.data.omomo_new import BODY_INDEX, Clip
 from h2d.common.objectmesh import ObjectMesh
 
-TASK_VERSION = 2                     # 2: tool pose targets from the palm (spec v0.8 §5.4)
+TASK_VERSION = 2                     # 2: tool pose targets from the palm (spec v0.8 §5.4), body points (§5.5)
+BODY_POINTS = ("Pelvis", "Chest", "L_Shoulder", "R_Shoulder")
 
 
 def _smooth(x: np.ndarray, k: int) -> np.ndarray:
@@ -153,6 +154,7 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
         "c_bar_human_local": c_human, "height": height, "target_on_face_m": on_face,
         "grip": grip, "palm_normal_local": palm_n, "palm_face_deg": palm_face, "palm_used": bool(palm_used),
         "tool_x_local": tool_x, "tool_z_local": tool_z,
+        "body_world": clip.body_pos[fr][:, [BODY_INDEX[b] for b in BODY_POINTS]],     # interaction mesh (spec §5.5)
     }
 
 

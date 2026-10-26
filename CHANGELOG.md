@@ -15,6 +15,12 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact),
   the same for press and grasp; implemented with the output motion.
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
+- Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame
+  SE(2) of the prior's body from the human's body-object mesh (pelvis -> trunk, chest -> Z1 base, hand -> contact
+  target; edge directions and heading from the human, the distance from the dog's arm), solved over the window by
+  sparse least squares. `reach_diag.py`: layout `mesh` next to the script baseline (`reach_track`) and the prior
+  (`reach_fit`), `--layouts`, relation metrics for every layout (edge / heading error, extra foot slide). Task
+  files carry the human pelvis, chest and shoulders. Course scope for 11/1: OMOMO pushes and top-face drags.
 
 ## [0.1.5] — unreleased
 

@@ -103,17 +103,20 @@ def reach_points(root_pos: np.ndarray, root_rot_xyzw: np.ndarray, ahead_m: float
 
 @dataclass
 class SE2Track:
-    """Constant rotation, per-frame translation (contact frames only)."""
-    psi: float
+    """Per-frame translation and a constant or per-frame rotation (contact frames only)."""
+    psi: float | np.ndarray       # () or (n,)
     b: np.ndarray                 # (n, 2)
     kind: str = "track"
     info: dict | None = None
 
     def apply_root_at(self, i: int, root_pos: np.ndarray, root_rot_xyzw: np.ndarray):
-        return SE2(self.psi, tuple(self.b[i])).apply_root(root_pos, root_rot_xyzw)
+        psi = float(np.broadcast_to(self.psi, len(self.b))[i])
+        return SE2(psi, tuple(self.b[i])).apply_root(root_pos, root_rot_xyzw)
 
     def to_dict(self) -> dict:
-        return {"psi": self.psi, "psi_deg": float(np.degrees(self.psi)), "kind": self.kind, "info": self.info}
+        psi = np.degrees(np.asarray(self.psi, float))
+        return {"psi": float(np.radians(psi.mean())), "psi_deg": float(psi.mean()),
+                "psi_range_deg": [float(psi.min()), float(psi.max())], "kind": self.kind, "info": self.info}
 
 
 def track(p: np.ndarray, y: np.ndarray, base: SE2, fps: float, smooth_s: float = 1.0) -> SE2Track:

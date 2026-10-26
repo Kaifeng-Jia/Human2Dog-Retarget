@@ -7,8 +7,11 @@ Inputs: task files from ``scripts/common/prepare_tasks.py`` and the prior from `
 
 1. registration (``h2d/common/registration.py``): start-anchored; reach-point fit (constant SE(2) placing a nominal
    reach point of the base on the contact targets); reach-point tracking (the same plus a smoothed per-frame
-   translation: the body follows the object, reported as extra base motion). Object trajectory fixed. The old
-   contact fit of the prior's contact site (R008 / R010: puts the body too close) is recorded only;
+   translation: the body follows the object, reported as extra base motion: the script baseline); interaction
+   mesh (``h2d/learned/imesh.py``, spec v0.8 §5.5: per-frame SE(2) placement keeping the human's body-object
+   relations; needs task files with body points). Object trajectory fixed. The old contact fit of the prior's
+   contact site (R008 / R010: puts the body too close) is recorded only. Every layout also gets the relation
+   metrics of the mesh (edge direction and heading errors, extra foot slide) on the contact frames;
 2. for each layout and each contact frame, three problems with the multi-start, collision-aware arm IK
    (``h2d/learned/reach.py``): position (joint limits only), position + direction (joint limits only),
    position + direction within +-budget around the prior. The direction is the task's tool approach target (from
@@ -48,20 +51,21 @@ from h2d.common.collision import ObjectHull, RobotCollision  # noqa: E402
 from h2d.common.data.omomo_objects import load_object  # noqa: E402
 from h2d.common.data.tasks import load_task  # noqa: E402
 from h2d.common.data.candidates import face_of  # noqa: E402
-from h2d.common.registration import contact_fit, reach_points, start_anchored, track  # noqa: E402
+from h2d.common.registration import SE2Track, contact_fit, reach_points, start_anchored, track  # noqa: E402
 from h2d.common.robot import B2Z1Robot  # noqa: E402
 from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.common.tables import clean  # noqa: E402
 from h2d.learned.prior import Motion, load_motion  # noqa: E402
+from h2d.learned.imesh import InteractionMesh, object_samples, prior_points  # noqa: E402
 from h2d.learned.reach import ArmIK, ObjectPose, reach_bound, shoulder  # noqa: E402
 from h2d.paths import REPO_ROOT, load_config  # noqa: E402
 
 PROBLEMS = (("pos", False, False), ("pos_dir", True, False), ("pos_dir_budget", True, True))
-LAYOUTS = ("reach_fit", "reach_track", "start_anchored")      # R010 and before: contact_fit, start_anchored
+LAYOUTS = ("mesh", "reach_track", "reach_fit", "start_anchored")   # ours, script baseline, prior, default anchor
 
 
 def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll: RobotCollision, cfg: dict,
-               reg_cfg: dict, bound: float, reach_cfg: dict) -> dict:
+               reg_cfg: dict, bound: float, reach_cfg: dict, mesh_cfg: dict, layouts=LAYOUTS) -> dict:
     fr, c = task["frames"], task["in_contact"].astype(bool)
     cf = fr[c]
     out = {"labels": {}, "flags": [], "notes": []}     # flags: coordinate problems; notes: everything else
@@ -113,6 +117,23 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
         # the prior's own root path drifts from the source (spec O2: speed mapping, half turn rate), which one SE(2)
         # cannot remove; reported, not a coordinate error (R008 mislabelled it as one)
         out["notes"].append(f"contact-fit residual {fit.info['residual_xy_rms_m']:.2f} m (prior path drift)")
+    placed, rel = {"reach_fit": fit, "reach_track": trk, "start_anchored": anchor}, {}
+    if "body_world" in task:
+        n_w, ci = len(fr), np.flatnonzero(c)
+        im = InteractionMesh(task, prior_points(robot, coll, motion, fr),
+                             object_samples(obj.hull_verts, mesh_cfg["object_samples"]), hull, mesh_cfg)
+        psi_w, b_w, info = im.place(fit.psi, np.asarray(fit.b))
+        placed["mesh"] = SE2Track(psi_w[c], b_w[c], kind="mesh", info=info)
+        out["registration"]["mesh"] = placed["mesh"].to_dict()
+
+        def window(T):          # a layout over the whole window (a track is held outside the contact frames)
+            if isinstance(T, SE2Track):
+                return (np.interp(np.arange(n_w), ci, np.broadcast_to(T.psi, len(T.b))),
+                        np.stack([np.interp(np.arange(n_w), ci, T.b[:, k]) for k in (0, 1)], 1))
+            return np.full(n_w, T.psi), np.tile(np.asarray(T.b), (n_w, 1))
+        rel = {k: im.metrics(*((psi_w, b_w) if k == "mesh" else window(T)), sel=ci) for k, T in placed.items()}
+    else:
+        out["notes"].append("task file without body points (task v1): no mesh layout")
 
     ik = ArmIK(robot, coll, cfg["pos_tol_m"], cfg["max_angle_deg"], cfg["n_random_starts"],
                margin_m=cfg["avoid_margin_m"], w_prev=cfg.get("prev_weight_m_per_rad", 0.0),
@@ -121,7 +142,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     budget = np.radians(cfg["budget_deg"])
     fps = float(task["fps"])
     sol = {}
-    for lay, T in (("reach_fit", fit), ("reach_track", trk), ("start_anchored", anchor)):
+    for lay, T in ((k, placed[k]) for k in layouts if k in placed):
         n_c = len(cf)
         prior_q = np.array([motion.dof_pos[t][arm_idx] for t in cf])
         scene, prior_site, dist_sh = np.zeros(n_c), np.zeros((n_c, 3)), np.zeros(n_c)
@@ -152,7 +173,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
                 d["armobj"][i], d["toolobj"][i] = r.collision["arm_obj_depth_m"], r.collision["tool_obj_depth_m"]
                 d["start"].append(r.start)
                 prev[p] = r.q if r.feasible else None
-        lay_out = {"scene_body_depth_max_m": float(scene.max()),
+        lay_out = {"relations": rel.get(lay), "scene_body_depth_max_m": float(scene.max()),
                    "scene_infeasible": bool(scene.max() > cfg["scene_body_depth_m"]),
                    "target_to_shoulder_m": [float(dist_sh.min()), float(dist_sh.max())], "reach_bound_m": bound,
                    "prior_site_error_m": [float(np.linalg.norm(prior_site - y_all, axis=1).min()),
@@ -202,7 +223,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
 
 
 def figure(tid: str, task: dict, out: dict, cfg: dict, path: Path) -> None:
-    sol = out["_sol"]["reach_track"]
+    lay = next(k for k in LAYOUTS if k in out["_sol"])
+    sol = out["_sol"][lay]
     t = task["frames"][task["in_contact"].astype(bool)] / float(task["fps"])
     fig, ax = plt.subplots(1, 4, figsize=(20, 4.2))
     cols = {"pos": "#2a78d6", "pos_dir": "#eb6834", "pos_dir_budget": "#1baf7a"}
@@ -223,13 +245,13 @@ def figure(tid: str, task: dict, out: dict, cfg: dict, path: Path) -> None:
     ax[3].plot(y[:, 0], y[:, 1], color="#2b2b2b", lw=2, label="contact target")
     ax[3].plot(sol["prior_site"][:, 0], sol["prior_site"][:, 1], color="#888", lw=1, ls="--", label="prior gripper")
     ax[3].set_aspect("equal", adjustable="datalim")
-    ax[3].set_title("top view, reach-track layout [m]", fontsize=9, loc="left")
+    ax[3].set_title(f"top view, {lay} layout [m]", fontsize=9, loc="left")
     for a in ax:
         a.legend(fontsize=7, frameon=False)
         a.tick_params(labelsize=7)
         for sp in ("top", "right"):
             a.spines[sp].set_visible(False)
-    labs = ", ".join(f"{k}: {v}" for k, v in out["labels"].items() if k.startswith("reach_track"))
+    labs = ", ".join(f"{k}: {v}" for k, v in out["labels"].items() if k.startswith(lay))
     fig.suptitle(f"{tid} · {task['clip']} · {labs}", fontsize=9)
     fig.tight_layout()
     fig.savefig(path, dpi=80)
@@ -244,17 +266,18 @@ def main() -> int:
     ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: confirmed ids in configs/push_candidates.yaml)")
     ap.add_argument("--tasks-csv", default=None, help="tasks.csv of prepare_tasks.py: take its passing candidates in order")
     ap.add_argument("--max-tasks", type=int, default=8, help="with --tasks-csv: at most this many")
+    ap.add_argument("--layouts", nargs="*", default=["mesh", "reach_track", "reach_fit"], choices=LAYOUTS)
     args = ap.parse_args()
     try:
         prov = start_run(args.run_id, needs=("xmorph", "hoi_retarget"),
-                         configs=("b2z1.yaml", "external.yaml", "learned/reach.yaml", "registration.yaml",
-                                  "push_candidates.yaml"),
+                         configs=("b2z1.yaml", "external.yaml", "learned/reach.yaml", "learned/mesh.yaml",
+                                  "registration.yaml", "push_candidates.yaml"),
                          allow_dirty=args.allow_dirty, allow_external_mismatch=args.allow_external_mismatch)
     except ProvenanceError as e:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
     reg_all = load_config("registration.yaml")
-    cfg, reg_cfg = load_config("learned/reach.yaml"), reg_all["contact_fit"]
+    cfg, reg_cfg, mesh_cfg = load_config("learned/reach.yaml"), reg_all["contact_fit"], load_config("learned/mesh.yaml")
     if args.tasks_csv:
         import csv
 
@@ -280,7 +303,8 @@ def main() -> int:
             pkl = Path(args.d0_dir) / f"{task['clip']}_b2z1.pkl"
             sidecar = json.loads(Path(str(pkl) + ".sidecar.json").read_text())
             t1 = time.time()
-            r = solve_task(task, load_motion(pkl), sidecar, robot, coll, cfg, reg_cfg, bound, reg_all)
+            r = solve_task(task, load_motion(pkl), sidecar, robot, coll, cfg, reg_cfg, bound, reg_all, mesh_cfg,
+                           args.layouts)
             if "_sol" in r:
                 figure(tid, task, r, cfg, out_dir / "tasks" / f"{tid}.png")
                 np.savez_compressed(out_dir / "solutions" / f"{tid}.npz",
@@ -300,7 +324,7 @@ def main() -> int:
             errors.append({"id": tid, "error": traceback.format_exc()[-2000:]})
             print(f"  {tid}: error {type(e).__name__}: {e}", flush=True)
     checks = {"all_tasks_processed": {"pass": not errors and bool(results), "n_errors": len(errors)}}
-    summary = {"provenance": prov, "config": cfg, "registration_config": reg_cfg,
+    summary = {"provenance": prov, "config": cfg, "registration_config": reg_cfg, "mesh_config": mesh_cfg,
                "reach_bound_m": bound, "reach_sampled_max_m": sampled, "checks": checks,
                "pass": all(c["pass"] for c in checks.values()), "errors": errors, "tasks": results,
                "elapsed_s": time.time() - t0}
@@ -310,10 +334,11 @@ def main() -> int:
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(results)}/{len(ids)} tasks · reach bound {bound:.3f} m (sampled max {sampled:.3f} m) · "
              f"{summary['elapsed_s'] / 60:.1f} min", "",
-             "| task | layout | registration (psi, residual RMS) | scene body in object [m] | target–shoulder [m] | problem "
+             "| task | layout | registration (psi, residual RMS) | relations: edge / heading [°], foot slide [m/s] "
+             "| scene body in object [m] | target–shoulder [m] | problem "
              "| label | feasible | err max [cm] | angle median / max [°] | roll median [°] | arm change max / RMS [°] "
              "| speed ratio max |",
-             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for tid, r in results.items():
         for lay in LAYOUTS:
             if lay not in r:
@@ -324,7 +349,11 @@ def main() -> int:
                 q = L[p]
                 ch = q["arm_change_max_deg"]
                 extra = (f", body +{f(reg['info']['extra_base_shift_max_m'])} m" if lay == "reach_track" else "")
-                lines.append(f"| {tid} | {lay} | {reg['psi_deg']:.1f}°, {f(reg['info']['residual_xy_rms_m'])} m{extra} | "
+                rl = L["relations"] or {}
+                rel_s = (f"{f(rl.get('edge_dir_err_deg'), 0)} / {f(rl.get('heading_err_deg'), 0)}, "
+                         f"{f(rl.get('extra_foot_slide_max_mps'))}") if rl else "–"
+                lines.append(f"| {tid} | {lay} | {reg['psi_deg']:.1f}°, {f((reg['info'] or {}).get('residual_xy_rms_m'))} m{extra} | "
+                             f"{rel_s} | "
                              f"{f(L['scene_body_depth_max_m'], 3)} | {f(L['target_to_shoulder_m'][0])}–{f(L['target_to_shoulder_m'][1])} | "
                              f"{p} | {q['label']} | {100 * q['feasible_frac']:.0f} % | {f(100 * q['pos_err_max_m'], 1)} | "
                              f"{f(q['angle_median_deg'], 0)} / {f(q['angle_max_deg'], 0)} | {f(q['roll_median_deg'], 0)} | "

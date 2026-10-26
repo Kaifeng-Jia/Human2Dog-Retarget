@@ -1,0 +1,15 @@
+# Interaction-mesh body placement (spec learned v0.8 §5.5, h2d/learned/imesh.py). Development initial values.
+object_samples: 24        # farthest-point samples of the object's hull vertices
+min_edge_m: 0.05          # human edges shorter than this horizontally have no reliable direction
+w_mesh: 1.0               # per edge, unit-vector difference of the horizontal edge directions
+w_heading: 2.0            # trunk forward axis vs the human's facing (shoulders)
+w_reach: 10.0             # hinge on the Z1 base - contact target distance [m]
+r_min_m: 0.35
+r_max_m: 0.80             # rigorous reach bound is 0.94 m (R008); keep a margin
+w_reach_pref: 5.0         # Z1 base - contact target distance towards the arm's comfortable reach [m]
+reach_pref_m: 0.60        # dry run: 0.60 m feasible with direction, 0.75-0.81 m not
+w_clear: 10.0             # hinge on trunk / leg samples inside the object hull [m]
+clear_margin_m: 0.03
+w_smooth: 30.0            # first difference of b [m] and 0.5 m x psi per frame (30 fps: 1 cm/frame = 0.3 m/s)
+w_anchor: 0.1             # weak pull to the constant registration (keeps the problem well posed)
+max_nfev: 100
