@@ -18,7 +18,7 @@ def _row(name="sub1_largebox_001", obj="largebox", ds="omomo_new", **kw):
     r = {"dataset": ds, "object": obj, "name": name, "object_state": "slid", "obj_lifted_frac": 0.0, "hands": "right",
          "duration_s": 2.0, "obj_tilt_max_deg": 1.0, "obj_yaw_maxabs_deg": 2.0, "frac_body": 0.0,
          "contact_surface_dist_median_m": 0.03, "push_alignment": 0.95, "normal_spread_p90_deg": 3.0,
-         "patch_coherence_median": 0.95, "normal_tilt_median_deg": 5.0, "obj_disp_xy_m": 0.3,
+         "patch_coherence_median": 0.95, "hands_face_angle_deg": 0.0, "normal_tilt_median_deg": 5.0, "obj_disp_xy_m": 0.3,
          "approach_angle_deg": 10.0, "retreat_angle_deg": 12.0}
     r.update(kw)
     r["passed"] = not cd.failed(r, cd.SEGMENT_CRITERIA + cd.PUSH_CRITERIA)
@@ -26,8 +26,10 @@ def _row(name="sub1_largebox_001", obj="largebox", ds="omomo_new", **kw):
 
 
 def test_failed_lists_every_criterion_and_nan_fails():
-    r = _row(hands="both", push_alignment=float("nan"), obj_tilt_max_deg=12.0)
-    assert cd.failed(r) == ["right_hand", "small_tilt"]
+    r = _row(hands="mixed", push_alignment=float("nan"), obj_tilt_max_deg=12.0)
+    assert cd.failed(r) == ["one_mode", "small_tilt"]
+    assert cd.failed(_row(hands="both")) == [] and cd.failed(_row(hands="left")) == []
+    assert cd.failed(_row(hands_face_angle_deg=170.0), cd.PUSH_CRITERIA) == ["same_face"]
     assert cd.failed(r, cd.PUSH_CRITERIA) == ["push"]
     assert "on_surface" in cd.failed({k: v for k, v in r.items() if k != "contact_surface_dist_median_m"},
                                      cd.PUSH_CRITERIA)
@@ -48,7 +50,7 @@ def test_select_ranks_and_caps():
         _row("a4", duration_s=4.0),                                            # A, but third of the object
         _row("b1", obj="box_huge", ds="force", retreat_angle_deg=60.0),        # C
         _row("b2", obj="box_huge", ds="force", normal_tilt_median_deg=60.0),   # A, top face
-        _row("b3", obj="box_huge", ds="force", hands="left"),                  # fails
+        _row("b3", obj="box_huge", ds="force", hands="mixed"),                 # fails
     ]
     rows.append(dict(rows[2], seg=1))                                          # same clip twice
     out = cd.select(rows, top=10, per_object=2)
@@ -58,29 +60,29 @@ def test_select_ranks_and_caps():
 
 
 def test_funnel_counts_in_order():
-    rows = [_row(), _row(hands="left"), _row(object_state="lifted"), _row(push_alignment=-0.9)]
+    rows = [_row(), _row(hands="mixed"), _row(object_state="lifted"), _row(push_alignment=-0.9)]
     f = dict(cd.funnel(rows))
-    assert f["all segments"] == 4 and f["slid"] == 3 and f["right_hand"] == 2 and f["push"] == 1
+    assert f["all segments"] == 4 and f["slid"] == 3 and f["one_mode"] == 2 and f["push"] == 1
     assert f["flat_patch"] == 1
     names = [n for n, *_ in cd.SEGMENT_CRITERIA + cd.PUSH_CRITERIA]
     assert [n for n, _ in cd.funnel(rows)][1:] == names
 
 
 @needs_mesh
-@pytest.mark.parametrize("face", ["side", "top"])
-def test_candidate_sheet_and_gallery(tmp_path, face):
+@pytest.mark.parametrize("face,hands", [("side", "R"), ("top", "R"), ("side", "B")])
+def test_candidate_sheet_and_gallery(tmp_path, face, hands):
     from synthetic_hoi import make_clip
 
     from h2d.common.data.describe import describe_clip, push_descriptors
     from h2d.common.viz_hoi import candidate_figure, gallery
 
-    c = make_clip(push_face=face)
+    c = make_clip(push_face=face, push_hands=hands)
     seg = describe_clip(c, BOX)["segments"][0]
-    r = {"dataset": "omomo_new", **seg, **push_descriptors(c, BOX, (seg["start"], seg["end"]), "R")}
+    r = {"dataset": "omomo_new", **seg, "mode": hands, **push_descriptors(c, BOX, (seg["start"], seg["end"]), hands)}
     r["passed"] = not cd.failed(r, cd.SEGMENT_CRITERIA + cd.PUSH_CRITERIA)
     assert r["passed"], cd.failed(r, cd.SEGMENT_CRITERIA + cd.PUSH_CRITERIA)
     (cand,) = cd.select([r])
     assert cand["tier"] == "A" and not math.isnan(cand["approach_angle_deg"])
-    candidate_figure(c, BOX, cand, tmp_path / "c.png")
+    candidate_figure(c, BOX, cand, tmp_path / "c.png", side=hands)
     gallery([(c, BOX, cand)], tmp_path / "g.png")
     assert (tmp_path / "c.png").stat().st_size > 20_000 and (tmp_path / "g.png").stat().st_size > 5_000

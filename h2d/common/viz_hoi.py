@@ -240,7 +240,7 @@ def candidate_figure(clip: Clip, obj: ObjectMesh, cand: dict, path: Path, side: 
     a.plot(cen[seg, 0], cen[seg, 1], color=C_LEFT, lw=2.0, label="object centre")
     a.plot(pel[:, 0], pel[:, 1], color=C_INK, lw=0.8, ls="--", label="human root (window)")
     a.plot(palm[:, 0], palm[:, 1], color=C_RIGHT, lw=0.8, ls=":")
-    a.plot(palm[seg, 0], palm[seg, 1], color=C_RIGHT, lw=2.0, label=f"{'right' if side == 'R' else 'left'} palm")
+    a.plot(palm[seg, 0], palm[seg, 1], color=C_RIGHT, lw=2.0, label={"R": "right palm", "L": "left palm", "B": "palm midpoint"}[side])
     nw0 = R.from_quat(clip.obj_rot_xyzw[s]).apply(n_loc)
     c0 = contact_point(clip, side, slice(s, s + 1))[0]
     a.annotate("", xy=(c0[0] - 0.25 * nw0[0], c0[1] - 0.25 * nw0[1]), xytext=(c0[0], c0[1]),
@@ -293,7 +293,12 @@ def candidate_figure(clip: Clip, obj: ObjectMesh, cand: dict, path: Path, side: 
 
         a.plot(*f(pa), color=C_RIGHT, lw=1.2, ls=":", label="palm, approach")
         a.plot(*f(pr), color=C_FOURTH, lw=1.2, ls=":", label="palm, retreat")
-        sc = a.scatter(*f(cp), s=6, c=np.arange(len(cp)) / fps, cmap="viridis", linewidths=0, label="contact proxy")
+        if side == "B":                                   # the two hands behind the midpoint
+            for hs, col, lab in (("L", C_LEFT, "left hand"), ("R", C_RIGHT, "right hand")):
+                a.scatter(*f(to_s(contact_point(clip, hs, slice(s, e)), np.arange(s, e))), s=3, c=col, alpha=0.5,
+                          linewidths=0, label=lab)
+        sc = a.scatter(*f(cp), s=6, c=np.arange(len(cp)) / fps, cmap="viridis", linewidths=0,
+                       label="contact proxy" if side != "B" else "midpoint (virtual hand)")
         if j == 1:
             x0, y0 = f(cp[:1])
             a.annotate("", xy=(x0[0] + 0.25 * nw0 @ ax_u, y0[0] + 0.25 * nw0 @ ax_v), xytext=(x0[0], y0[0]),
@@ -310,13 +315,15 @@ def candidate_figure(clip: Clip, obj: ObjectMesh, cand: dict, path: Path, side: 
     a = fig.add_subplot(g1[0, 3])
     a.axis("off")
     rows = [
-        ("tier", cand.get("tier", "")), ("segment", f"{s / fps:.2f}–{e / fps:.2f} s ({cand['duration_s']:.1f} s)"),
+        ("tier / hand", f"{cand.get('tier', '')} / " + {"R": "right", "L": "left", "B": "both (midpoint)"}[side]),
+        ("segment", f"{s / fps:.2f}–{e / fps:.2f} s ({cand['duration_s']:.1f} s)"),
         ("object moves", f"{_fmt(cand['obj_disp_xy_m'], 2, ' m')} (path {_fmt(cand['obj_path_xy_m'], 2, ' m')})"),
         ("tilt / yaw", f"{_fmt(cand['obj_tilt_max_deg'])}° / {_fmt(cand['obj_yaw_maxabs_deg'])}°"),
         ("push alignment", _fmt(cand.get("push_alignment"), 2)),
         ("normal spread p90", f"{_fmt(cand.get('normal_spread_p90_deg'))}°"),
         ("face tilt from vertical", f"{_fmt(cand.get('normal_tilt_median_deg'))}°"),
         ("patch coherence", _fmt(cand.get("patch_coherence_median"), 2)),
+        *([("faces under the hands", f"{_fmt(cand.get('hands_face_angle_deg'))}° apart")] if side == "B" else []),
         ("approach / retreat angle", f"{_fmt(cand.get('approach_angle_deg'))}° / {_fmt(cand.get('retreat_angle_deg'))}°"),
         ("contact height", _fmt(cand.get("contact_z_median_m"), 2, " m")),
         ("proxy to surface", _fmt(cand.get("contact_surface_dist_median_m"), 3, " m")),
@@ -375,7 +382,7 @@ def gallery(items: list[tuple[Clip, ObjectMesh, dict]], path: Path, ncols: int =
         s, e = int(c["start"]), int(c["end"])
         k = (s + e - 1) // 2
         draw_frame(ax, clip, obj, k, _subsample(obj, 1500), _limits(clip, obj, np.arange(s, e)),
-                   f"#{c['rank']} · tier {c['tier']} · {c['dataset']} · {c['object']}\n{clip.name}  "
+                   f"#{c['rank']} · tier {c['tier']} · {c.get('mode', '')} · {c['dataset']} · {c['object']}\n{clip.name}  "
                    f"{s / clip.fps:.1f}–{e / clip.fps:.1f} s")
     fig.tight_layout()
     fig.savefig(path, dpi=72)

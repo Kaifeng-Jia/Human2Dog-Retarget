@@ -223,21 +223,36 @@ def describe_clip(clip: Clip, obj: ObjectMesh, p: dict = DEFAULTS, mesh_check_fr
 
 # ------------------------------------------------------------------------------ push descriptors
 PALM = ("Wrist", "Index1", "Middle1", "Pinky1", "Ring1")
+# Virtual hand (spec v0.6 §5.1): "L" / "R" = that hand; "B" = both hands on the same face, midpoint of the two.
+MODE_OF_HANDS = {"left": "L", "right": "R", "both": "B"}
 
 
 def palm_point(clip: Clip, side: str, frames) -> np.ndarray:
-    """Palm centre (n, 3): mean of the wrist and the four finger base bodies."""
+    """Palm centre (n, 3): mean of the wrist and the four finger base bodies; for "B" the midpoint of both palms."""
+    if side == "B":
+        return 0.5 * (palm_point(clip, "L", frames) + palm_point(clip, "R", frames))
     return clip.body_pos[frames][:, [BODY_INDEX[f"{side}_{n}"] for n in PALM]].mean(1)
 
 
-def contact_point(clip: Clip, side: str, frames: slice) -> np.ndarray:
-    """Per-frame hand contact proxy (n, 3): mean of the hand's flagged bodies, else the palm centre."""
+def _hand_proxy(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:
     idx = HAND_BODIES[side]
     pos = clip.body_pos[frames][:, idx]
     fl = (clip.contact_body[frames][:, idx] == 1).astype(float)
-    palm = palm_point(clip, side, frames)
     k = fl.sum(1, keepdims=True)
-    return np.where(k > 0, (pos * fl[..., None]).sum(1) / np.maximum(k, 1), palm)
+    return np.where(k > 0, (pos * fl[..., None]).sum(1) / np.maximum(k, 1), palm_point(clip, side, frames)), k[:, 0] > 0
+
+
+def contact_point(clip: Clip, side: str, frames) -> np.ndarray:
+    """Per-frame contact proxy (n, 3) of the virtual hand: for "L" / "R" the mean of that hand's flagged bodies,
+    else its palm centre; for "B" the midpoint of the two hands' proxies where both touch, the touching hand's
+    proxy where one does, the palm midpoint where none does."""
+    if side != "B":
+        return _hand_proxy(clip, side, frames)[0]
+    (pl, fl), (pr, fr) = _hand_proxy(clip, "L", frames), _hand_proxy(clip, "R", frames)
+    out = 0.5 * (pl + pr)
+    out[fl & ~fr] = pl[fl & ~fr]
+    out[fr & ~fl] = pr[fr & ~fl]
+    return out
 
 
 def alignment_series(clip: Clip, obj: ObjectMesh, frames: slice, side: str, min_speed: float = 0.05) -> np.ndarray:
@@ -258,14 +273,17 @@ def alignment_series(clip: Clip, obj: ObjectMesh, frames: slice, side: str, min_
 
 def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: str, min_speed: float = 0.05,
                      path_m: float = 0.10, search_s: float = 2.0, patch_m: float = 0.03) -> dict:
-    """How one hand moves the object in a segment: push vs pull, which face, how the hand came in.
+    """How the virtual hand (``side`` "L", "R" or "B", see ``contact_point``) moves the object in a segment: push vs
+    pull, which face, how the hand came in.
 
     * ``push_alignment``: mean of ``alignment_series`` over the segment frames where the object moves faster than
       ``min_speed`` (``moving_frac`` of the segment).
     * ``normal_*``: normal of the surface patch (radius ``patch_m``) under the contact proxy, pointing to the
       hand (``ObjectMesh.patch_normals``); ``normal_local`` = its segment mean in the object frame, spread of
       the per-frame normals around it (one face or several), tilt of the mean from the horizontal (0 = vertical
-      face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner).
+      face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner);
+      ``hands_face_angle_deg``: for "B", median angle between the patch normals under the two hands while both
+      touch (0 = same face, 180 = opposite faces, i.e. squeezing); 0 for one hand.
       ``contact_surface_dist_*``: distance of the contact proxy to the surface (body positions are joint
       centres, so a few cm is normal; tens of cm means the proxy is not on the object).
     * ``approach_*`` / ``retreat_*``: the last ``path_m`` of palm path before first contact and the first
@@ -284,13 +302,25 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
     n_mean = n_loc.mean(0)
     n_mean /= max(np.linalg.norm(n_mean), 1e-9)
     spread = np.degrees(np.arccos(np.clip(n_loc @ n_mean, -1, 1)))
+    faces_deg = 0.0                                    # one hand: one face by definition
+    if side == "B":                                    # angle between the faces under the two hands, both touching
+        (pl, fl), (pr, fr) = _hand_proxy(clip, "L", sl), _hand_proxy(clip, "R", sl)
+        both = np.flatnonzero(fl & fr)
+        if both.size:
+            nl = obj.patch_normals(obj.to_local(pl[both, None], clip.obj_pos[sl][both], clip.obj_rot_xyzw[sl][both])[:, 0],
+                                   patch_m)[2]
+            nr = obj.patch_normals(obj.to_local(pr[both, None], clip.obj_pos[sl][both], clip.obj_rot_xyzw[sl][both])[:, 0],
+                                   patch_m)[2]
+            faces_deg = float(np.median(np.degrees(np.arccos(np.clip(np.sum(nl * nr, 1), -1, 1)))))
+        else:
+            faces_deg = float("nan")
     n_world = R.from_quat(clip.obj_rot_xyzw[sl]).apply(n_mean)
     tilt = np.degrees(np.arcsin(np.clip(np.abs(n_world[:, 2]), 0, 1)))
     out = {
         "push_alignment": float(np.mean(cosv[mov])) if mov.any() else float("nan"), "moving_frac": float(mov.mean()),
         "normal_spread_median_deg": float(np.median(spread)), "normal_spread_p90_deg": float(np.percentile(spread, 90)),
         "normal_tilt_median_deg": float(np.median(tilt)), "normal_local": n_mean.tolist(),
-        "patch_coherence_median": float(np.median(coh)),
+        "patch_coherence_median": float(np.median(coh)), "hands_face_angle_deg": faces_deg,
         "contact_surface_dist_median_m": float(np.median(dist)), "contact_surface_dist_max_m": float(dist.max()),
         "approach_available_s": s / fps, "retreat_available_s": (clip.n - e) / fps,
     }

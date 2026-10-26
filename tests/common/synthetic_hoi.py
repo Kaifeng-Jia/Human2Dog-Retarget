@@ -1,6 +1,6 @@
 """A synthetic OMOMO_new-layout clip with a real object mesh (largebox), for tests and dry runs.
 
-Timeline (30 fps, 240 frames): stand; right hand moves 0.25 m straight in along +x (0.5-1 s) and pushes the
+Timeline (30 fps, 240 frames, default arguments): stand; right hand moves 0.25 m straight in along +x (0.5-1 s) and pushes the
 box 0.3 m along +x (1-3 s); release and 0.25 m straight out along -x (3-3.5 s); both hands lift the box 0.3 m and the human walks 1 m along +x carrying it (4-6.5 s); set down.
 Human faces +x, left = +y. The box is yawed so that its faces are perpendicular to the world axes (the mesh's
 local frame is turned ~30 deg against its faces). Contact bodies are placed 12 mm outside the surface (near the
@@ -66,9 +66,12 @@ def hand_offsets(side: str) -> np.ndarray:
 
 
 def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bool = True,
-               push_face: str = "side") -> np.ndarray:
+               push_face: str = "side", push_hands: str = "R") -> np.ndarray:
     """``push_face``: "side" = palm on the -x face, in and out along x; "top" = palm on the top face 10 cm from
-    its -x edge (pushing by friction, as many OMOMO_new low-box pushes do), in and out along z."""
+    its -x edge (pushing by friction, as many OMOMO_new low-box pushes do), in and out along z.
+    ``push_hands``: "R" = right hand; "B" = both hands on that face, 8 cm left and right of the middle;
+    "squeeze" = left hand on the +y face, right hand on the -y face (opposite faces), each in and out along its
+    normal."""
     t = np.arange(T) / 30.0
     a = np.zeros((T + 1, om.DIM), np.float32)            # + an all-zero first frame, as in the dataset
     pose = standing_pose()
@@ -83,26 +86,35 @@ def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bo
     flags = np.zeros((T, 52))
     rpush = (t >= 1.0) & (t < 3.0) & push
     lift = (t >= 4.0) & (t < 6.5) & carry
-    rh = om.HAND_BODIES["R"]
     if push_face == "side":
         d_out, shift = np.array([-1.0, 0, 0]), np.zeros(3)
     else:
         top = face_point(q.inv().apply([0, 0, 1]), obj)
         edge = q.apply(face_point(q.inv().apply([-1, 0, 0]), obj))[0]
         d_out, shift = np.array([0, 0, 1.0]), np.array([edge + 0.10 - q.apply(top)[0], 0, 0])
-    on_face = lambda i: (box[i] + q.apply(face_point(q.inv().apply(d_out), obj)) + shift  # noqa: E731
-                         + 0.012 * d_out)
-    hand = lambda p: p + hand_offsets("R") * np.array([1, 1, -1]) * 0.8              # noqa: E731
-    for i in np.flatnonzero(rpush):
-        # palm on the chosen face
-        body[i, rh] = hand(on_face(i))
-        flags[i, rh[:4]] = 1
-    if push:                                     # straight in along the inward normal, straight out after
-        i0, i1 = int(np.flatnonzero(rpush)[0]), int(np.flatnonzero(rpush)[-1])
-        for i in np.flatnonzero((t >= 0.5) & (t < 1.0)):
-            body[i, rh] = hand(on_face(i0) + d_out * 0.25 * (i0 - i) / 15)
-        for i in np.flatnonzero((t >= 3.0) & (t < 4.0)):
-            body[i, rh] = hand(on_face(i1) + d_out * 0.25 * min(1.0, (i - i1) / 15))
+    if push_hands == "squeeze":
+        places = [("L", np.array([0, 1.0, 0]), np.zeros(3)), ("R", np.array([0, -1.0, 0]), np.zeros(3))]
+    else:
+        lat = {"R": [("R", 0.0)], "B": [("L", 0.08), ("R", -0.08)]}[push_hands]
+        places = [(side, d_out, shift + [0, dy, 0]) for side, dy in lat]
+    for side, dd, sh in places:
+        idx = om.HAND_BODIES[side]
+
+        def on_face(i, dd=dd, sh=sh):
+            return box[i] + q.apply(face_point(q.inv().apply(dd), obj)) + sh + 0.012 * dd
+
+        def hand(p, side=side):
+            return p + hand_offsets(side) * np.array([1, 1, -1]) * 0.8
+
+        for i in np.flatnonzero(rpush):          # palm on the chosen face
+            body[i, idx] = hand(on_face(i))
+            flags[i, idx[:4]] = 1
+        if push:                                 # straight in along the inward normal, straight out after
+            i0, i1 = int(np.flatnonzero(rpush)[0]), int(np.flatnonzero(rpush)[-1])
+            for i in np.flatnonzero((t >= 0.5) & (t < 1.0)):
+                body[i, idx] = hand(on_face(i0) + dd * 0.25 * (i0 - i) / 15)
+            for i in np.flatnonzero((t >= 3.0) & (t < 4.0)):
+                body[i, idx] = hand(on_face(i1) + dd * 0.25 * min(1.0, (i - i1) / 15))
     for i in np.flatnonzero(lift):
         for side, y in (("L", 1), ("R", -1)):
             idx = om.HAND_BODIES[side]

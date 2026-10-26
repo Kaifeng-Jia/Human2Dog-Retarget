@@ -114,3 +114,26 @@ def test_push_descriptors_top_face():
     # the hand goes straight down and up in the world; the mesh's top is ~9 deg off level in this test world
     off = 90.0 - d["normal_tilt_median_deg"]
     assert abs(d["approach_angle_deg"] - off) < 1 and abs(d["retreat_angle_deg"] - off) < 1
+
+
+@needs_mesh
+def test_virtual_hand_both_same_face_and_squeeze():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import contact_point, push_descriptors
+
+    c = make_clip(push_hands="B")
+    seg = describe_clip(c, BOX)["segments"][0]
+    assert seg["hands"] == "both" and seg["object_state"] == "slid"
+    s, e = seg["start"], seg["end"]
+    mid = contact_point(c, "B", slice(s, e))
+    assert np.allclose(mid, 0.5 * (contact_point(c, "L", slice(s, e)) + contact_point(c, "R", slice(s, e))))
+    d = push_descriptors(c, BOX, (s, e), "B")
+    assert d["hands_face_angle_deg"] < 5 and d["push_alignment"] > 0.9 and d["normal_tilt_median_deg"] < 5
+    assert d["approach_angle_deg"] < 3 and d["contact_surface_dist_median_m"] < 0.05     # midpoint lies on the face
+    assert push_descriptors(c, BOX, (s, e), "R")["hands_face_angle_deg"] == 0.0         # one hand: one face
+
+    sq = make_clip(push_hands="squeeze")
+    seg = describe_clip(sq, BOX)["segments"][0]
+    d = push_descriptors(sq, BOX, (seg["start"], seg["end"]), "B")
+    assert d["hands_face_angle_deg"] > 150                                              # opposite faces

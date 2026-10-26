@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-"""Propose push candidates for the first reachability diagnostic (spec learned v0.5 §7.1 step 1).
+"""Propose push candidates for the first reachability diagnostic (spec learned v0.6 §7.1 step 1).
 
 For every clip of the chosen datasets: hand-contact segments (``describe_clip``), the segment criteria, and for
-the segments that pass them the push descriptors (push vs pull, contact face and its normal, approach and
-retreat direction; ``push_descriptors``) and the push criteria (``h2d/common/data/candidates.py``). The
-passing segments are ranked and at most ``--top`` are proposed. Three are then confirmed by hand.
+the segments that pass them the push descriptors of the segment's virtual hand (one hand, or both hands: the
+midpoint; spec v0.6 §5.1): push vs pull, contact face and its normal, approach and retreat direction
+(``push_descriptors``) and the push criteria (``h2d/common/data/candidates.py``). The
+passing segments are ranked and at most ``--top`` are proposed, then confirmed by hand.
 
 Checks: all files processed; at least 3 candidates; the contact proxy lies on the object surface for the
 segments that reach the push criteria (median <= 8 cm, a convention check like the profile's); FORCE data at
@@ -27,26 +28,26 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data import candidates as cd  # noqa: E402
-from h2d.common.data.describe import DEFAULTS, describe_clip, push_descriptors  # noqa: E402
+from h2d.common.data.describe import DEFAULTS, MODE_OF_HANDS, describe_clip, push_descriptors  # noqa: E402
 from h2d.common.data.sources import SOURCES  # noqa: E402
 from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.common.tables import clean, nanmed, write_csv  # noqa: E402
 from h2d.common.viz_hoi import candidate_figure, example_video, gallery  # noqa: E402
 from h2d.paths import data_path  # noqa: E402
 
-SIDE = "R"
 MIN_CANDIDATES = 3
 CHECK_ON_SURFACE_M = 0.08
 POOL_COLS = ["dataset", "object", "name", "subject", "seg", "start", "end", "start_s", "duration_s", "hands",
-             "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
+             "mode", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "contact_z_median_m", "root_disp_xy_m",
              "push_alignment", "moving_frac", "normal_spread_p90_deg", "normal_tilt_median_deg",
-             "patch_coherence_median", "contact_surface_dist_median_m", "approach_angle_deg", "approach_time_s",
+             "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "approach_angle_deg",
+             "approach_time_s",
              "retreat_angle_deg", "retreat_time_s", "approach_available_s", "retreat_available_s",
              "ann_hands", "ann_dir", "ann_weight_kg"]
-CAND_COLS = ["rank", "tier"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
-             "normal_spread_p90_deg", "normal_tilt_median_deg", "patch_coherence_median", "approach_angle_deg",
-             "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "contact_surface_dist_median_m",
+CAND_COLS = ["rank", "tier", "mode"] + POOL_COLS[:4] + ["start_s", "duration_s", "obj_disp_xy_m", "push_alignment",
+             "normal_spread_p90_deg", "normal_tilt_median_deg", "patch_coherence_median", "hands_face_angle_deg",
+             "approach_angle_deg", "retreat_angle_deg", "approach_available_s", "contact_z_median_m", "contact_surface_dist_median_m",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "root_disp_xy_m", "human", "obj_size_m",
              "normal_local", "start", "end", "ann_hands", "ann_dir", "ann_weight_kg"]
 
@@ -58,7 +59,7 @@ def main() -> int:
     ap.add_argument("--omomo-root", default=None)
     ap.add_argument("--force-root", default=None)
     ap.add_argument("--smplh-root", default=None, help="FORCE: folder with SMPLH_{male,female}.pkl")
-    ap.add_argument("--top", type=int, default=12)
+    ap.add_argument("--top", type=int, default=16)
     ap.add_argument("--per-object", type=int, default=2)
     ap.add_argument("--limit", type=int, default=0, help="only the first N files per dataset (debug)")
     ap.add_argument("--objects", nargs="*", default=None, help="only these objects (debug)")
@@ -95,7 +96,8 @@ def main() -> int:
                          "obj_size_m": size, "file": f.name}
                     fail = cd.failed(r, cd.SEGMENT_CRITERIA)
                     if not fail:
-                        r.update(push_descriptors(c, mesh, (r["start"], r["end"]), SIDE))
+                        r["mode"] = MODE_OF_HANDS[r["hands"]]
+                        r.update(push_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
                         fail = cd.failed(r, cd.PUSH_CRITERIA)
                     r["failed"] = ";".join(fail)
                     r["passed"] = not fail
@@ -130,9 +132,9 @@ def main() -> int:
         clip, mesh, _ = src.load(f)
         c["file_sha256_16"] = hashlib.sha256(f.read_bytes()).hexdigest()[:16]
         stem = f"{c['rank']:02d}_{clip.name}"
-        title = (f"#{c['rank']} tier {c['tier']}  ·  {c['dataset']} / {c['object']}  ·  {clip.name}  ·  "
+        title = (f"#{c['rank']} tier {c['tier']} · hand {c['mode']}  ·  {c['dataset']} / {c['object']}  ·  {clip.name}  ·  "
                  f"segment {c['start_s']:.2f}–{c['start_s'] + c['duration_s']:.2f} s")
-        candidate_figure(clip, mesh, c, out / "candidates" / f"{stem}.png", side=SIDE, title=title)
+        candidate_figure(clip, mesh, c, out / "candidates" / f"{stem}.png", side=c["mode"], title=title)
         c["figure"] = f"candidates/{stem}.png"
         if args.videos:
             (out / "videos").mkdir(exist_ok=True)
@@ -162,13 +164,14 @@ def main() -> int:
                                        "pinned": versions["force"]["force_commit_pinned"]}
     passed = all(v["pass"] for v in checks.values())
     summary = {
-        "provenance": prov, "datasets": args.datasets, "data_versions": versions, "side": SIDE,
+        "provenance": prov, "datasets": args.datasets, "data_versions": versions,
         "n_files": {ds: len(files[ds]) for ds in args.datasets}, "n_segments": dict(n_segs),
         "n_slid_segments": len(slid), "errors": errors[:50], "segment_params": DEFAULTS,
         "criteria": cd.criteria_table(), "ranking": {"near_normal_deg": cd.NEAR_NORMAL_DEG,
                                                      "vertical_face_deg": cd.VERTICAL_FACE_DEG,
                                                      "top": args.top, "per_object": args.per_object},
         "funnel": {ds: dict(f) for ds, f in funnels.items()}, "by_object": by_object,
+        "passed_by_mode": dict(Counter(f"{r['dataset']}/{r['mode']}" for r in pool if r["passed"])),
         "checks": checks, "pass": passed,
         "candidates": [{k: c.get(k) for k in CAND_COLS + ["figure", "file", "file_sha256_16"]} for c in chosen],
         "elapsed_s": time.time() - t0,
@@ -179,7 +182,7 @@ def main() -> int:
         return "–" if v is None or math.isnan(v) else f"{v:.{nd}f}"
 
     lines = [
-        "# Push candidates (spec learned v0.5 §7.1 step 1)", "",
+        "# Push candidates (spec learned v0.6 §7.1 step 1)", "",
         f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
         + " · ".join(f"{ds} {len(files[ds])} files, {n_segs[ds]} segments" for ds in args.datasets)
         + f" · {len(errors)} errors · {summary['elapsed_s'] / 60:.1f} min", "",
@@ -197,12 +200,14 @@ def main() -> int:
               "normal; B = within, but one is not observable; C = sideways), then a vertical face "
               f"(tilt ≤ {cd.VERTICAL_FACE_DEG:.0f}°), then duration × displacement; at most {args.per_object} "
               "per object, one per clip.", "",
-              "## Candidates", "", "![gallery](gallery.png)", "",
-              "| # | tier | dataset / object | clip | segment [s] | moves [m] | push | spread p90 [°] | face tilt [°] "
+              "Passing segments by virtual-hand mode (R = right hand, L = left hand, B = both hands on one face): "
+              + ", ".join(f"{m} {n}" for m, n in sorted(Counter(r["mode"] for r in pool if r["passed"]).items())),
+              "", "## Candidates", "", "![gallery](gallery.png)", "",
+              "| # | tier | mode | dataset / object | clip | segment [s] | moves [m] | push | spread p90 [°] | face tilt [°] "
               "| approach / retreat [°] | contact z [m] | figure |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for c in chosen:
-        lines.append(f"| {c['rank']} | {c['tier']} | {c['dataset']} / {c['object']} | {c['name']} | "
+        lines.append(f"| {c['rank']} | {c['tier']} | {c['mode']} | {c['dataset']} / {c['object']} | {c['name']} | "
                      f"{c['start_s']:.1f}–{c['start_s'] + c['duration_s']:.1f} | {f1(c['obj_disp_xy_m'], 2)} | "
                      f"{f1(c['push_alignment'], 2)} | {f1(c['normal_spread_p90_deg'])} | "
                      f"{f1(c['normal_tilt_median_deg'])} | {f1(c['approach_angle_deg'])} / "

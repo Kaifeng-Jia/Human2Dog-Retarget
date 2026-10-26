@@ -2,6 +2,18 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.1.5] — unreleased
+
+### Changed (method: spec learned v0.6)
+- Virtual hand restored (Kevin; it was in the first method draft and narrowed to "right hand only" in v0.5):
+  one hand (left or right) uses that hand; both hands on the same face use the midpoint of the two contacts;
+  squeezing (opposite faces) and hand switching are excluded. Spec `docs/spec/learned/v0.6_zh.md` (Codex review
+  pending); approach direction no longer required, it only ranks (no near-normal right-hand push in R005).
+- `describe.contact_point` / `palm_point` take side "B"; `push_descriptors` reports `hands_face_angle_deg`.
+- Candidates: `right_hand` -> `one_mode` (left / right / both), new push criterion `same_face`; mode shown in the
+  tables, sheets (both hands drawn behind the midpoint) and gallery; 16 candidates by default.
+- Test clip: `push_hands` = R / B (both on one face) / squeeze (opposite faces).
+
 ## [0.1.4] — unreleased
 
 ### Added
