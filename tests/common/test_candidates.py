@@ -125,3 +125,11 @@ def test_pull_and_grasp_criteria():
     press["contact_shape_ok"] = cd.contact_shape_ok(press)
     assert "contact_shape" in cd.failed(press, push)                 # a press still needs one flat face
     assert cd.interaction_of(_row(push_alignment=0.2)) == ""
+
+
+def test_robot_grip_from_interaction_and_face():
+    assert cd.robot_grip(_row(interaction="push", normal_tilt_median_deg=5.0)) == "press"
+    assert cd.robot_grip(_row(interaction="push", normal_tilt_median_deg=85.0)) == "press"
+    assert cd.robot_grip(_row(interaction="pull", normal_tilt_median_deg=85.0)) == "press"   # drag on the top
+    assert cd.robot_grip(_row(interaction="pull", normal_tilt_median_deg=5.0)) == "grasp"    # pull a side: hold it
+    assert cd.robot_grip(_row(interaction="pull", normal_tilt_median_deg=45.0)) == "grasp"

@@ -42,7 +42,7 @@ from h2d.paths import data_path  # noqa: E402
 MIN_CANDIDATES = 3
 CHECK_ON_SURFACE_M = 0.08
 POOL_COLS = ["dataset", "object", "name", "subject", "seg", "start", "end", "start_s", "duration_s", "hands",
-             "mode", "interaction", "grip", "grasp_frac", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
+             "mode", "interaction", "grip", "human_grip", "grasp_frac", "face", "object_state", "human", "passed", "failed", "obj_disp_xy_m", "obj_path_xy_m", "obj_lifted_frac",
              "obj_tilt_max_deg", "obj_yaw_maxabs_deg", "frac_body", "contact_z_median_m", "root_disp_xy_m",
              "push_alignment", "moving_frac", "normal_spread_p90_deg", "normal_tilt_median_deg",
              "patch_coherence_median", "hands_face_angle_deg", "contact_surface_dist_median_m", "face_z_min_m",
@@ -107,10 +107,12 @@ def main() -> int:
                     if not fail:
                         r["mode"] = MODE_OF_HANDS[r["hands"]]
                         r.update(push_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
-                        r.update(grip_descriptors(c, mesh, (r["start"], r["end"]), r["mode"]))
+                        hg = grip_descriptors(c, mesh, (r["start"], r["end"]), r["mode"])
+                        r["human_grip"], r["grasp_frac"] = hg["grip"], hg["grasp_frac"]   # informational only
                         r["interaction"] = cd.interaction_of(r)
-                        r["contact_shape_ok"] = cd.contact_shape_ok(r)
                         r["face"] = cd.face_of(r.get("normal_tilt_median_deg"))
+                        r["grip"] = cd.robot_grip(r)
+                        r["contact_shape_ok"] = cd.contact_shape_ok(r)
                         if sel.get("reach_band"):
                             r["robot_contact_z_m"] = cd.adapted_height(r, sel["reach_band"])
                             r["in_reach_band"] = not math.isnan(r["robot_contact_z_m"])

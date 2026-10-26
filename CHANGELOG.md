@@ -22,6 +22,14 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   longer turns every problem into `coordinate_or_tool_offset_error`; it is a note. IK is regularised towards the
   previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
 
+### Changed (found in R012)
+- Robot grip from the interaction and the face, not from the human's fingers: OMOMO_new carries a fixed hand shape
+  (finger motion 0.0 mm), and its thumb / finger contacts marked every R012 candidate a grasp. Push, and pull on a
+  top face (drag): press with the closed gripper; pull on a side / slant face: grasp. The finger-based label stays
+  as `human_grip` (information only).
+- D0 chain: one small figure per clip (`figures/<clip>.png`; the joint figure of 19 clips exceeded 1 MB); wrist
+  convention tolerance 0.10 m (a large subject reached 8.3 cm with the mean shape; convention errors are tens of cm).
+
 ### Added
 - Pulls (Kevin): `interactions: [push, pull]` in `configs/candidate_selection.yaml`; `describe.grip_descriptors`
   (grasp = thumb and fingers on opposite-facing patches, else press), `finger_motion_std_m` (is there real finger

@@ -97,6 +97,15 @@ def interaction_of(row: dict, thr: float = 0.7) -> str:
     return "push" if a >= thr else "pull" if a <= -thr else ""
 
 
+def robot_grip(row: dict) -> str:
+    """How the robot must hold the object, from the interaction and the face (R012: OMOMO_new has a fixed hand shape,
+    so thumb / finger contacts cannot tell a grasp from a press): a push, and a pull on a top face (dragging by
+    friction), press with the closed gripper; a pull on a side or slant face needs a grasp (or a hook)."""
+    if row.get("interaction") == "pull" and face_of(row.get("normal_tilt_median_deg")) in ("side", "slant"):
+        return "grasp"
+    return "press"
+
+
 def contact_shape_ok(row: dict) -> bool:
     """A grasp wraps a handle or an edge (several normals by design); a press needs one flat face."""
     if row.get("grip") == "grasp":
