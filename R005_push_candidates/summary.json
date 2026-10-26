@@ -1,0 +1,706 @@
+{
+  "provenance": {
+    "run_id": "R005_push_candidates",
+    "started_utc": "2026-10-26T01:52:01+00:00",
+    "h2d_version": "0.1.4",
+    "git": {
+      "commit": "01985abfdc03ef8bd46ca09533718bcafe641a49",
+      "branch": "HEAD",
+      "describe": "v0.1.3-1-g01985ab",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "data.yaml": "f1b886e5ad6d93ee",
+      "external.yaml": "847b4b4bf499bd9e"
+    },
+    "command": "push_candidates.py --run-id R005_push_candidates --videos",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "datasets": [
+    "omomo_new",
+    "force"
+  ],
+  "data_versions": {
+    "omomo_new": {
+      "root": "/home/kevin/CS6758Project/data/omomo_new"
+    },
+    "force": {
+      "root": "/home/kevin/CS6758Project/data/force",
+      "force_commit": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_pinned": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_match": true,
+      "smplh_file": "SMPLH_male.pkl",
+      "smplh_bytes": 130422893,
+      "smplh_sha256_16": "996338a29346b4d4",
+      "smplh_joints": 52,
+      "smplh_vertices": 6890,
+      "src_fps_assumed": 60.0
+    }
+  },
+  "side": "R",
+  "n_files": {
+    "omomo_new": 4421,
+    "force": 398
+  },
+  "n_segments": {
+    "omomo_new": 4270,
+    "force": 696
+  },
+  "n_slid_segments": 1183,
+  "errors": [],
+  "segment_params": {
+    "min_run_s": 0.2,
+    "max_gap_s": 0.3,
+    "min_seg_s": 0.3,
+    "lift_m": 0.05,
+    "lift_frac": 0.3,
+    "tilt_deg": 15.0,
+    "slide_m": 0.1,
+    "yaw_deg": 20.0,
+    "walk_m": 0.5
+  },
+  "criteria": [
+    {
+      "name": "slid",
+      "key": "object_state",
+      "op": "==",
+      "value": "slid",
+      "meaning": "object slides on the floor (moves >= 0.10 m, not lifted or tilted)"
+    },
+    {
+      "name": "on_floor",
+      "key": "obj_lifted_frac",
+      "op": "<=",
+      "value": 0.1,
+      "meaning": "object lowest point > 5 cm in at most 10 % of the frames"
+    },
+    {
+      "name": "right_hand",
+      "key": "hands",
+      "op": "==",
+      "value": "right",
+      "meaning": "right hand only in >= 60 % of the contact frames"
+    },
+    {
+      "name": "long_enough",
+      "key": "duration_s",
+      "op": ">=",
+      "value": 1.0,
+      "meaning": "contact lasts at least 1 s"
+    },
+    {
+      "name": "small_tilt",
+      "key": "obj_tilt_max_deg",
+      "op": "<",
+      "value": 10.0,
+      "meaning": "object tilts less than 10 deg"
+    },
+    {
+      "name": "small_yaw",
+      "key": "obj_yaw_maxabs_deg",
+      "op": "<",
+      "value": 20.0,
+      "meaning": "object turns less than 20 deg about z"
+    },
+    {
+      "name": "hand_only",
+      "key": "frac_body",
+      "op": "<",
+      "value": 0.05,
+      "meaning": "other body parts touch in < 5 % of the frames"
+    },
+    {
+      "name": "on_surface",
+      "key": "contact_surface_dist_median_m",
+      "op": "<=",
+      "value": 0.08,
+      "meaning": "hand contact proxy within 8 cm of the surface"
+    },
+    {
+      "name": "push",
+      "key": "push_alignment",
+      "op": ">=",
+      "value": 0.7,
+      "meaning": "object moves away from the hand (cos >= 0.7; pull is negative)"
+    },
+    {
+      "name": "one_face",
+      "key": "normal_spread_p90_deg",
+      "op": "<=",
+      "value": 20.0,
+      "meaning": "contact stays on one face (normal spread p90 <= 20 deg)"
+    },
+    {
+      "name": "flat_patch",
+      "key": "patch_coherence_median",
+      "op": ">=",
+      "value": 0.8,
+      "meaning": "contact patch is flat (no edge / corner)"
+    }
+  ],
+  "ranking": {
+    "near_normal_deg": 30.0,
+    "vertical_face_deg": 30.0,
+    "top": 12,
+    "per_object": 2
+  },
+  "funnel": {
+    "omomo_new": {
+      "all segments": 4270,
+      "slid": 1037,
+      "on_floor": 1022,
+      "right_hand": 276,
+      "long_enough": 263,
+      "small_tilt": 236,
+      "small_yaw": 83,
+      "hand_only": 76,
+      "on_surface": 76,
+      "push": 51,
+      "one_face": 17,
+      "flat_patch": 10
+    },
+    "force": {
+      "all segments": 696,
+      "slid": 146,
+      "on_floor": 145,
+      "right_hand": 25,
+      "long_enough": 17,
+      "small_tilt": 16,
+      "small_yaw": 3,
+      "hand_only": 3,
+      "on_surface": 3,
+      "push": 2,
+      "one_face": 1,
+      "flat_patch": 1
+    }
+  },
+  "by_object": {
+    "omomo_new/clothesstand": {
+      "slid": 23,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 14,
+        "small_yaw": 4,
+        "on_floor": 2,
+        "push": 1
+      }
+    },
+    "omomo_new/floorlamp": {
+      "slid": 73,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 35,
+        "small_yaw": 17,
+        "on_floor": 7,
+        "push": 6
+      }
+    },
+    "omomo_new/largebox": {
+      "slid": 126,
+      "passed": 2,
+      "first_failure": {
+        "right_hand": 94,
+        "small_yaw": 17,
+        "one_face": 8,
+        "long_enough": 3
+      }
+    },
+    "omomo_new/largetable": {
+      "slid": 124,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 110,
+        "small_yaw": 7,
+        "small_tilt": 3,
+        "one_face": 2
+      }
+    },
+    "omomo_new/monitor": {
+      "slid": 7,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 4,
+        "small_yaw": 1,
+        "push": 1,
+        "small_tilt": 1
+      }
+    },
+    "omomo_new/plasticbox": {
+      "slid": 114,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 85,
+        "small_yaw": 12,
+        "one_face": 7,
+        "small_tilt": 5
+      }
+    },
+    "omomo_new/smallbox": {
+      "slid": 132,
+      "passed": 4,
+      "first_failure": {
+        "right_hand": 84,
+        "small_yaw": 29,
+        "one_face": 7,
+        "flat_patch": 6
+      }
+    },
+    "omomo_new/smalltable": {
+      "slid": 123,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 97,
+        "small_yaw": 16,
+        "push": 3,
+        "one_face": 2
+      }
+    },
+    "omomo_new/suitcase": {
+      "slid": 115,
+      "passed": 1,
+      "first_failure": {
+        "right_hand": 88,
+        "small_yaw": 14,
+        "one_face": 8,
+        "push": 3
+      }
+    },
+    "omomo_new/trashcan": {
+      "slid": 65,
+      "passed": 3,
+      "first_failure": {
+        "right_hand": 36,
+        "small_yaw": 14,
+        "push": 6,
+        "small_tilt": 6
+      }
+    },
+    "omomo_new/tripod": {
+      "slid": 7,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 4,
+        "on_floor": 2,
+        "long_enough": 1
+      }
+    },
+    "omomo_new/whitechair": {
+      "slid": 74,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 50,
+        "small_yaw": 20,
+        "small_tilt": 3,
+        "push": 1
+      }
+    },
+    "omomo_new/woodchair": {
+      "slid": 54,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 45,
+        "small_tilt": 3,
+        "long_enough": 2,
+        "on_floor": 2
+      }
+    },
+    "force/backpack": {
+      "slid": 3,
+      "passed": 1,
+      "first_failure": {
+        "small_tilt": 1,
+        "one_face": 1
+      }
+    },
+    "force/box_huge": {
+      "slid": 56,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 41,
+        "small_yaw": 9,
+        "long_enough": 5,
+        "push": 1
+      }
+    },
+    "force/chair": {
+      "slid": 86,
+      "passed": 0,
+      "first_failure": {
+        "right_hand": 79,
+        "small_yaw": 4,
+        "long_enough": 3
+      }
+    },
+    "force/plasticcontainer": {
+      "slid": 1,
+      "passed": 0,
+      "first_failure": {
+        "on_floor": 1
+      }
+    }
+  },
+  "checks": {
+    "all_files_processed": {
+      "pass": true,
+      "n_errors": 0
+    },
+    "enough_candidates": {
+      "pass": true,
+      "threshold": 3,
+      "n_candidates": 8,
+      "n_passing_segments": 11
+    },
+    "contact_proxy_on_surface": {
+      "pass": true,
+      "threshold_m": 0.08,
+      "median_m": 0.01616172099138997,
+      "n_segments": 79
+    },
+    "force_data_pinned": {
+      "pass": true,
+      "actual": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "pinned": "695c8b8616f0915dd61658862751e40ec658b81c"
+    }
+  },
+  "pass": true,
+  "candidates": [
+    {
+      "rank": 1,
+      "tier": "B",
+      "dataset": "omomo_new",
+      "object": "smallbox",
+      "name": "sub8_smallbox_052",
+      "subject": "sub8",
+      "start_s": 0.0,
+      "duration_s": 1.4666666666666666,
+      "obj_disp_xy_m": 1.5049801372652984,
+      "push_alignment": 0.993507221593668,
+      "normal_spread_p90_deg": 15.204149870383539,
+      "normal_tilt_median_deg": 83.34986785436368,
+      "patch_coherence_median": 0.9503665851101197,
+      "approach_angle_deg": null,
+      "retreat_angle_deg": 15.10157988346058,
+      "approach_available_s": 0.0,
+      "contact_z_median_m": 0.1810826063156128,
+      "contact_surface_dist_median_m": 0.036528523266334705,
+      "obj_tilt_max_deg": 1.7952070072134991,
+      "obj_yaw_maxabs_deg": 19.611201487203218,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.8867983780600167,
+      "human": "walk",
+      "obj_size_m": "0.44x0.38x0.24",
+      "normal_local": [
+        -0.07715069340380569,
+        0.1791349633723885,
+        0.9807947978068017
+      ],
+      "start": 0,
+      "end": 44,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/01_sub8_smallbox_052.png",
+      "file": "sub8_smallbox_052.pt",
+      "file_sha256_16": "e8e851d25db92b6b"
+    },
+    {
+      "rank": 2,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "trashcan",
+      "name": "sub6_trashcan_003",
+      "subject": "sub6",
+      "start_s": 0.8,
+      "duration_s": 4.533333333333333,
+      "obj_disp_xy_m": 2.227275804210302,
+      "push_alignment": 0.9375823461233639,
+      "normal_spread_p90_deg": 7.574144515247955,
+      "normal_tilt_median_deg": 4.75518629947853,
+      "patch_coherence_median": 0.970225892854492,
+      "approach_angle_deg": 74.33246376674273,
+      "retreat_angle_deg": 45.27940252708167,
+      "approach_available_s": 0.8,
+      "contact_z_median_m": 0.13736864924430847,
+      "contact_surface_dist_median_m": 0.036282241527492626,
+      "obj_tilt_max_deg": 1.1600368999129844,
+      "obj_yaw_maxabs_deg": 16.68837821990145,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 2.016151417287623,
+      "human": "walk",
+      "obj_size_m": "0.37x0.33x0.31",
+      "normal_local": [
+        -0.8862469933217653,
+        0.251093304858394,
+        -0.38925366932557076
+      ],
+      "start": 24,
+      "end": 160,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/02_sub6_trashcan_003.png",
+      "file": "sub6_trashcan_003.pt",
+      "file_sha256_16": "37b174f07624c5b0"
+    },
+    {
+      "rank": 3,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "trashcan",
+      "name": "sub6_trashcan_002",
+      "subject": "sub6",
+      "start_s": 1.1333333333333333,
+      "duration_s": 4.1,
+      "obj_disp_xy_m": 1.6015825686013743,
+      "push_alignment": 0.9943924385693377,
+      "normal_spread_p90_deg": 2.2181670771670388,
+      "normal_tilt_median_deg": 3.0168404212348516,
+      "patch_coherence_median": 0.996189417320662,
+      "approach_angle_deg": 72.38877726060541,
+      "retreat_angle_deg": 50.380849528240866,
+      "approach_available_s": 1.1333333333333333,
+      "contact_z_median_m": 0.12626932561397552,
+      "contact_surface_dist_median_m": 0.036721232009195304,
+      "obj_tilt_max_deg": 2.2856176934530814,
+      "obj_yaw_maxabs_deg": 19.29842798656758,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.5953398836134272,
+      "human": "walk",
+      "obj_size_m": "0.37x0.33x0.31",
+      "normal_local": [
+        0.7715228500150527,
+        -0.10662747692875121,
+        0.6272025773770856
+      ],
+      "start": 34,
+      "end": 157,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/03_sub6_trashcan_002.png",
+      "file": "sub6_trashcan_002.pt",
+      "file_sha256_16": "ec89a9782dd291e9"
+    },
+    {
+      "rank": 4,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "smallbox",
+      "name": "sub7_smallbox_041",
+      "subject": "sub7",
+      "start_s": 1.3666666666666667,
+      "duration_s": 2.6333333333333333,
+      "obj_disp_xy_m": 1.8325721486456512,
+      "push_alignment": 0.9558789944539101,
+      "normal_spread_p90_deg": 2.0166162845225895,
+      "normal_tilt_median_deg": 84.12567550438827,
+      "patch_coherence_median": 0.9908677523026537,
+      "approach_angle_deg": 30.846845637955838,
+      "retreat_angle_deg": 24.46377101988571,
+      "approach_available_s": 1.3666666666666667,
+      "contact_z_median_m": 0.1711355745792389,
+      "contact_surface_dist_median_m": 0.021209550737064948,
+      "obj_tilt_max_deg": 0.9351124085562743,
+      "obj_yaw_maxabs_deg": 13.007880682536506,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 2.0854740993505123,
+      "human": "walk",
+      "obj_size_m": "0.44x0.38x0.24",
+      "normal_local": [
+        -0.055214290035829845,
+        0.2120716950251143,
+        0.9756930758927287
+      ],
+      "start": 41,
+      "end": 120,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/04_sub7_smallbox_041.png",
+      "file": "sub7_smallbox_041.pt",
+      "file_sha256_16": "24e7d6ed5214bb4d"
+    },
+    {
+      "rank": 5,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "largebox",
+      "name": "sub12_largebox_065",
+      "subject": "sub12",
+      "start_s": 0.7666666666666667,
+      "duration_s": 5.1,
+      "obj_disp_xy_m": 0.94098341791364,
+      "push_alignment": 0.9396073614910819,
+      "normal_spread_p90_deg": 3.7983757435641237,
+      "normal_tilt_median_deg": 88.006665696563,
+      "patch_coherence_median": 0.9958844245839188,
+      "approach_angle_deg": 19.70539900323533,
+      "retreat_angle_deg": 64.77002641674989,
+      "approach_available_s": 0.7666666666666667,
+      "contact_z_median_m": 0.36930331587791443,
+      "contact_surface_dist_median_m": 0.019456820864813158,
+      "obj_tilt_max_deg": 2.2621289638231246,
+      "obj_yaw_maxabs_deg": 15.597812253591197,
+      "frac_body": 0.006535947712418301,
+      "root_disp_xy_m": 1.2084988376099097,
+      "human": "walk",
+      "obj_size_m": "0.47x0.46x0.41",
+      "normal_local": [
+        0.14290874872433132,
+        -0.10100343853067227,
+        -0.9845686339423101
+      ],
+      "start": 23,
+      "end": 176,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/05_sub12_largebox_065.png",
+      "file": "sub12_largebox_065.pt",
+      "file_sha256_16": "1949f5c67c2d50e0"
+    },
+    {
+      "rank": 6,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "largebox",
+      "name": "sub7_largebox_041",
+      "subject": "sub7",
+      "start_s": 1.1666666666666667,
+      "duration_s": 2.8333333333333335,
+      "obj_disp_xy_m": 1.604264440194034,
+      "push_alignment": 0.9816104677344288,
+      "normal_spread_p90_deg": 2.857362346753019,
+      "normal_tilt_median_deg": 87.40749410271049,
+      "patch_coherence_median": 0.9920208203688022,
+      "approach_angle_deg": 42.302124545227294,
+      "retreat_angle_deg": 31.646512568576185,
+      "approach_available_s": 1.1666666666666667,
+      "contact_z_median_m": 0.35750699043273926,
+      "contact_surface_dist_median_m": 0.006123063183996836,
+      "obj_tilt_max_deg": 0.3711636179401537,
+      "obj_yaw_maxabs_deg": 3.614953277988594,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.714572151798914,
+      "human": "walk",
+      "obj_size_m": "0.47x0.46x0.41",
+      "normal_local": [
+        0.1542718460754897,
+        -0.11604592905750176,
+        -0.981189859230945
+      ],
+      "start": 35,
+      "end": 120,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/06_sub7_largebox_041.png",
+      "file": "sub7_largebox_041.pt",
+      "file_sha256_16": "e943acd237adbd7d"
+    },
+    {
+      "rank": 7,
+      "tier": "C",
+      "dataset": "omomo_new",
+      "object": "suitcase",
+      "name": "sub1_suitcase_008",
+      "subject": "sub1",
+      "start_s": 0.16666666666666666,
+      "duration_s": 2.8,
+      "obj_disp_xy_m": 1.5323945857844268,
+      "push_alignment": 0.9798583185623867,
+      "normal_spread_p90_deg": 1.444341534442759,
+      "normal_tilt_median_deg": 84.30780603830587,
+      "patch_coherence_median": 0.9871964321001643,
+      "approach_angle_deg": 126.23148104231673,
+      "retreat_angle_deg": 130.9273960498187,
+      "approach_available_s": 0.16666666666666666,
+      "contact_z_median_m": 0.5312484800815582,
+      "contact_surface_dist_median_m": 0.020432213568406535,
+      "obj_tilt_max_deg": 1.1601282814066032,
+      "obj_yaw_maxabs_deg": 15.582585014593196,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.2239750926512847,
+      "human": "walk",
+      "obj_size_m": "0.53x0.41x0.41",
+      "normal_local": [
+        0.12528561759111378,
+        -0.992108000644158,
+        0.005022856026671567
+      ],
+      "start": 5,
+      "end": 89,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/07_sub1_suitcase_008.png",
+      "file": "sub1_suitcase_008.pt",
+      "file_sha256_16": "25eb8222336fd25a"
+    },
+    {
+      "rank": 8,
+      "tier": "C",
+      "dataset": "force",
+      "object": "backpack",
+      "name": "0630_61-2",
+      "subject": "session0630",
+      "start_s": 15.733333333333333,
+      "duration_s": 1.7,
+      "obj_disp_xy_m": 0.19040598630135563,
+      "push_alignment": 0.994969726048684,
+      "normal_spread_p90_deg": 17.239310663855612,
+      "normal_tilt_median_deg": 57.01639232034682,
+      "patch_coherence_median": 0.8722111817875258,
+      "approach_angle_deg": 127.89422841734425,
+      "retreat_angle_deg": 57.58696012899623,
+      "approach_available_s": 15.733333333333333,
+      "contact_z_median_m": 0.49297909250429756,
+      "contact_surface_dist_median_m": 0.031986761964525504,
+      "obj_tilt_max_deg": 7.483237304954755,
+      "obj_yaw_maxabs_deg": 7.385483991181628,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.08260338870148179,
+      "human": "stand",
+      "obj_size_m": "0.54x0.43x0.36",
+      "normal_local": [
+        -0.0895322193642994,
+        0.8069706525542395,
+        0.5837656615559773
+      ],
+      "start": 472,
+      "end": 523,
+      "ann_hands": "R",
+      "ann_dir": "",
+      "ann_weight_kg": 10.0,
+      "figure": "candidates/08_0630_61-2.png",
+      "file": "0630_61-2.npz",
+      "file_sha256_16": "e509bbaad793b0ce"
+    }
+  ],
+  "elapsed_s": 388.88777351379395
+}

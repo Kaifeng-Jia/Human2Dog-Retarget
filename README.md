@@ -19,3 +19,4 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R003_profile | #6 | `09ef090` | Ubuntu, CPU | pass=false：suitcase 网格底部比记录高约 3 cm，其余检查通过；作为数据概况保留，见 #6 |
 | R004_force_profile | #8 | `14a7154` | Ubuntu, CPU, SMPL-H male | **pass=false**: floor_at_zero fails for chair (0.219 m) and box_huge (0.224 m); all 6 objects sit ~0.2 m above z=0 while toes are at ~0.015 m; other checks pass. Only summary.json, checks.png, per_object.csv pushed, awaiting lead |
 | R004b_force_profile | #8 | `5c1e1a6` | Ubuntu, CPU, SMPL-H male | pass=true after pelvis-at-smpl_trans fix; chair / box_huge lowest point −0.018 / −0.013 m, mostly slid (0.96 / 0.72); single-hand agreement 0.88; suitcase hand contact found in 0.76 of clips |
+| R005_push_candidates | #10 | `01985ab` | Ubuntu, CPU, SMPL-H male | pass=true; 8 candidates (1 tier B, 7 tier C; 11 segments pass all criteria: omomo_new 10, force 1); proxy-to-surface median 0.016 m |
