@@ -1,0 +1,2882 @@
+{
+  "provenance": {
+    "run_id": "R014_reach",
+    "started_utc": "2026-10-26T19:43:39+00:00",
+    "h2d_version": "0.1.5",
+    "git": {
+      "commit": "0872d25ede86f9d26d984c3b4d12820440f89d74",
+      "branch": "HEAD",
+      "describe": "v0.1.3-17-g0872d25",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      },
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "16f20eb9643618b2",
+      "external.yaml": "847b4b4bf499bd9e",
+      "learned/reach.yaml": "14dfbb57a230f6dc",
+      "learned/mesh.yaml": "0d772a1e6a32555e",
+      "registration.yaml": "12e7bed449da2b6b",
+      "push_candidates.yaml": "7e52b023332ddb84"
+    },
+    "command": "reach_diag.py --run-id R014_reach --tasks-dir outputs/R014_tasks/tasks --d0-dir outputs/R014_d0 --tasks-csv outputs/R014_tasks/tasks.csv --max-tasks 8",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "config": {
+    "pos_tol_m": 0.01,
+    "max_angle_deg": 15.0,
+    "budget_deg": 20.0,
+    "n_random_starts": 16,
+    "full_search_every": 10,
+    "avoid_margin_m": 0.01,
+    "penetration_tol_m": 0.002,
+    "scene_body_depth_m": 0.02,
+    "joint_speed_limit_rad_s": [
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416,
+      3.1416
+    ],
+    "registration_residual_suspect_m": 0.3,
+    "prev_weight_m_per_rad": 0.01,
+    "roll_weight_m": 0.02
+  },
+  "registration_config": {
+    "lambda_psi": 0.08,
+    "min_target_spread_m": 0.05,
+    "psi_grid_deg": 0.25
+  },
+  "mesh_config": {
+    "object_samples": 24,
+    "min_edge_m": 0.05,
+    "w_mesh": 1.0,
+    "w_heading": 2.0,
+    "w_reach": 10.0,
+    "r_min_m": 0.35,
+    "r_max_m": 0.8,
+    "w_reach_pref": 5.0,
+    "reach_pref_m": 0.6,
+    "w_clear": 10.0,
+    "clear_margin_m": 0.03,
+    "w_smooth": 30.0,
+    "w_anchor": 0.1,
+    "max_nfev": 100
+  },
+  "reach_bound_m": 0.9395286488664946,
+  "reach_sampled_max_m": 0.938784186311356,
+  "checks": {
+    "all_tasks_processed": {
+      "pass": true,
+      "n_errors": 0
+    }
+  },
+  "pass": true,
+  "errors": [],
+  "tasks": {
+    "c01_sub6_largetable_033": {
+      "clip": "sub6_largetable_033",
+      "object": "largetable",
+      "mode": "B",
+      "grip": "press",
+      "palm_used": false,
+      "palm_face_deg": 149.05185437569014,
+      "forearm_used": true,
+      "forearm_face_deg": 30.064788693289717,
+      "contact_moved": "rear_edge",
+      "labels": {
+        "mesh/pos": "feasible",
+        "mesh/pos_dir": "feasible",
+        "mesh/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_track/pos": "feasible",
+        "reach_track/pos_dir": "feasible",
+        "reach_track/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_fit/pos": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [
+        "palm faces away (149\u00b0): no roll target"
+      ],
+      "registration": {
+        "reach_fit": {
+          "psi": 0.010270053410764923,
+          "b": [
+            -0.21279237601747047,
+            1.5139663564221757
+          ],
+          "kind": "reach_fit",
+          "info": {
+            "target_spread_m": 0.7188613724012201,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 0.25193995476245834,
+            "residual_xy_rms_m": 0.24786185817232148,
+            "residual_xy_max_m": 0.38398190098179436,
+            "n_frames": 147
+          },
+          "psi_deg": 0.5884307158107661
+        },
+        "reach_track": {
+          "psi": 0.010270053410764923,
+          "psi_deg": 0.5884307158107661,
+          "psi_range_deg": [
+            0.5884307158107661,
+            0.5884307158107661
+          ],
+          "kind": "track",
+          "info": {
+            "extra_base_shift_max_m": 0.35300857057900764,
+            "extra_base_speed_max_mps": 0.3252397141001931,
+            "residual_xy_rms_m": 0.034497890446341425,
+            "residual_xy_max_m": 0.07964771306498024,
+            "smooth_s": 1.0
+          }
+        },
+        "start_anchored": {
+          "psi": 0.005872871682834457,
+          "b": [
+            -0.16137856569508108,
+            0.9112696755755456
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.6370259148731348,
+            "residual_xy_max_m": 0.9538534191349805
+          },
+          "psi_deg": 0.33649076104830783
+        },
+        "contact_fit_prior_site": {
+          "psi": 0.011812568496771814,
+          "b": [
+            -0.24098696416472837,
+            1.4860835098600171
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.7188613724012201,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 0.3403195590259123,
+            "residual_xy_rms_m": 0.2635000252777739,
+            "residual_xy_max_m": 0.3896702158013431,
+            "n_frames": 147
+          },
+          "psi_deg": 0.6768103200742202
+        },
+        "face": "slant",
+        "reach_ahead_m": 0.7,
+        "mesh": {
+          "psi": -0.141137889503546,
+          "psi_deg": -8.086605397936948,
+          "psi_range_deg": [
+            -14.392137164070489,
+            -2.5851882894711276
+          ],
+          "kind": "mesh",
+          "info": {
+            "cost": 112.66629837291286,
+            "nfev": 13,
+            "status": 2,
+            "n_edges": 4996
+          }
+        }
+      },
+      "mesh": {
+        "relations": {
+          "edge_dir_err_deg": 7.4912303640997715,
+          "heading_err_deg": 2.084522524320849,
+          "reach_m": [
+            0.44099193858118685,
+            0.6251561958194637
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.5532499472439179
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.44099193858118685,
+          0.6251561958194635
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.5632923678928895,
+          0.7409680495476155
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 5.794472284071569e-05,
+          "pos_err_median_m": 4.072239821485542e-06,
+          "angle_max_deg": 34.73797742980077,
+          "angle_median_deg": 30.868088382137994,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            28.898561341046292,
+            68.04204595024467,
+            33.363024784812986,
+            18.370302008601644,
+            37.91804639407302,
+            174.30168585450093
+          ],
+          "arm_change_rms_deg": 73.19149160436298,
+          "speed_ratio_max": 0.9004556781616354,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            162.60646644720265,
+            162.8579625069427
+          ],
+          "tool_obj_depth_max_m": 0.013074416191399152,
+          "starts": {
+            "prior": 1,
+            "previous": 146
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.00047938906775563854,
+          "pos_err_median_m": 5.591207809413875e-05,
+          "angle_max_deg": 1.037195483519378,
+          "angle_median_deg": 0.12213143123186328,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            21.560496945175963,
+            65.66156605633874,
+            37.175420148827705,
+            57.590374053628814,
+            6.34328141530607,
+            174.3024939078767
+          ],
+          "arm_change_rms_deg": 73.23054795492538,
+          "speed_ratio_max": 0.6832662653336995,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            162.60646644720265,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.0032252314616224714,
+          "starts": {
+            "prior": 1,
+            "previous": 146
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.2716661146700544,
+          "pos_err_median_m": 0.22066849237712796,
+          "angle_max_deg": 40.98469439619349,
+          "angle_median_deg": 35.043588707827595,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 40,
+            "random6": 1,
+            "random2": 29,
+            "random7": 2,
+            "random14": 3,
+            "random9": 1,
+            "random15": 1,
+            "random10": 1,
+            "random1": 38,
+            "random13": 2,
+            "random0": 29
+          }
+        }
+      },
+      "reach_track": {
+        "relations": {
+          "edge_dir_err_deg": 10.985562872951435,
+          "heading_err_deg": 9.598269549305815,
+          "reach_m": [
+            0.5736577829500631,
+            0.6288255886740023
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.3252397141001931
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5736577829500633,
+          0.6288255886740022
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.524149840837816,
+          0.7394653759424303
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.1330771724681e-05,
+          "pos_err_median_m": 3.997460239072899e-06,
+          "angle_max_deg": 39.770463806673774,
+          "angle_median_deg": 33.3884479599022,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            14.583211893005002,
+            64.41155167929003,
+            30.068563398442976,
+            17.33859152934617,
+            13.700952042582466,
+            174.3024939078767
+          ],
+          "arm_change_rms_deg": 72.37592484267518,
+          "speed_ratio_max": 0.3414784079648861,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            162.60646644720265,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.0027265749819214147,
+          "starts": {
+            "prior": 1,
+            "previous": 146
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0006804465517886037,
+          "pos_err_median_m": 8.778158897449563e-05,
+          "angle_max_deg": 1.477290082343248,
+          "angle_median_deg": 0.1889352704661425,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            13.082265199954298,
+            64.70357375002256,
+            53.524919395533466,
+            83.55118704163267,
+            10.155323210239251,
+            174.3024939078767
+          ],
+          "arm_change_rms_deg": 77.91623599853513,
+          "speed_ratio_max": 0.7094736679885201,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            162.60646644720265,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.0046212104861626385,
+          "starts": {
+            "prior": 1,
+            "previous": 146
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.2533439878706038,
+          "pos_err_median_m": 0.21125494290704125,
+          "angle_max_deg": 41.42614621038104,
+          "angle_median_deg": 35.56983535482652,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 40,
+            "random6": 1,
+            "random2": 28,
+            "random14": 1,
+            "random8": 1,
+            "random3": 3,
+            "random11": 1,
+            "random9": 2,
+            "random1": 43,
+            "random0": 23,
+            "random4": 4
+          }
+        }
+      },
+      "reach_fit": {
+        "relations": {
+          "edge_dir_err_deg": 9.356679943049027,
+          "heading_err_deg": 9.598269549305815,
+          "reach_m": [
+            0.3430978027060593,
+            0.9596004470230942
+          ],
+          "body_in_object_m": 0.028102611623238627,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.03216663187309057,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.3430978027060593,
+          0.9596004470230943
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6389626017640222,
+          0.7929279653074347
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.6598639455782312,
+          "n_frames": 147,
+          "n_proven_unreachable": 9,
+          "fail_reasons": {
+            "pos_error": 48,
+            "angle": 0,
+            "self_collision": 49,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.09521826990515864,
+          "pos_err_median_m": 3.006708739268129e-05,
+          "angle_max_deg": 61.3835673052862,
+          "angle_median_deg": 36.826869944477636,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            39.93135537448845,
+            79.67184599587503,
+            73.45862473140849,
+            121.97514617555876,
+            25.92459077127786,
+            172.536659086094
+          ],
+          "arm_change_rms_deg": 86.07559696669682,
+          "speed_ratio_max": 3.4639629292371437,
+          "speed_violations": 5,
+          "jump_to_prior_at_ends_deg": [
+            132.79769076738987,
+            147.00392832906016
+          ],
+          "tool_obj_depth_max_m": 0.02990373586512829,
+          "starts": {
+            "prior": 22,
+            "random13": 1,
+            "random2": 4,
+            "random7": 1,
+            "random10": 1,
+            "random1": 4,
+            "random15": 1,
+            "previous": 95,
+            "random0": 17,
+            "random4": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.5306122448979592,
+          "n_frames": 147,
+          "n_proven_unreachable": 9,
+          "fail_reasons": {
+            "pos_error": 65,
+            "angle": 68,
+            "self_collision": 49,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.09536866182818095,
+          "pos_err_median_m": 0.005799236564033733,
+          "angle_max_deg": 49.433302150645304,
+          "angle_median_deg": 11.121467768405799,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            33.18937657227343,
+            78.12514250938891,
+            77.9720961295158,
+            95.3582486670452,
+            7.63087364372241,
+            65.77440849591677
+          ],
+          "arm_change_rms_deg": 39.751543459435666,
+          "speed_ratio_max": 0.9518804485796037,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            214.46875390725234,
+            162.85875570589636
+          ],
+          "tool_obj_depth_max_m": 0.01614630878567709,
+          "starts": {
+            "prior": 31,
+            "random2": 6,
+            "random7": 1,
+            "random8": 1,
+            "random12": 3,
+            "random11": 1,
+            "random10": 1,
+            "random1": 17,
+            "previous": 76,
+            "random0": 10
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 147,
+          "n_proven_unreachable": 9,
+          "fail_reasons": {
+            "pos_error": 147,
+            "angle": 147,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4932436145162358,
+          "pos_err_median_m": 0.2767242143272435,
+          "angle_max_deg": 65.72354940052924,
+          "angle_median_deg": 36.9069785951092,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 26,
+            "random6": 1,
+            "random2": 36,
+            "random8": 1,
+            "random3": 2,
+            "random12": 3,
+            "random9": 1,
+            "random1": 33,
+            "random15": 1,
+            "random0": 42,
+            "random4": 1
+          }
+        }
+      },
+      "runtime_s": 268.18642926216125
+    },
+    "c02_sub12_largebox_000": {
+      "clip": "sub12_largebox_000",
+      "object": "largebox",
+      "mode": "B",
+      "grip": "press",
+      "palm_used": false,
+      "palm_face_deg": 169.8217642292629,
+      "forearm_used": true,
+      "forearm_face_deg": 8.396522162541247,
+      "contact_moved": "rear_edge",
+      "labels": {
+        "mesh/pos": "no_feasible_solution_within_budget",
+        "mesh/pos_dir": "no_feasible_solution_within_budget",
+        "mesh/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_track/pos": "no_feasible_solution_within_budget",
+        "reach_track/pos_dir": "no_feasible_solution_within_budget",
+        "reach_track/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_fit/pos": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [
+        "palm faces away (170\u00b0): no roll target"
+      ],
+      "registration": {
+        "reach_fit": {
+          "psi": -0.07988099477040178,
+          "b": [
+            0.419690584736238,
+            1.2603581709750529
+          ],
+          "kind": "reach_fit",
+          "info": {
+            "target_spread_m": 0.27686524322913536,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -3.7879521630796202,
+            "residual_xy_rms_m": 0.07254191413492088,
+            "residual_xy_max_m": 0.15792088688532405,
+            "n_frames": 234
+          },
+          "psi_deg": -4.576843863650622
+        },
+        "reach_track": {
+          "psi": -0.07988099477040178,
+          "psi_deg": -4.576843863650622,
+          "psi_range_deg": [
+            -4.576843863650622,
+            -4.576843863650622
+          ],
+          "kind": "track",
+          "info": {
+            "extra_base_shift_max_m": 0.14678834608823227,
+            "extra_base_speed_max_mps": 0.1184394061636534,
+            "residual_xy_rms_m": 0.02414604595901735,
+            "residual_xy_max_m": 0.06377740951828843,
+            "smooth_s": 1.0
+          }
+        },
+        "start_anchored": {
+          "psi": -0.013768757616621219,
+          "b": [
+            0.43928201504547537,
+            0.6506382477923425
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.6415255157501117,
+            "residual_xy_max_m": 0.7646449065325277
+          },
+          "psi_deg": -0.7888917005710022
+        },
+        "contact_fit_prior_site": {
+          "psi": -0.029915019389331388,
+          "b": [
+            0.3063322287701446,
+            1.2565474723946877
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.27686524322913536,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -0.9251126544897116,
+            "residual_xy_rms_m": 0.16229971869365678,
+            "residual_xy_max_m": 0.761529451026935,
+            "n_frames": 234
+          },
+          "psi_deg": -1.7140043550607138
+        },
+        "face": "slant",
+        "reach_ahead_m": 0.7,
+        "mesh": {
+          "psi": -0.20008772715568585,
+          "psi_deg": -11.46418229838595,
+          "psi_range_deg": [
+            -17.501712405494185,
+            -1.4277896171682383
+          ],
+          "kind": "mesh",
+          "info": {
+            "cost": 17.906017146499703,
+            "nfev": 35,
+            "status": 4,
+            "n_edges": 5116
+          }
+        }
+      },
+      "mesh": {
+        "relations": {
+          "edge_dir_err_deg": 1.3763140799708717,
+          "heading_err_deg": 1.1545998426902755,
+          "reach_m": [
+            0.5435467177050366,
+            0.7121112415904313
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5435467177050366,
+          0.7121112415904313
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.573288285451184,
+          1.3136196315807926
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.20085470085470086,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 141,
+            "angle": 0,
+            "self_collision": 174,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.34783844780731216,
+          "pos_err_median_m": 0.025675513259885374,
+          "angle_max_deg": 58.34292433707233,
+          "angle_median_deg": 45.04796365053864,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            134.61117299911834,
+            111.91558714649902,
+            105.53787463341668,
+            67.80555040651686,
+            67.9497325191221,
+            194.28303573070494
+          ],
+          "arm_change_rms_deg": 73.616730353815,
+          "speed_ratio_max": 27.84221754430597,
+          "speed_violations": 1,
+          "jump_to_prior_at_ends_deg": [
+            147.33264359250973,
+            132.7405199422918
+          ],
+          "tool_obj_depth_max_m": 0.024781753379613303,
+          "starts": {
+            "prior": 38,
+            "random6": 3,
+            "random2": 42,
+            "random7": 3,
+            "random14": 1,
+            "random8": 3,
+            "random12": 1,
+            "random5": 2,
+            "random9": 1,
+            "random15": 2,
+            "random10": 1,
+            "random1": 44,
+            "random13": 2,
+            "previous": 42,
+            "random0": 48,
+            "random4": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.042735042735042736,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 220,
+            "angle": 223,
+            "self_collision": 201,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.3968826123204719,
+          "pos_err_median_m": 0.029831058626285753,
+          "angle_max_deg": 48.12433298240955,
+          "angle_median_deg": 39.09277488050256,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            15.623090752237358,
+            86.5611977230375,
+            175.65051113971774,
+            56.240384326994636,
+            8.063808694394625,
+            153.46114581131317
+          ],
+          "arm_change_rms_deg": 79.34704594634955,
+          "speed_ratio_max": 0.8739587756627311,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            174.21357974760392,
+            159.65169853110632
+          ],
+          "tool_obj_depth_max_m": 0.02066428508239565,
+          "starts": {
+            "prior": 92,
+            "random2": 30,
+            "random13": 1,
+            "random7": 2,
+            "random14": 1,
+            "random8": 1,
+            "random3": 2,
+            "random5": 3,
+            "random9": 2,
+            "random10": 2,
+            "random1": 38,
+            "random15": 1,
+            "previous": 9,
+            "random0": 49,
+            "random4": 1
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 78,
+            "self_collision": 24,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.1301021687113895,
+          "pos_err_median_m": 0.5499388851599871,
+          "angle_max_deg": 135.38728105800044,
+          "angle_median_deg": 12.289416717250848,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 46,
+            "random6": 3,
+            "random2": 65,
+            "random7": 2,
+            "random14": 1,
+            "random13": 2,
+            "random8": 2,
+            "random12": 1,
+            "random3": 1,
+            "random5": 1,
+            "random11": 1,
+            "random1": 52,
+            "random15": 1,
+            "random0": 53,
+            "random4": 3
+          }
+        }
+      },
+      "reach_track": {
+        "relations": {
+          "edge_dir_err_deg": 5.545757465960656,
+          "heading_err_deg": 8.126605708497358,
+          "reach_m": [
+            0.6361905998732219,
+            0.8521257178284323
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.6361905998732219,
+          0.8521257178284323
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.5936945172097968,
+          1.3400649062333574
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.08547008547008547,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 187,
+            "angle": 0,
+            "self_collision": 207,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.5119525902465039,
+          "pos_err_median_m": 0.06180798348062407,
+          "angle_max_deg": 45.11736967123362,
+          "angle_median_deg": 23.86101924044633,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            36.16978738218863,
+            101.40872993202886,
+            135.72362420436855,
+            22.8485687356601,
+            48.00072636347737,
+            167.34554752592592
+          ],
+          "arm_change_rms_deg": 66.41616115690866,
+          "speed_ratio_max": 1.5698288459920404,
+          "speed_violations": 4,
+          "jump_to_prior_at_ends_deg": [
+            140.90789697430014,
+            159.41527289699795
+          ],
+          "tool_obj_depth_max_m": 0.01941196334916187,
+          "starts": {
+            "prior": 83,
+            "random2": 22,
+            "random13": 2,
+            "random14": 4,
+            "random8": 1,
+            "random3": 2,
+            "random5": 1,
+            "random11": 2,
+            "random9": 1,
+            "random10": 2,
+            "random1": 39,
+            "random15": 3,
+            "previous": 19,
+            "random0": 52,
+            "random4": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.06837606837606838,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 208,
+            "angle": 161,
+            "self_collision": 216,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.17621047485895325,
+          "pos_err_median_m": 0.0620170308082233,
+          "angle_max_deg": 33.53134726802056,
+          "angle_median_deg": 20.743355015517125,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            14.521097544115621,
+            101.9220086493226,
+            166.1510006914197,
+            44.940367861244965,
+            15.949963240391629,
+            160.45999134839718
+          ],
+          "arm_change_rms_deg": 77.37395286016329,
+          "speed_ratio_max": 1.1036586594630822,
+          "speed_violations": 1,
+          "jump_to_prior_at_ends_deg": [
+            164.90640698028102,
+            158.00652431349963
+          ],
+          "tool_obj_depth_max_m": 0.004442602126902839,
+          "starts": {
+            "prior": 99,
+            "random6": 3,
+            "random2": 35,
+            "random14": 3,
+            "random8": 2,
+            "random3": 2,
+            "random12": 1,
+            "random11": 1,
+            "random9": 1,
+            "random15": 1,
+            "random10": 1,
+            "random1": 30,
+            "random13": 2,
+            "previous": 15,
+            "random0": 35,
+            "random4": 3
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 73,
+            "self_collision": 22,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.187025992032777,
+          "pos_err_median_m": 0.48293066100060633,
+          "angle_max_deg": 134.30746138424172,
+          "angle_median_deg": 11.24327741658507,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 67,
+            "random6": 1,
+            "random2": 54,
+            "random13": 3,
+            "random14": 1,
+            "random7": 1,
+            "random8": 1,
+            "random12": 2,
+            "random5": 2,
+            "random9": 2,
+            "random10": 2,
+            "random1": 46,
+            "random15": 1,
+            "random0": 50,
+            "random4": 1
+          }
+        }
+      },
+      "reach_fit": {
+        "relations": {
+          "edge_dir_err_deg": 7.185993790716995,
+          "heading_err_deg": 8.126605708497358,
+          "reach_m": [
+            0.5667643416021134,
+            0.9271205049646388
+          ],
+          "body_in_object_m": 0.03714349322398963,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.046315855308266776,
+        "scene_infeasible": true,
+        "target_to_shoulder_m": [
+          0.5667643416021134,
+          0.9271205049646388
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.643713863906999,
+          1.304379983117724
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.08547008547008547,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 190,
+            "angle": 0,
+            "self_collision": 205,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.5647690337245539,
+          "pos_err_median_m": 0.06041740194157281,
+          "angle_max_deg": 49.09390699461819,
+          "angle_median_deg": 25.59691631414524,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            28.374187843031823,
+            102.06552566273923,
+            147.47157334705537,
+            27.29558695752355,
+            72.50249738605125,
+            104.50881400344095
+          ],
+          "arm_change_rms_deg": 61.2850683399362,
+          "speed_ratio_max": 4.932383599329678,
+          "speed_violations": 3,
+          "jump_to_prior_at_ends_deg": [
+            151.46788347890475,
+            159.65169853110632
+          ],
+          "tool_obj_depth_max_m": 0.01972780808986896,
+          "starts": {
+            "prior": 76,
+            "random6": 2,
+            "random2": 48,
+            "random7": 3,
+            "random14": 2,
+            "random8": 2,
+            "random3": 1,
+            "random11": 1,
+            "random9": 1,
+            "random15": 2,
+            "random10": 2,
+            "random1": 37,
+            "random13": 1,
+            "previous": 18,
+            "random0": 37,
+            "random4": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.038461538461538464,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 218,
+            "angle": 155,
+            "self_collision": 215,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.19820292052344474,
+          "pos_err_median_m": 0.059355258635127535,
+          "angle_max_deg": 37.82062651773584,
+          "angle_median_deg": 21.454654528290373,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            10.047587000368047,
+            86.80389105127523,
+            163.516518196767,
+            59.26334913993826,
+            31.548607228688102,
+            153.46114581131317
+          ],
+          "arm_change_rms_deg": 78.85981408437658,
+          "speed_ratio_max": 0.9389817841006376,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            177.80670700216655,
+            159.57124019833046
+          ],
+          "tool_obj_depth_max_m": 0.01905988350484747,
+          "starts": {
+            "prior": 101,
+            "random2": 34,
+            "random14": 1,
+            "random8": 3,
+            "random3": 1,
+            "random5": 1,
+            "random11": 4,
+            "random9": 3,
+            "random10": 3,
+            "random1": 35,
+            "random13": 1,
+            "previous": 8,
+            "random0": 39
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 234,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 234,
+            "angle": 81,
+            "self_collision": 17,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.1526804458214324,
+          "pos_err_median_m": 0.48857011806078154,
+          "angle_max_deg": 155.25209863589797,
+          "angle_median_deg": 12.108057512096927,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 52,
+            "random2": 43,
+            "random7": 2,
+            "random14": 2,
+            "random8": 2,
+            "random12": 1,
+            "random3": 1,
+            "random5": 2,
+            "random11": 1,
+            "random9": 1,
+            "random15": 1,
+            "random10": 1,
+            "random1": 64,
+            "random13": 3,
+            "random0": 58
+          }
+        }
+      },
+      "runtime_s": 634.3718519210815
+    },
+    "c03_sub5_largetable_030": {
+      "clip": "sub5_largetable_030",
+      "object": "largetable",
+      "mode": "B",
+      "grip": "press",
+      "palm_used": false,
+      "palm_face_deg": 172.89016939889575,
+      "forearm_used": true,
+      "forearm_face_deg": 11.73836702133703,
+      "contact_moved": "rear_edge",
+      "labels": {
+        "mesh/pos": "feasible",
+        "mesh/pos_dir": "feasible",
+        "mesh/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_track/pos": "feasible",
+        "reach_track/pos_dir": "feasible",
+        "reach_track/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_fit/pos": "feasible",
+        "reach_fit/pos_dir": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [
+        "palm faces away (173\u00b0): no roll target"
+      ],
+      "registration": {
+        "reach_fit": {
+          "psi": 0.006588003601941228,
+          "b": [
+            0.026859576077962077,
+            1.6482304918237594
+          ],
+          "kind": "reach_fit",
+          "info": {
+            "target_spread_m": 0.5621228742825966,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 0.23485625660600792,
+            "residual_xy_rms_m": 0.18184911125021025,
+            "residual_xy_max_m": 0.3505251090333288,
+            "n_frames": 119
+          },
+          "psi_deg": 0.3774648018082168
+        },
+        "reach_track": {
+          "psi": 0.006588003601941229,
+          "psi_deg": 0.3774648018082168,
+          "psi_range_deg": [
+            0.3774648018082168,
+            0.3774648018082168
+          ],
+          "kind": "track",
+          "info": {
+            "extra_base_shift_max_m": 0.28300081634895546,
+            "extra_base_speed_max_mps": 0.2668691441606811,
+            "residual_xy_rms_m": 0.0352176666837704,
+            "residual_xy_max_m": 0.10308966243532589,
+            "smooth_s": 1.0
+          }
+        },
+        "start_anchored": {
+          "psi": 0.0024889886552577067,
+          "b": [
+            0.0773737108310186,
+            1.114668149079158
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.5642722166703981,
+            "residual_xy_max_m": 0.9045492903967368
+          },
+          "psi_deg": 0.14260854520220884
+        },
+        "contact_fit_prior_site": {
+          "psi": 0.0313075373276086,
+          "b": [
+            -0.026925683443684734,
+            1.6398147765301496
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.5621228742825966,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 1.6511812106180483,
+            "residual_xy_rms_m": 0.1856662631237689,
+            "residual_xy_max_m": 0.39977408744662185,
+            "n_frames": 119
+          },
+          "psi_deg": 1.7937897558202571
+        },
+        "face": "slant",
+        "reach_ahead_m": 0.7,
+        "mesh": {
+          "psi": -0.13048569621085043,
+          "psi_deg": -7.476279679707928,
+          "psi_range_deg": [
+            -9.835246175063364,
+            -4.516001850505871
+          ],
+          "kind": "mesh",
+          "info": {
+            "cost": 49.70922259628503,
+            "nfev": 11,
+            "status": 2,
+            "n_edges": 3828
+          }
+        }
+      },
+      "mesh": {
+        "relations": {
+          "edge_dir_err_deg": 5.170182951452652,
+          "heading_err_deg": 1.048005625413654,
+          "reach_m": [
+            0.5476143943789482,
+            0.6649490386328626
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.5889354156271255
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5476143943789482,
+          0.6649490386328626
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.478772454797369,
+          0.7024810056054325
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 4.323812100783501e-05,
+          "pos_err_median_m": 3.2882513436887756e-06,
+          "angle_max_deg": 37.44615384069386,
+          "angle_median_deg": 14.394717432570221,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            12.515856528413467,
+            69.35925132237838,
+            41.461037584821156,
+            15.904542414666425,
+            5.612852447869794,
+            164.82081847187584
+          ],
+          "arm_change_rms_deg": 69.3668120441324,
+          "speed_ratio_max": 0.7164841659024965,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.0038279568668418418,
+          "starts": {
+            "prior": 1,
+            "previous": 118
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0012398054593317047,
+          "pos_err_median_m": 7.102639988751966e-05,
+          "angle_max_deg": 2.670025922958764,
+          "angle_median_deg": 0.15507694191640933,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            18.112281640822665,
+            69.49269379774015,
+            72.35597731739506,
+            73.94523256633353,
+            8.930027397479115,
+            164.82081847187584
+          ],
+          "arm_change_rms_deg": 70.28808199475115,
+          "speed_ratio_max": 1.2000551374137354,
+          "speed_violations": 4,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.004187964996649085,
+          "starts": {
+            "prior": 1,
+            "previous": 118
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 81,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.260188929724598,
+          "pos_err_median_m": 0.13800030505976507,
+          "angle_max_deg": 28.503703275621362,
+          "angle_median_deg": 18.074766377074678,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 22,
+            "random6": 1,
+            "random2": 34,
+            "random8": 2,
+            "random12": 2,
+            "random3": 2,
+            "random5": 1,
+            "random1": 31,
+            "random13": 1,
+            "random0": 22,
+            "random4": 1
+          }
+        }
+      },
+      "reach_track": {
+        "relations": {
+          "edge_dir_err_deg": 6.714765601899801,
+          "heading_err_deg": 7.972112848226789,
+          "reach_m": [
+            0.5539907074729743,
+            0.6145811133371831
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.26686914416068086
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5539907074729743,
+          0.6145811133371833
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.4501495645730497,
+          0.7022662414768174
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 2.1098966456268266e-05,
+          "pos_err_median_m": 3.7916237390628453e-06,
+          "angle_max_deg": 53.51021837002108,
+          "angle_median_deg": 40.497911064494566,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            33.52833527960291,
+            65.6561739123989,
+            32.626089006657494,
+            14.941758172631994,
+            47.90371392014355,
+            164.82081847187584
+          ],
+          "arm_change_rms_deg": 72.73462323780848,
+          "speed_ratio_max": 0.7127645172772843,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.01365668505389192,
+          "starts": {
+            "prior": 1,
+            "previous": 118
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0005503918551943177,
+          "pos_err_median_m": 8.415744111806056e-05,
+          "angle_max_deg": 1.193102063759765,
+          "angle_median_deg": 0.18350627861086913,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            18.91264004753626,
+            54.52856806801436,
+            39.736739830104,
+            64.97398150373479,
+            12.500146079197247,
+            164.82081847187584
+          ],
+          "arm_change_rms_deg": 70.11777628349198,
+          "speed_ratio_max": 0.8668230796004809,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.0039300080322288156,
+          "starts": {
+            "prior": 1,
+            "previous": 118
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 80,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.21302850148249397,
+          "pos_err_median_m": 0.13893867261373313,
+          "angle_max_deg": 28.533576599908425,
+          "angle_median_deg": 18.33052841112186,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 26,
+            "random2": 34,
+            "random7": 2,
+            "random14": 1,
+            "random12": 2,
+            "random9": 1,
+            "random15": 1,
+            "random10": 1,
+            "random1": 27,
+            "random13": 1,
+            "random0": 23
+          }
+        }
+      },
+      "reach_fit": {
+        "relations": {
+          "edge_dir_err_deg": 6.261962014460195,
+          "heading_err_deg": 7.972112848226789,
+          "reach_m": [
+            0.33726030233516036,
+            0.8668449932268291
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.3372603023351604,
+          0.8668449932268291
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.5375285226774267,
+          0.7216439568935004
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.009700865487413363,
+          "pos_err_median_m": 2.4292570858639304e-05,
+          "angle_max_deg": 79.84088602401849,
+          "angle_median_deg": 66.05135877383209,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            148.06965331888696,
+            86.69847039075242,
+            183.49606847597667,
+            64.45780876566505,
+            99.2659327844076,
+            100.61394034215807
+          ],
+          "arm_change_rms_deg": 82.5756009253667,
+          "speed_ratio_max": 26.843362889210912,
+          "speed_violations": 6,
+          "jump_to_prior_at_ends_deg": [
+            174.11051745945815,
+            86.69847039075242
+          ],
+          "tool_obj_depth_max_m": 0.024908457786403007,
+          "starts": {
+            "prior": 1,
+            "previous": 117,
+            "random1": 1
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.6890756302521008,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 23,
+            "angle": 37,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.01681762221830969,
+          "pos_err_median_m": 0.0006938859711328627,
+          "angle_max_deg": 32.83379691656474,
+          "angle_median_deg": 1.4940843698927009,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            55.65945858300802,
+            70.98406141194353,
+            84.99661516235793,
+            77.44465354369122,
+            19.51075546154345,
+            159.2724203831444
+          ],
+          "arm_change_rms_deg": 70.22272457152455,
+          "speed_ratio_max": 3.3080200737436414,
+          "speed_violations": 3,
+          "jump_to_prior_at_ends_deg": [
+            158.76880161190422,
+            163.21851799118022
+          ],
+          "tool_obj_depth_max_m": 0.008383971043539495,
+          "starts": {
+            "prior": 18,
+            "random2": 7,
+            "random12": 1,
+            "random9": 1,
+            "random1": 2,
+            "random15": 3,
+            "previous": 80,
+            "random0": 7
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 119,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 119,
+            "angle": 103,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.416198966415607,
+          "pos_err_median_m": 0.22399025976761533,
+          "angle_max_deg": 43.93637988782306,
+          "angle_median_deg": 23.03308863346582,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 33,
+            "random2": 32,
+            "random14": 1,
+            "random8": 1,
+            "random12": 1,
+            "random3": 1,
+            "random11": 2,
+            "random1": 20,
+            "random15": 2,
+            "random0": 25,
+            "random4": 1
+          }
+        }
+      },
+      "runtime_s": 194.95517015457153
+    },
+    "c04_sub12_largebox_065": {
+      "clip": "sub12_largebox_065",
+      "object": "largebox",
+      "mode": "R",
+      "grip": "press",
+      "palm_used": false,
+      "palm_face_deg": 65.55928098867386,
+      "forearm_used": true,
+      "forearm_face_deg": 65.86798157686032,
+      "contact_moved": "rear_edge",
+      "labels": {
+        "mesh/pos": "feasible",
+        "mesh/pos_dir": "feasible",
+        "mesh/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_track/pos": "feasible",
+        "reach_track/pos_dir": "feasible",
+        "reach_track/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_fit/pos": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir": "no_feasible_solution_within_budget",
+        "reach_fit/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [
+        "palm faces away (66\u00b0): no roll target"
+      ],
+      "registration": {
+        "reach_fit": {
+          "psi": -0.09746267743059622,
+          "b": [
+            -0.9113438550619988,
+            0.7493724117941744
+          ],
+          "kind": "reach_fit",
+          "info": {
+            "target_spread_m": 0.3448382610707621,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -7.476413082670843,
+            "residual_xy_rms_m": 0.10331393971219356,
+            "residual_xy_max_m": 0.1656522586324103,
+            "n_frames": 153
+          },
+          "psi_deg": -5.584200076818106
+        },
+        "reach_track": {
+          "psi": -0.09746267743059622,
+          "psi_deg": -5.584200076818106,
+          "psi_range_deg": [
+            -5.584200076818106,
+            -5.584200076818106
+          ],
+          "kind": "track",
+          "info": {
+            "extra_base_shift_max_m": 0.14605949497266682,
+            "extra_base_speed_max_mps": 0.15855719205148358,
+            "residual_xy_rms_m": 0.022460564775319214,
+            "residual_xy_max_m": 0.03825317695187109,
+            "smooth_s": 1.0
+          }
+        },
+        "start_anchored": {
+          "psi": 0.033025347101188984,
+          "b": [
+            -0.700124896717272,
+            -0.037572637985182886
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.649289159863667,
+            "residual_xy_max_m": 0.8266877504908152
+          },
+          "psi_deg": 1.8922130058527364
+        },
+        "contact_fit_prior_site": {
+          "psi": -0.09946087978524165,
+          "b": [
+            -0.7980731112961057,
+            0.5823945466649092
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.3448382610707621,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": -7.590901644205129,
+            "residual_xy_rms_m": 0.12287329907691044,
+            "residual_xy_max_m": 0.18799420082634388,
+            "n_frames": 153
+          },
+          "psi_deg": -5.698688638352392
+        },
+        "face": "slant",
+        "reach_ahead_m": 0.7,
+        "mesh": {
+          "psi": -0.19633333757960023,
+          "psi_deg": -11.249071621028333,
+          "psi_range_deg": [
+            -19.15682763646758,
+            -3.730385682847493
+          ],
+          "kind": "mesh",
+          "info": {
+            "cost": 68.72247785036845,
+            "nfev": 28,
+            "status": 2,
+            "n_edges": 4677
+          }
+        }
+      },
+      "mesh": {
+        "relations": {
+          "edge_dir_err_deg": 3.7176954233270734,
+          "heading_err_deg": 2.1761770977928716,
+          "reach_m": [
+            0.6041397003984712,
+            0.6879811326442422
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.6849926737184548
+        },
+        "scene_body_depth_max_m": 0.012165494744724031,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.6041397003984712,
+          0.6879811326442422
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.664785685240522,
+          1.0198812772430887
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 5.0890162403665076e-05,
+          "pos_err_median_m": 4.186303290421401e-06,
+          "angle_max_deg": 56.50050996311625,
+          "angle_median_deg": 43.85242335980005,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            88.52750174845319,
+            112.65303604612184,
+            38.40285888910128,
+            61.52583381710769,
+            58.810701360124234,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 88.73695893282574,
+          "speed_ratio_max": 0.4673794201172714,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.021448282278125202,
+          "starts": {
+            "prior": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0013966526343910718,
+          "pos_err_median_m": 0.0002727826137271669,
+          "angle_max_deg": 3.002366964422854,
+          "angle_median_deg": 0.5894235622390124,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            80.76082597621303,
+            115.44670970378256,
+            104.18711480426357,
+            81.29189515926214,
+            20.198400925399334,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 91.22084643960811,
+          "speed_ratio_max": 1.0320537080789591,
+          "speed_violations": 2,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.012754697020291916,
+          "starts": {
+            "prior": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 153,
+            "angle": 153,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.5076238984129801,
+          "pos_err_median_m": 0.45982000611369606,
+          "angle_max_deg": 51.82212320777175,
+          "angle_median_deg": 40.476209253390245,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 110,
+            "random6": 1,
+            "random2": 10,
+            "random12": 1,
+            "random10": 2,
+            "random1": 12,
+            "random0": 16,
+            "random4": 1
+          }
+        }
+      },
+      "reach_track": {
+        "relations": {
+          "edge_dir_err_deg": 80.0798217149896,
+          "heading_err_deg": 7.7619676476836705,
+          "reach_m": [
+            0.6339429760366572,
+            0.7004658604617863
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.15855719205148044
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.6339429760366571,
+          0.7004658604617862
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6006654557133766,
+          0.9271079970732012
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0014841601544108246,
+          "pos_err_median_m": 7.825019589140111e-06,
+          "angle_max_deg": 42.314360865567494,
+          "angle_median_deg": 18.471248872267136,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            25.40172205732902,
+            101.59921107440819,
+            56.73868132847123,
+            42.46166058298822,
+            20.05388710191466,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 79.66019831562323,
+          "speed_ratio_max": 0.6377831574724409,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.02105861392814848,
+          "starts": {
+            "prior": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.005185778761524418,
+          "pos_err_median_m": 0.0017906026429779594,
+          "angle_max_deg": 10.779802770459268,
+          "angle_median_deg": 3.7967720299580674,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            27.161285412006126,
+            106.57349120512208,
+            75.20376045552183,
+            59.22600339751705,
+            8.408535872547432,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 83.24767917109165,
+          "speed_ratio_max": 0.8013579344995451,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.02001931255930081,
+          "starts": {
+            "prior": 1,
+            "previous": 152
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 153,
+            "angle": 153,
+            "self_collision": 31,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.43279494291443044,
+          "pos_err_median_m": 0.3616375943582673,
+          "angle_max_deg": 45.35244890935541,
+          "angle_median_deg": 31.27276532770971,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 30,
+            "random6": 1,
+            "random2": 40,
+            "random7": 1,
+            "random8": 2,
+            "random12": 1,
+            "random5": 1,
+            "random9": 1,
+            "random10": 2,
+            "random1": 39,
+            "random13": 2,
+            "random0": 32,
+            "random4": 1
+          }
+        }
+      },
+      "reach_fit": {
+        "relations": {
+          "edge_dir_err_deg": 79.67743251214645,
+          "heading_err_deg": 7.7619676476836705,
+          "reach_m": [
+            0.5307198604973463,
+            0.7688753619467525
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5307198604973463,
+          0.7688753619467524
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.6450436108274943,
+          0.9132167291260879
+        ],
+        "pos": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.9019607843137255,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 15,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.007326826290928029,
+          "pos_err_median_m": 0.00018240329838793487,
+          "angle_max_deg": 50.58507092131328,
+          "angle_median_deg": 28.80141117597194,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            30.59439990691247,
+            107.40733811197083,
+            71.00603170834889,
+            46.968334999293255,
+            54.45594431714836,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 80.1730686793429,
+          "speed_ratio_max": 0.6008972934372453,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.020577625072998623,
+          "starts": {
+            "prior": 8,
+            "random2": 1,
+            "random12": 1,
+            "random9": 1,
+            "random1": 3,
+            "random15": 1,
+            "previous": 136,
+            "random0": 2
+          }
+        },
+        "pos_dir": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.5686274509803921,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 20,
+            "angle": 66,
+            "self_collision": 16,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.012947313759587548,
+          "pos_err_median_m": 0.0026929417297476706,
+          "angle_max_deg": 24.8565328247554,
+          "angle_median_deg": 5.608866039592794,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            25.293555041164876,
+            85.48489034457603,
+            37.13730170938917,
+            43.96211922247348,
+            5.903081483953718,
+            180.5502728473625
+          ],
+          "arm_change_rms_deg": 79.74030855852568,
+          "speed_ratio_max": 0.6572384431187414,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            180.5502728473625,
+            162.98333024550774
+          ],
+          "tool_obj_depth_max_m": 0.019465341100205563,
+          "starts": {
+            "prior": 31,
+            "random6": 2,
+            "random2": 7,
+            "random14": 1,
+            "random3": 1,
+            "random11": 1,
+            "random10": 1,
+            "random1": 8,
+            "previous": 86,
+            "random0": 14,
+            "random4": 1
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 153,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 153,
+            "angle": 153,
+            "self_collision": 24,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.4782103995329318,
+          "pos_err_median_m": 0.374903035066107,
+          "angle_max_deg": 44.32350646488603,
+          "angle_median_deg": 31.86977661357235,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 38,
+            "random2": 34,
+            "random7": 1,
+            "random3": 4,
+            "random12": 1,
+            "random5": 1,
+            "random9": 2,
+            "random10": 3,
+            "random1": 35,
+            "random15": 1,
+            "random0": 33
+          }
+        }
+      },
+      "runtime_s": 215.89131331443787
+    },
+    "c05_sub1_suitcase_008": {
+      "clip": "sub1_suitcase_008",
+      "object": "suitcase",
+      "mode": "R",
+      "grip": "press",
+      "palm_used": false,
+      "palm_face_deg": 142.92183221848893,
+      "forearm_used": true,
+      "forearm_face_deg": 7.576733182084708,
+      "contact_moved": "rear_edge",
+      "labels": {
+        "mesh/pos": "feasible",
+        "mesh/pos_dir": "feasible",
+        "mesh/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_track/pos": "feasible",
+        "reach_track/pos_dir": "feasible",
+        "reach_track/pos_dir_budget": "no_feasible_solution_within_budget",
+        "reach_fit/pos": "feasible",
+        "reach_fit/pos_dir": "feasible",
+        "reach_fit/pos_dir_budget": "no_feasible_solution_within_budget"
+      },
+      "flags": [],
+      "notes": [
+        "palm faces away (143\u00b0): no roll target"
+      ],
+      "registration": {
+        "reach_fit": {
+          "psi": 0.21805925669623694,
+          "b": [
+            -1.52331843024425,
+            0.04936450888556043
+          ],
+          "kind": "reach_fit",
+          "info": {
+            "target_spread_m": 0.5483102135511629,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 13.0920148213198,
+            "residual_xy_rms_m": 0.20561537695585796,
+            "residual_xy_max_m": 0.32583171429443586,
+            "n_frames": 84
+          },
+          "psi_deg": 12.493875092454212
+        },
+        "reach_track": {
+          "psi": 0.21805925669623696,
+          "psi_deg": 12.493875092454212,
+          "psi_range_deg": [
+            12.493875092454212,
+            12.493875092454212
+          ],
+          "kind": "track",
+          "info": {
+            "extra_base_shift_max_m": 0.31509457242337546,
+            "extra_base_speed_max_mps": 0.32809731603446907,
+            "residual_xy_rms_m": 0.04038302704460561,
+            "residual_xy_max_m": 0.0797962570370754,
+            "smooth_s": 1.0
+          }
+        },
+        "start_anchored": {
+          "psi": -0.010439507655690683,
+          "b": [
+            -1.299690621242737,
+            -0.3039900118745882
+          ],
+          "kind": "start_anchored",
+          "info": {
+            "residual_xy_rms_m": 0.5630572159689236,
+            "residual_xy_max_m": 0.670544772778679
+          },
+          "psi_deg": -0.5981397288655883
+        },
+        "contact_fit_prior_site": {
+          "psi": 0.21288400555478804,
+          "b": [
+            -1.5464119434443553,
+            0.08726901917868723
+          ],
+          "kind": "contact_fit",
+          "info": {
+            "target_spread_m": 0.5483102135511629,
+            "yaw_fixed_to_anchor": false,
+            "lambda_psi": 0.08,
+            "psi_minus_anchor_deg": 12.795494772994516,
+            "residual_xy_rms_m": 0.22471484538131326,
+            "residual_xy_max_m": 0.41181812055341727,
+            "n_frames": 84
+          },
+          "psi_deg": 12.197355044128928
+        },
+        "face": "slant",
+        "reach_ahead_m": 0.7,
+        "mesh": {
+          "psi": 0.5172436008829523,
+          "psi_deg": 29.635875310742385,
+          "psi_range_deg": [
+            14.629075255758888,
+            42.021194145454004
+          ],
+          "kind": "mesh",
+          "info": {
+            "cost": 29.683300365554324,
+            "nfev": 25,
+            "status": 2,
+            "n_edges": 2631
+          }
+        }
+      },
+      "mesh": {
+        "relations": {
+          "edge_dir_err_deg": 2.6250759418378746,
+          "heading_err_deg": 2.336718939764466,
+          "reach_m": [
+            0.5623740566646771,
+            0.6432714962983823
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.3834487291379197
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5623740566646771,
+          0.6432714962983822
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.46647420022784913,
+          0.7153173964726625
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 5.859693689416893e-05,
+          "pos_err_median_m": 4.229493973859114e-06,
+          "angle_max_deg": 80.2755604030258,
+          "angle_median_deg": 70.06242567330072,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            18.340951895760956,
+            97.35607479096298,
+            37.74846821995026,
+            62.03787670660524,
+            49.173927698506894,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 78.2940807897042,
+          "speed_ratio_max": 0.3216399956798111,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.0391958504342145,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.0006341904106037028,
+          "pos_err_median_m": 0.00011828777801757556,
+          "angle_max_deg": 1.38354554451874,
+          "angle_median_deg": 0.2587499381652922,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            49.89042382348793,
+            76.52612128659291,
+            54.09666798617779,
+            80.52158732591847,
+            37.66699265010588,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 76.64997119815834,
+          "speed_ratio_max": 0.6292611637006018,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.004002448574945527,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 80,
+            "angle": 84,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.2947834121514056,
+          "pos_err_median_m": 0.10600925474689164,
+          "angle_max_deg": 53.29025694037308,
+          "angle_median_deg": 32.87172878440744,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.01216665100866604,
+          "starts": {
+            "prior": 24,
+            "random6": 1,
+            "random2": 21,
+            "random3": 1,
+            "random12": 1,
+            "random5": 1,
+            "random10": 2,
+            "random1": 17,
+            "random0": 16
+          }
+        }
+      },
+      "reach_track": {
+        "relations": {
+          "edge_dir_err_deg": 6.863686952167421,
+          "heading_err_deg": 18.684312407660713,
+          "reach_m": [
+            0.5507512880827233,
+            0.6006981530006476
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.32809731603446907
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.5507512880827232,
+          0.6006981530006477
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.4346091209521491,
+          0.6731561187094223
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 1.4412534437703474e-05,
+          "pos_err_median_m": 4.858069358475871e-06,
+          "angle_max_deg": 85.3314688147776,
+          "angle_median_deg": 79.52747941698134,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            28.46234394772183,
+            96.85259506623835,
+            84.10345257071802,
+            113.05630313255969,
+            61.863735404982144,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 91.25457534731682,
+          "speed_ratio_max": 0.24196795141249963,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.03838863381767468,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.00038777408911450616,
+          "pos_err_median_m": 0.0001236491959497947,
+          "angle_max_deg": 0.8454330761175004,
+          "angle_median_deg": 0.2707137649234694,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            22.137794622594797,
+            65.95603480100507,
+            28.543208124240856,
+            49.48197889604859,
+            36.81788747011361,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 72.81216868887758,
+          "speed_ratio_max": 0.4723829141830087,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.005765680702701226,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.07142857142857142,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 78,
+            "angle": 75,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.22971765659590052,
+          "pos_err_median_m": 0.10231351996561582,
+          "angle_max_deg": 30.368821630337294,
+          "angle_median_deg": 21.31301346741351,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            2.2254624593366152,
+            20.000000000000004,
+            20.000000000000004,
+            20.000000000000004,
+            20.0,
+            20.0
+          ],
+          "arm_change_rms_deg": 17.388049212692568,
+          "speed_ratio_max": 0.1783395007736076,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.01199931837432211,
+          "starts": {
+            "prior": 15,
+            "random6": 1,
+            "random2": 19,
+            "random14": 2,
+            "random8": 1,
+            "random3": 2,
+            "random5": 1,
+            "random9": 1,
+            "random1": 23,
+            "previous": 6,
+            "random0": 13
+          }
+        }
+      },
+      "reach_fit": {
+        "relations": {
+          "edge_dir_err_deg": 4.096159217375552,
+          "heading_err_deg": 18.684312407660713,
+          "reach_m": [
+            0.4518093527735777,
+            0.8004372694375717
+          ],
+          "body_in_object_m": 0.0,
+          "extra_foot_slide_max_mps": 0.0
+        },
+        "scene_body_depth_max_m": 0.0,
+        "scene_infeasible": false,
+        "target_to_shoulder_m": [
+          0.4518093527735778,
+          0.8004372694375715
+        ],
+        "reach_bound_m": 0.9395286488664946,
+        "prior_site_error_m": [
+          0.43781555977370423,
+          0.7161017637024851
+        ],
+        "pos": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 2.9163154692615778e-05,
+          "pos_err_median_m": 8.812865858580032e-06,
+          "angle_max_deg": 53.465197274013065,
+          "angle_median_deg": 37.32251692909996,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            26.268966394565577,
+            92.87705410651925,
+            50.16727102829464,
+            18.699070074571036,
+            23.342114787072266,
+            110.5701569175832
+          ],
+          "arm_change_rms_deg": 47.88700195554034,
+          "speed_ratio_max": 0.39179268312936594,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            100.02578839017524,
+            97.72523204224909
+          ],
+          "tool_obj_depth_max_m": 0.02745135933197798,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir": {
+          "label": "feasible",
+          "feasible_frac": 1.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 0,
+            "angle": 0,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.005969668643331232,
+          "pos_err_median_m": 0.00026153780968776296,
+          "angle_max_deg": 12.639855485365347,
+          "angle_median_deg": 0.567541625632626,
+          "roll_median_deg": null,
+          "arm_change_max_deg": [
+            59.42398793148767,
+            100.2475119969064,
+            107.29942161761862,
+            77.28409363522798,
+            39.35237736815681,
+            173.85501491817698
+          ],
+          "arm_change_rms_deg": 78.74495085298355,
+          "speed_ratio_max": 0.8407380076738714,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            163.3106542548759,
+            161.01008581952672
+          ],
+          "tool_obj_depth_max_m": 0.004127629935452071,
+          "starts": {
+            "prior": 1,
+            "previous": 83
+          }
+        },
+        "pos_dir_budget": {
+          "label": "no_feasible_solution_within_budget",
+          "feasible_frac": 0.0,
+          "n_frames": 84,
+          "n_proven_unreachable": 0,
+          "fail_reasons": {
+            "pos_error": 84,
+            "angle": 84,
+            "self_collision": 0,
+            "floor": 0,
+            "arm_object": 0
+          },
+          "pos_err_max_m": 0.3986448777163749,
+          "pos_err_median_m": 0.14231779462748678,
+          "angle_max_deg": 57.00562787497686,
+          "angle_median_deg": 25.96205014779349,
+          "roll_median_deg": null,
+          "arm_change_max_deg": null,
+          "arm_change_rms_deg": null,
+          "speed_ratio_max": null,
+          "speed_violations": 0,
+          "jump_to_prior_at_ends_deg": [
+            20.000000000000004,
+            20.000000000000004
+          ],
+          "tool_obj_depth_max_m": 0.0,
+          "starts": {
+            "prior": 23,
+            "random6": 2,
+            "random2": 21,
+            "random14": 1,
+            "random5": 1,
+            "random1": 15,
+            "random15": 2,
+            "random0": 18,
+            "random4": 1
+          }
+        }
+      },
+      "runtime_s": 302.5049731731415
+    }
+  },
+  "elapsed_s": 1615.9223232269287
+}

@@ -38,3 +38,7 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R013_tasks | #19 | `fa9ae09` | Ubuntu, CPU | pass=true; 19 tasks; confirmed 3/3 pass, candidates 5/16 pass task checks |
 | R013_d0 | #19 | `fa9ae09` | Ubuntu RTX 5070 (cuda:0) | **pass=false**: 17/18 clips pass; sub1_suitcase_085 X-Morph aborted (exit -6, PyTorch c10 ApproximateClock "getCount is non-monotonic"); see #19 |
 | R013_reach | #19 | `fa9ae09` | Ubuntu, CPU | pass=true (3/3 tasks, 0 errors); feasible only reach_track/pos for c14 sub6_largetable_033 and c16 sub5_largetable_030 |
+| R014_candidates | #21 | `0872d25` | Ubuntu, CPU, SMPL-H male | pass=true; 6 candidates, all push/press (5 omomo_new, 1 force); 12 segments pass all criteria |
+| R014_tasks | #21 | `0872d25` | Ubuntu, CPU | pass=true; 9 tasks, all 9 pass task checks |
+| R014_d0 | #21 | `0872d25` | Ubuntu RTX 5070 (cuda:0) | pass=true; 8/8 clips |
+| R014_reach | #21 | `0872d25` | Ubuntu, CPU | pass=true (5/5 tasks, 0 errors); feasible pos / pos_dir: mesh 4/4 of 5, reach_track 4/4 of 5, reach_fit 2/1 of 5; pos_dir_budget 0 everywhere; layout videos rendered (mp4 on Drive) |
