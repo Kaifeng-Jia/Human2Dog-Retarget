@@ -137,3 +137,32 @@ def test_virtual_hand_both_same_face_and_squeeze():
     seg = describe_clip(sq, BOX)["segments"][0]
     d = push_descriptors(sq, BOX, (seg["start"], seg["end"]), "B")
     assert d["hands_face_angle_deg"] > 150                                              # opposite faces
+
+
+@needs_mesh
+@pytest.mark.parametrize("face,hands", [("side", "R"), ("top", "R"), ("side", "B")])
+def test_task_targets(tmp_path, face, hands):
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.tasks import build_task, load_task, save_task, task_checks
+
+    c = make_clip(push_face=face, push_hands=hands)
+    s, e = segments(c)[0]
+    t = build_task(c, BOX, (s, e), hands)
+    ck = task_checks(t)
+    assert ck["contact_frames"] == e - s and ck["target_equals_c_bar_in_contact_m"] < 1e-9
+    assert ck["patch_coherence_median"] > 0.9 and ck["normal_spread_p90_deg"] < 5
+    # the hand comes 0.25 m straight in over 0.5 s and leaves 0.25 m straight out: d = 0.25 at both ends of that
+    w0 = t["window"][0]
+    d_in, d_out = t["d"][s - 15 - w0], t["d"][e - 1 + 15 - w0]
+    assert abs(d_in - 0.25) < 0.02 and abs(d_out - 0.25) < 0.02 and np.all(t["d"][t["in_contact"]] == 0)
+    assert np.all(np.diff(t["d"][s - 15 - w0:s - w0]) <= 1e-9)            # decreasing towards contact
+    # targets on the surface in contact, off it along the normal outside; world = object pose applied
+    dist = BOX.surface_distance(t["target_local"][t["in_contact"]])
+    assert dist.max() < 1e-6
+    i = 0
+    w = R.from_quat(t["obj_rot_xyzw"][i]).apply(t["target_local"][i]) + t["obj_pos"][i]
+    assert np.allclose(w, t["target_world"][i])
+    save_task(t, tmp_path / "t.npz")
+    back = load_task(tmp_path / "t.npz")
+    assert back["clip"] == c.name and np.allclose(back["target_world"], t["target_world"])

@@ -57,3 +57,11 @@ People bring the hand down onto the face from above (30-75 deg from the normal),
 low boxes are mostly on the top face; FORCE box / chair pushes are mostly two-handed or turn the object.
 Kevin confirmed three OMOMO_new segments (one side-face, two top-face pushes; contact at 0.14, 0.17, 0.36 m),
 recorded in `configs/push_candidates.yaml` with the deviation note; later runs read them from there.
+
+## Task targets
+
+`scripts/common/prepare_tasks.py` turns each confirmed segment (and, with `--candidates`, every candidate) into
+`tasks/<id>.npz` (`h2d/common/data/tasks.py`, load with `load_task`): window of 1 s before and after the contact,
+object pose per frame (unchanged), `in_contact`, `c_bar_local` (contact target on the surface, object frame),
+`n_bar_local` (one normal, towards the hand), `d` (palm distance to the contact plane, zeroed by its median in
+contact), `target_local` / `target_world` (c~_t = c_bar_ref + d_t n_bar, spec §5.2), `palm_world`.

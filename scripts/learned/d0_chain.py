@@ -13,6 +13,7 @@ Clips are chosen explicitly, after looking at the data profile (scripts/common/p
 
 Usage:
   python scripts/learned/d0_chain.py --run-id R00x_d0 --clips sub10_largebox_011 sub3_floorlamp_004
+  python scripts/learned/d0_chain.py --run-id R00x_d0 --clips-file outputs/R00x_tasks/clips_omomo.txt
 """
 
 from __future__ import annotations
@@ -145,7 +146,9 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
 def main() -> int:
     ap = argparse.ArgumentParser()
     add_run_args(ap)
-    ap.add_argument("--clips", nargs="+", required=True)
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--clips", nargs="+")
+    g.add_argument("--clips-file", help="text file, one clip name per line (e.g. prepare_tasks.py clips_omomo.txt)")
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--root", default=None)
     args = ap.parse_args()
@@ -156,7 +159,8 @@ def main() -> int:
     except ProvenanceError as e:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
-    names = list(args.clips)
+    names = list(args.clips) if args.clips else [ln.strip() for ln in Path(args.clips_file).read_text().splitlines()
+                                                    if ln.strip()]
     root = Path(args.root).expanduser() if args.root else data_path("omomo_new")
     smplx_root = data_path("smplx_models")
     out = Path(args.out or f"outputs/{args.run_id}")

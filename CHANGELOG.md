@@ -14,6 +14,14 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   tables, sheets (both hands drawn behind the midpoint) and gallery; 16 candidates by default.
 - Test clip: `push_hands` = R / B (both on one face) / squeeze (opposite faces).
 
+### Added
+- [common] Task targets (`h2d/common/data/tasks.py`, `scripts/common/prepare_tasks.py`; spec v0.6 §4 step 1,
+  §5.2): per segment the object trajectory, contact frames, object-local contact target on the surface, one
+  normal, approach / retreat distance d_t (palm-thickness zeroed) and the world target path; `tasks/<id>.npz`,
+  a sheet per task, checks; also for every candidate of a candidates.csv, so a later confirmation needs no rerun.
+- `configs/push_candidates.yaml`: per-segment `mode`.
+- [learned] `d0_chain.py --clips-file` (e.g. `clips_omomo.txt` from `prepare_tasks.py`).
+
 ## [0.1.4] — 2026-10-25 (merge `8dfde27`)
 
 ### Added
