@@ -9,4 +9,5 @@ penetration_tol_m: 0.002     # collision = penetration deeper than this (numeric
 scene_body_depth_m: 0.02     # frozen body inside the object deeper than this: scene infeasible (arm cannot fix it)
 # Z1 Pro: 180 deg/s for all six joints (Unitree Z1 Pro product sheet, e.g. store.ired.co.uk/products/z1-pro-robotics-arm)
 joint_speed_limit_rad_s: [3.1416, 3.1416, 3.1416, 3.1416, 3.1416, 3.1416]
-registration_residual_suspect_m: 0.30   # contact-fit xy RMS above this: suspect a coordinate error, label it
+registration_residual_suspect_m: 0.30   # contact-fit xy RMS above this: noted as prior path drift (not a label)
+prev_weight_m_per_rad: 0.01  # IK regularisation towards the previous frame's solution (continuity), when there is one

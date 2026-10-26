@@ -18,6 +18,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - SMPL-X export for GMR: 16 betas (mean shape) instead of 10; smplx builds SMPL-X with 16 betas plus 10
   expression coefficients, so 10 betas failed in `blend_shapes` for every clip.
 
+- Reachability diagnostic (found in R008): a large contact-fit residual (the prior's path drift, spec O2) no
+  longer turns every problem into `coordinate_or_tool_offset_error`; it is a note. IK is regularised towards the
+  previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
+
 ### Added
 - [common] Task targets (`h2d/common/data/tasks.py`, `scripts/common/prepare_tasks.py`; spec v0.6 §4 step 1,
   §5.2): per segment the object trajectory, contact frames, object-local contact target on the surface, one

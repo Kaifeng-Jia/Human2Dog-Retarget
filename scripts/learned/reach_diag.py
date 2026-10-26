@@ -17,8 +17,8 @@ Inputs: task files from ``scripts/common/prepare_tasks.py`` and the prior from `
 
 Failure labels (spec §7.1 step 5): "proven_unreachable" (target farther from the joint1 anchor than the sum of
 the arm's segment lengths), "no_feasible_solution_within_budget" (all other failures of the local search),
-"coordinate_or_tool_offset_error" (frame mismatch, target below the floor, registration residual above the
-suspect level). "Task not expressible" comes only from the task definition and is not produced here.
+"coordinate_or_tool_offset_error" (frame mismatch, target below the floor). A large registration residual is the
+prior's path drift (spec O2) and is reported in ``notes``, not as a label. "Task not expressible" comes only from the task definition and is not produced here.
 
 Writes outputs/<run-id>/{summary.json, report.md, tasks/<id>.png, solutions/<id>.npz}.
 """
@@ -59,7 +59,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
                reg_cfg: dict, bound: float) -> dict:
     fr, c = task["frames"], task["in_contact"].astype(bool)
     cf = fr[c]
-    out = {"labels": {}, "flags": []}
+    out = {"labels": {}, "flags": [], "notes": []}     # flags: coordinate problems; notes: everything else
     if motion.n < fr[-1] + 1:
         out["flags"].append(f"prior has {motion.n} frames, task needs {fr[-1] + 1}")
         out["labels"] = {f"{lay}/{p}": "coordinate_or_tool_offset_error" for lay in LAYOUTS for p, *_ in PROBLEMS}
@@ -89,10 +89,12 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     anchor.info = {"residual_xy_rms_m": float(np.sqrt(np.mean(anchor_res ** 2))), "residual_xy_max_m": float(anchor_res.max())}
     out["registration"] = {"contact_fit": fit.to_dict(), "start_anchored": anchor.to_dict()}
     if fit.info["residual_xy_rms_m"] > cfg["registration_residual_suspect_m"]:
-        out["flags"].append(f"contact-fit residual {fit.info['residual_xy_rms_m']:.2f} m")
+        # the prior's own root path drifts from the source (spec O2: speed mapping, half turn rate), which one SE(2)
+        # cannot remove; reported, not a coordinate error (R008 mislabelled it as one)
+        out["notes"].append(f"contact-fit residual {fit.info['residual_xy_rms_m']:.2f} m (prior path drift)")
 
     ik = ArmIK(robot, coll, cfg["pos_tol_m"], cfg["max_angle_deg"], cfg["n_random_starts"],
-               margin_m=cfg["avoid_margin_m"])
+               margin_m=cfg["avoid_margin_m"], w_prev=cfg.get("prev_weight_m_per_rad", 0.0))
     vmax = np.asarray(cfg["joint_speed_limit_rad_s"])
     budget = np.radians(cfg["budget_deg"])
     fps = float(task["fps"])
@@ -284,6 +286,10 @@ def main() -> int:
                              f"{p} | {q['label']} | {100 * q['feasible_frac']:.0f} % | {f(100 * q['pos_err_max_m'], 1)} | "
                              f"{f(q['angle_median_deg'], 0)} / {f(q['angle_max_deg'], 0)} | "
                              f"{f(max(ch) if ch else None, 0)} / {f(q['arm_change_rms_deg'], 0)} | {f(q['speed_ratio_max'])} |")
+    notes = [f"- `{tid}`: " + "; ".join(r.get("flags", []) + r.get("notes", [])) for tid, r in results.items()
+             if r.get("flags") or r.get("notes")]
+    if notes:
+        lines += ["", "## Flags and notes", ""] + notes
     if errors:
         lines += ["", "## Errors", ""] + [f"- `{e['id']}`: {e['error'].splitlines()[-1]}" for e in errors]
     (out_dir / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

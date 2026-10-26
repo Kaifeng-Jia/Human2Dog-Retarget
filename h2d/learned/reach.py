@@ -55,11 +55,11 @@ class ArmIK:
 
     def __init__(self, robot: B2Z1Robot, coll: RobotCollision, pos_tol_m: float = 0.01, max_angle_deg: float = 15.0,
                  n_random: int = 16, seed: int = 0, max_iter: int = 60, margin_m: float = 0.01,
-                 w_avoid: float = 1.0, n_random_light: int = 3):
+                 w_avoid: float = 1.0, n_random_light: int = 3, w_prev: float = 0.01):
         self.r, self.coll = robot, coll
         self.pos_tol, self.max_angle = pos_tol_m, max_angle_deg
         self.n_random, self.n_light, self.max_iter = n_random, n_random_light, max_iter
-        self.margin, self.w = margin_m, w_avoid
+        self.margin, self.w, self.w_prev = margin_m, w_avoid, w_prev
         self.rng = np.random.default_rng(seed)
         m = robot.model
         self.pairs = np.array(coll.pairs + [(a, f) for a in coll.arm for f in coll.floor], dtype=int)
@@ -105,7 +105,7 @@ class ArmIK:
         return np.array(rows), np.array(jacs)
 
     # ------------------------------------------------------------------ one local solve
-    def _residual(self, y, n, use_dir, obj):
+    def _residual(self, y, n, use_dir, obj, q_ref=None):
         p = self.r.contact_site()
         Jp = self.r.contact_site_jacobian()
         if use_dir:
@@ -114,20 +114,24 @@ class ArmIK:
         else:
             e, J = p - y, Jp
         ea, Jav = self._avoid(obj)
-        return np.r_[e, ea], np.vstack([J, Jav])
+        e, J = np.r_[e, ea], np.vstack([J, Jav])
+        if q_ref is not None and self.w_prev > 0:          # stay near the previous frame's solution (continuity)
+            q = self.r.data.qpos[self.r.arm_qadr]
+            e, J = np.r_[e, self.w_prev * (q - q_ref)], np.vstack([J, self.w_prev * np.eye(6)])
+        return e, J
 
-    def _local(self, q0, lo, hi, y, n, use_dir, obj):
+    def _local(self, q0, lo, hi, y, n, use_dir, obj, q_ref=None):
         q = np.clip(q0, lo, hi)
         mu, it = 1e-3, 0
         self.r.set_arm(q)
-        e, J = self._residual(y, n, use_dir, obj)
+        e, J = self._residual(y, n, use_dir, obj, q_ref)
         f = e @ e
         for it in range(1, self.max_iter + 1):
             H = J.T @ J
             step = np.linalg.solve(H + mu * np.diag(np.diag(H) + 1e-9), J.T @ e)
             qn = np.clip(q - step, lo, hi)
             self.r.set_arm(qn)
-            en, Jn = self._residual(y, n, use_dir, obj)
+            en, Jn = self._residual(y, n, use_dir, obj, q_ref)
             fn = en @ en
             if fn < f:
                 q, e, J, f, mu = qn, en, Jn, fn, max(mu / 3, 1e-7)
@@ -160,7 +164,7 @@ class ArmIK:
         starts += [(f"random{i}", self.rng.uniform(lo, hi)) for i in range(self.n_random if full else self.n_light)]
         best = None
         for name, q0 in starts:
-            q, it = self._local(q0, lo, hi, y, n, use_dir, obj)
+            q, it = self._local(q0, lo, hi, y, n, use_dir, obj, q_prev)
             err, ang, col, ok = self._evaluate(q, y, n, use_dir, obj)
             res = IKResult(q, err, ang, col, ok, name, it)
             key = (not ok, err if not ok else 0.0, float(np.sum((q - q_prior) ** 2)))
