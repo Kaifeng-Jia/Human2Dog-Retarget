@@ -207,6 +207,64 @@ class ObjectMesh:
         q = closest_points_on_triangles(p, self.verts[self.faces[face_ids]])
         return float(np.min(np.linalg.norm(q - p, axis=1)))
 
+    @property
+    def center(self) -> np.ndarray:
+        """Bounding-box centre of the local frame."""
+        return 0.5 * (self.verts.min(0) + self.verts.max(0))
+
+    @property
+    def face_normals(self) -> np.ndarray:
+        """Unit face normals (local) as wound in the file. The winding is not consistent across the meshes used
+        here (thin parts, open boxes, one inverted scan), so callers sign them, see ``patch_normals``."""
+        if "fn" not in self._cache:
+            t = self.verts[self.faces]
+            n = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
+            self._cache["fn"] = n / np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12)
+        return self._cache["fn"]
+
+    def closest_face(self, p_local: np.ndarray, k: int = 16) -> tuple[np.ndarray, np.ndarray]:
+        """Closest face id (K,) and closest surface point (K, 3) for local points (K, 3)."""
+        p = np.asarray(p_local, np.float64).reshape(-1, 3)
+        _, F, tree = self._samples()
+        _, idx = tree.query(p, k=k)
+        fid = np.zeros(len(p), np.int64)
+        q = np.zeros_like(p)
+        for i in range(len(p)):
+            cand = np.unique(F[idx[i]])
+            cq = closest_points_on_triangles(p[i], self.verts[self.faces[cand]])
+            j = int(np.argmin(np.linalg.norm(cq - p[i], axis=1)))
+            fid[i], q[i] = cand[j], cq[j]
+        return fid, q
+
+    def patch_normals(self, p_local: np.ndarray, radius: float = 0.03) -> tuple[np.ndarray, np.ndarray, np.ndarray,
+                                                                              np.ndarray]:
+        """Surface patch under each local point p (K, 3) as seen from p.
+
+        Returns the closest surface point q (K, 3), the distance |p - q| (K,), the patch normal (K, 3) and its
+        coherence (K,). The patch normal is the mean of the face normals of the (area-weighted) surface
+        samples within ``radius`` of q, each signed to point towards p (the side the hand is on; this also
+        handles thin parts and inconsistent winding), normalised. Coherence is the length before
+        normalisation: 1 on a flat patch, lower on edges, corners and curved or noisy patches.
+        """
+        p = np.asarray(p_local, np.float64).reshape(-1, 3)
+        _, q = self.closest_face(p)
+        pts, F, tree = self._samples()
+        fn = self.face_normals
+        n = np.zeros_like(p)
+        coh = np.zeros(len(p))
+        for i, nb in enumerate(tree.query_ball_point(q, r=radius)):
+            if not nb:
+                nb = [int(tree.query(q[i])[1])]
+            nf = fn[F[nb]]
+            side = p[i] - q[i]
+            if np.linalg.norm(side) < 1e-6:              # on the surface: fall back to the file's winding
+                side = nf.mean(0)
+            nf = nf * np.where(nf @ side < 0, -1.0, 1.0)[:, None]
+            m = nf.mean(0)
+            coh[i] = float(np.linalg.norm(m))
+            n[i] = m / max(coh[i], 1e-12)
+        return q, np.linalg.norm(p - q, axis=1), n, coh
+
 
 # ----------------------------------------------------------------------------- relative object motion
 def tilt_and_yaw(rot_xyzw: np.ndarray, ref: int = 0) -> tuple[np.ndarray, np.ndarray]:

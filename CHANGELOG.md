@@ -2,7 +2,32 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.3] — unreleased
+## [0.1.4] — unreleased
+
+### Added
+- [common] Push candidates for the reachability diagnostic (spec §7.1 step 1; `docs/data/push_candidates.md`):
+  `h2d/common/data/candidates.py` (criteria in order, exclusion reasons, tiers by approach / retreat direction,
+  ranking with per-object and per-clip caps, funnel) and `scripts/common/push_candidates.py` (OMOMO_new + FORCE;
+  `candidates.csv`, `pool.csv` with reasons, gallery, one sheet per candidate, source-file hashes).
+- [common] Push descriptors in `describe.py`: contact proxy, per-frame push alignment, patch normal of the touched
+  face (spread, tilt, coherence), proxy-to-surface distance, approach / retreat angle to the normal from the palm
+  path in the object frame.
+- [common] `ObjectMesh.center`, `face_normals`, `closest_face`, `patch_normals` (normals signed towards the query
+  point: the meshes' winding is inconsistent).
+- [common] `viz_hoi.candidate_figure`, `viz_hoi.gallery`.
+- `configs/push_candidates.yaml`: the three segments confirmed by Kevin from R005, with the deviation from §7.1 step 1.
+
+### Fixed (found in R005)
+- Candidate sheet: the side view of a top-face contact looked along the normal (the object collapsed to a line);
+  it now looks across the push. Numbers unchanged. Test clip gained a top-face push variant.
+
+### Changed
+- Dataset sources (`OmomoSource`, `ForceSource`) moved from `profile_hoi.py` to `h2d/common/data/sources.py`;
+  CSV / JSON helpers to `h2d/common/tables.py`.
+- Test clip: the box is yawed so its faces are perpendicular to the world axes, the hands sit near face centres,
+  and the pushing hand comes in and leaves straight along the normal.
+
+## [0.1.3] — 2026-10-25 (merge `3e42e9b`)
 
 ### Added
 - [common] SMPL-H body model in numpy (`h2d/common/body/smplh.py`): loads MANO `SMPLH_*.pkl` without chumpy
