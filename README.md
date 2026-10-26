@@ -23,3 +23,5 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R007_candidates | #13 | `04e7eab` | Ubuntu, CPU, SMPL-H male | pass=true; 13 candidates (virtual hand: 5 R, 2 L, 6 B; 1 tier A), 37 segments pass all criteria |
 | R007_tasks | #13 | `04e7eab` | Ubuntu, CPU | pass=true; 15 tasks (3 confirmed + 12 candidates), 0 errors |
 | R007_d0 | #13 | `04e7eab` | Ubuntu RTX 5070 (cuda:0) | **failed**: all 14 OMOMO_new clips stop in GMR load_smplx_file (einsum shape 26 vs 20; exported betas are 10-dim); see #13 |
+| R008_d0 | #14 | `80c2a7a` | Ubuntu RTX 5070 (cuda:0) | pass=true; X-Morph prior for all 14 OMOMO_new clips (16 SMPL-X betas); prior Z1 site 0.74–1.24 m vs human hand 0.09–0.62 m in contact |
+| R008_reach | #14 | `80c2a7a` | Ubuntu, CPU | pass=true (4/4 tasks, 0 errors); feasible only for largebox_top contact_fit pos / pos_dir; smallbox_top and c07 labelled coordinate_or_tool_offset_error |
