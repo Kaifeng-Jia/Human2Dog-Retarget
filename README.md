@@ -30,3 +30,7 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R010_tasks | #16 | `f6899c2` | Ubuntu, CPU | pass=true; 9 tasks (3 confirmed + 6 candidates), 0 errors |
 | R010_d0 | #16 | `f6899c2` | Ubuntu RTX 5070 (cuda:0) | pass=true; X-Morph prior for 8 OMOMO_new clips |
 | R010_reach | #16 | `f6899c2` | Ubuntu, CPU | pass=true (5/5 tasks, 0 errors); feasible: c04 sub12_largebox_065 (contact_fit pos; start_anchored pos, pos_dir), c05 sub1_suitcase_008 (contact_fit pos) |
+| R012_candidates | #18 | `e0b5d6e` | Ubuntu, CPU, SMPL-H male | pass=true; 16 candidates, all labelled grasp (9 pull, 7 push); 60 segments pass all criteria (6 omomo_new push/press among them); OMOMO finger motion 0.0 mm |
+| R012_tasks | #18 | `e0b5d6e` | Ubuntu, CPU | pass=true; 19 tasks; confirmed 3 pass, 15 of 16 candidates fail task checks (patch coherence / normal spread) |
+| R012_d0 | #18 | `e0b5d6e` | Ubuntu RTX 5070 (cuda:0) | **pass=false**: 18/19 clips pass; sub3_largetable_028 left-wrist convention median 0.0826 m > 0.08 m. d0_chain figure not pushed (JPG q80 still 1.33 MB > 1 MB) |
+| R012_reach | #18 | `e0b5d6e` | Ubuntu, CPU | **pass=false**: 0/0 tasks selected (no passing press candidate; all candidates are grasp); see #18 |
