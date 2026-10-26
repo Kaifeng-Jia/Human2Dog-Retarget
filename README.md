@@ -20,3 +20,6 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R004_force_profile | #8 | `14a7154` | Ubuntu, CPU, SMPL-H male | **pass=false**: floor_at_zero fails for chair (0.219 m) and box_huge (0.224 m); all 6 objects sit ~0.2 m above z=0 while toes are at ~0.015 m; other checks pass. Only summary.json, checks.png, per_object.csv pushed, awaiting lead |
 | R004b_force_profile | #8 | `5c1e1a6` | Ubuntu, CPU, SMPL-H male | pass=true after pelvis-at-smpl_trans fix; chair / box_huge lowest point −0.018 / −0.013 m, mostly slid (0.96 / 0.72); single-hand agreement 0.88; suitcase hand contact found in 0.76 of clips |
 | R005_push_candidates | #10 | `01985ab` | Ubuntu, CPU, SMPL-H male | pass=true; 8 candidates (1 tier B, 7 tier C; 11 segments pass all criteria: omomo_new 10, force 1); proxy-to-surface median 0.016 m |
+| R007_candidates | #13 | `04e7eab` | Ubuntu, CPU, SMPL-H male | pass=true; 13 candidates (virtual hand: 4 R, 2 L, 7 B; 1 tier A), 37 segments pass all criteria |
+| R007_tasks | #13 | `04e7eab` | Ubuntu, CPU | pass=true; 15 tasks (3 confirmed + 12 candidates), 0 errors |
+| R007_d0 | #13 | `04e7eab` | Ubuntu RTX 5070 (cuda:0) | **failed**: all 14 OMOMO_new clips stop in GMR load_smplx_file (einsum shape 26 vs 20; exported betas are 10-dim); see #13 |

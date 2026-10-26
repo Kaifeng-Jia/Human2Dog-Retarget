@@ -1,0 +1,16 @@
+id,dataset,clip,object,mode,start,end,confirmed,pass,failed,contact_frames,proxy_surface_dist_median_m,patch_coherence_median,normal_spread_p90_deg,target_equals_c_bar_in_contact_m,d_max_m,target_step_max_m,palm_offset_m,approach_angle_deg,retreat_angle_deg,normal_tilt_deg,contact_z_m
+trashcan_side,omomo_new,sub6_trashcan_003,trashcan,R,24,160,True,True,,136,0.0363,0.9702,7.5741,0.0,0.4501,0.0367,0.0409,74.3325,45.2794,4.7552,0.1488
+smallbox_top,omomo_new,sub7_smallbox_041,smallbox,R,41,120,True,True,,79,0.0212,0.9909,2.0166,0.0,0.6449,0.0752,0.0494,30.8468,24.4638,84.1257,0.1544
+largebox_top,omomo_new,sub7_largebox_041,largebox,R,35,120,True,True,,85,0.0061,0.992,2.8574,0.0,0.4949,0.0901,0.0336,42.3021,31.6465,87.4075,0.3504
+c01_sub8_smallbox_039,omomo_new,sub8_smallbox_039,smallbox,L,15,86,False,True,,71,0.034,0.9902,10.4899,0.0,0.7021,0.0539,0.0724,27.0724,5.163,81.2074,0.1532
+c02_sub8_smallbox_052,omomo_new,sub8_smallbox_052,smallbox,R,0,44,False,True,,44,0.0365,0.9504,15.2041,0.0,0.4318,0.0471,0.0802,,15.1016,83.3499,0.141
+c03_sub5_plasticbox_000,omomo_new,sub5_plasticbox_000,plasticbox,B,0,233,False,True,,233,0.0189,0.8586,6.6837,0.0,0.0,0.0361,0.0234,,118.209,6.8014,0.272
+c05_sub6_trashcan_002,omomo_new,sub6_trashcan_002,trashcan,R,34,157,False,True,,123,0.0367,0.9962,2.2182,0.0,0.4234,0.0364,0.0422,72.3888,50.3808,3.0168,0.13
+c06_sub5_plasticbox_051,omomo_new,sub5_plasticbox_051,plasticbox,B,12,165,False,True,,153,0.0371,0.9985,1.9957,0.0,0.1354,0.0665,0.0587,58.9999,76.5819,3.2867,0.1071
+c07_sub7_largebox_001,omomo_new,sub7_largebox_001,largebox,B,38,124,False,True,,86,0.0179,0.9986,1.8665,0.0,0.3125,0.0703,0.0411,78.3009,52.0516,4.174,0.2807
+c08_sub15_suitcase_000,omomo_new,sub15_suitcase_000,suitcase,B,8,87,False,True,,79,0.0108,0.8663,5.7855,0.0,0.4093,0.1568,0.0316,32.9217,31.076,23.7414,0.5192
+c09_sub10_largebox_007,omomo_new,sub10_largebox_007,largebox,L,63,138,False,True,,75,0.0216,0.9805,0.3468,0.0,0.5894,0.0432,0.0587,37.5227,40.8193,2.7245,0.2778
+c10_sub5_largetable_030,omomo_new,sub5_largetable_030,largetable,B,17,136,False,True,,119,0.012,1.0,2.8677,0.0,0.0,0.0472,-0.0121,133.7887,139.6198,87.3092,0.471
+c11_sub1_suitcase_008,omomo_new,sub1_suitcase_008,suitcase,R,5,89,False,True,,84,0.0204,0.9872,1.4443,0.0,0.0,0.03,-0.0019,126.2315,130.9274,84.3078,0.5499
+c12_sub1_largetable_074,omomo_new,sub1_largetable_074,largetable,B,5,51,False,True,,46,0.0132,0.9116,6.5713,0.0,0.2161,0.0861,0.0414,13.4421,100.4953,82.8581,0.461
+c13_0630_61-2,force,0630_61-2,backpack,R,472,523,False,True,,51,0.032,0.8722,17.2393,0.0,0.1566,0.057,0.0809,127.8942,57.587,57.0164,0.4695
