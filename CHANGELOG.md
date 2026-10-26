@@ -14,6 +14,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   tables, sheets (both hands drawn behind the midpoint) and gallery; 16 candidates by default.
 - Test clip: `push_hands` = R / B (both on one face) / squeeze (opposite faces).
 
+### Fixed (found in R007)
+- SMPL-X export for GMR: 16 betas (mean shape) instead of 10; smplx builds SMPL-X with 16 betas plus 10
+  expression coefficients, so 10 betas failed in `blend_shapes` for every clip.
+
 ### Added
 - [common] Task targets (`h2d/common/data/tasks.py`, `scripts/common/prepare_tasks.py`; spec v0.6 §4 step 1,
   §5.2): per segment the object trajectory, contact frames, object-local contact target on the surface, one
