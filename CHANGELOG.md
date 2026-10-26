@@ -23,6 +23,11 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
 
 ### Added
+- Reach-point registration and body tracking (found in R010; Kevin: the dog's body has to move with the
+  interaction): `registration.reach_points / track / SE2Track`, `configs/registration.yaml` (reach point 0.6 /
+  0.75 / 0.7 m ahead for top / side / slant faces; 1 s smoothing). Fitting the prior's contact site placed the
+  body too close (the X-Morph arm stays raised), so the tool could reach top faces but not point down at them.
+  `reach_diag.py` layouts: reach_fit, reach_track (extra base motion reported), start_anchored.
 - Contact height adaptation (spec v0.7 §5.1, Kevin): on side / slant faces the robot's contact moves up or down the
   same face into the arm's band (same face, normal and position along the face); `tasks.adapt_height`,
   `prepare_tasks.py --selection`, `ObjectMesh.face_points`, descriptors `face_z_min_m / face_z_max_m`,

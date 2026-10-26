@@ -9,6 +9,10 @@ trajectory is never changed.
   (p_t: the prior's contact site, y_t: the object-frame contact target in the world, both xy) plus
   lambda_psi wrap(psi - psi_a)^2. For fixed psi the best b is closed form; psi is found on a grid and refined.
   If the targets barely move, psi is not identifiable and is fixed to psi_a.
+* reach point (``reach_points``): the same fit with p_t a nominal reach point fixed in the base frame instead of the
+  prior's contact site (the prior's arm is not informative, R008 / R010);
+* tracking (``track``): on top of a constant fit, a smoothed per-frame translation b_t that keeps the reach point on
+  the target (the body follows the object); the robot's base path then differs from the prior by b_t - b.
 """
 
 from __future__ import annotations
@@ -86,3 +90,48 @@ def contact_fit(p: np.ndarray, y: np.ndarray, w: np.ndarray | None, psi_anchor: 
             "residual_xy_rms_m": float(np.sqrt(w @ res ** 2)), "residual_xy_max_m": float(res.max()),
             "n_frames": int(len(p))}
     return SE2(psi, (float(b[0]), float(b[1])), "contact_fit", info)
+
+
+def reach_points(root_pos: np.ndarray, root_rot_xyzw: np.ndarray, ahead_m: float) -> np.ndarray:
+    """Nominal reach point per frame: ``ahead_m`` along the base heading (horizontal), at the base height."""
+    yaw = R.from_quat(root_rot_xyzw).as_euler("zyx")[:, 0]
+    p = np.array(root_pos, dtype=np.float64)
+    p[:, 0] += ahead_m * np.cos(yaw)
+    p[:, 1] += ahead_m * np.sin(yaw)
+    return p
+
+
+@dataclass
+class SE2Track:
+    """Constant rotation, per-frame translation (contact frames only)."""
+    psi: float
+    b: np.ndarray                 # (n, 2)
+    kind: str = "track"
+    info: dict | None = None
+
+    def apply_root_at(self, i: int, root_pos: np.ndarray, root_rot_xyzw: np.ndarray):
+        return SE2(self.psi, tuple(self.b[i])).apply_root(root_pos, root_rot_xyzw)
+
+    def to_dict(self) -> dict:
+        return {"psi": self.psi, "psi_deg": float(np.degrees(self.psi)), "kind": self.kind, "info": self.info}
+
+
+def track(p: np.ndarray, y: np.ndarray, base: SE2, fps: float, smooth_s: float = 1.0) -> SE2Track:
+    """Per-frame translation keeping R(psi) p_t + b_t on y_t (xy), moving average over ``smooth_s``."""
+    p, y = np.asarray(p, float)[:, :2], np.asarray(y, float)[:, :2]
+    b = y - p @ rot2(base.psi).T
+    k = max(1, int(round(smooth_s * fps)))
+    k -= 1 - k % 2
+    if k > 1 and len(b) > 2:
+        k = min(k, len(b) - (1 - len(b) % 2))
+        pad = k // 2
+        bp = np.pad(b, ((pad, pad), (0, 0)), mode="edge")
+        c = np.cumsum(np.vstack([np.zeros((1, 2)), bp]), axis=0)
+        b = (c[k:] - c[:-k]) / k
+    dev = np.linalg.norm(b - np.asarray(base.b), axis=1)
+    speed = np.linalg.norm(np.diff(b, axis=0), axis=1) * fps if len(b) > 1 else np.zeros(1)
+    res = np.linalg.norm(p @ rot2(base.psi).T + b - y, axis=1)
+    info = {"extra_base_shift_max_m": float(dev.max()), "extra_base_speed_max_mps": float(speed.max()),
+            "residual_xy_rms_m": float(np.sqrt(np.mean(res ** 2))), "residual_xy_max_m": float(res.max()),
+            "smooth_s": smooth_s}
+    return SE2Track(base.psi, b, "track", info)

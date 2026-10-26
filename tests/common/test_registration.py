@@ -33,3 +33,21 @@ def test_contact_fit_recovers_a_rigid_motion_and_respects_the_prior():
     assert T3.info["yaw_fixed_to_anchor"] and np.isclose(T3.psi, np.radians(5))
     pm = p[:30, :2].mean(0)
     assert np.allclose(rot2(T3.psi) @ pm + np.asarray(T3.b), [1.0, 2.0])
+
+
+def test_reach_points_and_tracking_follow_a_drifting_target():
+    from h2d.common.registration import reach_points, track
+
+    n, fps = 90, 30.0
+    root = np.zeros((n, 3))
+    root[:, 0] = np.linspace(0, 0.8, n)                           # prior walks 0.8 m along +x
+    q = np.tile(R.from_euler("z", 0).as_quat(), (n, 1))
+    p = reach_points(root, q, 0.6)
+    assert np.allclose(p[:, 0], root[:, 0] + 0.6)
+    y = np.c_[np.linspace(2.0, 3.0, n), np.zeros(n), np.full(n, 0.4)]   # the object travels 1.0 m: 0.2 m more
+    base = contact_fit(p, y, None, 0.0, lambda_psi=10.0)
+    T = track(p, y, base, fps, smooth_s=0.5)
+    assert T.info["residual_xy_max_m"] < 0.02 < base.info["residual_xy_max_m"]
+    assert 0.09 < T.info["extra_base_shift_max_m"] < 0.12              # half of the 0.2 m drift each way
+    rp, _ = T.apply_root_at(n - 1, root[-1:], q[-1:])
+    assert abs(rp[0, 0] + 0.6 - 3.0) < 0.02
