@@ -4,16 +4,19 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 
 ## [0.1.6] — unreleased
 
-### Added (method: spec learned v0.8 §5.4, Kevin)
-- Tool pose from the human palm: per frame, palm normal and finger direction from the wrist and the index / middle /
-  pinky knuckles (`describe.hand_frame`; finger curl is not used, OMOMO_new keeps one hand shape per clip). Press:
-  tool x = palm normal, jaw axis (tool z) = fingers; grasp: tool x = fingers, jaw axis = palm normal
-  (`tasks.gripper_axes`). Used when the palm faces the contact (press <= 30 deg, grasp <= 90 deg), else the inward
-  normal (e.g. a flipped hand). Task files v2: `tool_x_local`, `tool_z_local`, `palm_face_deg`, `palm_used`.
+### Added (method: spec learned v0.8 §5.4–5.6, Kevin)
+- Tool pose from the human forearm and hand (§5.4): approach = forearm (elbow -> wrist, the direction the human
+  pushes along) within a 45 deg cone about the inward normal of the robot's contact; roll = the hand's roll (the
+  mover's hinge follows the line across the knuckles), one rule for press and grasp (`describe.hand_frame`,
+  `tasks.gripper_axes`, `tasks.clamp_cone`). Finger curl is not used (OMOMO_new keeps one hand shape per clip).
+  No roll target when the palm faces away (e.g. a flipped hand). Task files v2.
 - Arm IK: the approach target is the task's tool x; soft roll term on the jaw axis (`roll_weight_m` 0.02, does not
   decide feasibility); `roll_median_deg` in the reachability report. Jaw axis in `configs/b2z1.yaml`.
-- Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact),
-  the same for press and grasp; implemented with the output motion.
+- A push on a top face is done from the robot's side (§5.6, R013: pressing down on a low top was infeasible for all
+  three tasks): the vertical face facing the robot when it reaches the side band, else the edge between that face
+  and the top (`tasks.from_behind`; `contact_moved` in the task and the reports).
+- Candidate selection: `grips: [press]` (side pulls need a grasp, out of scope for 11/1).
+- Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
 - Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame
   SE(2) of the prior's body from the human's body-object mesh (pelvis -> trunk, chest -> Z1 base, hand -> contact

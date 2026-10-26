@@ -117,21 +117,25 @@ def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bo
         def on_face(i, dd=dd, sh=sh):
             return box[i] + q.apply(face_point(q.inv().apply(dd), obj)) + sh + 0.012 * dd
 
-        def hand(p, side=side, dd=dd):    # flat hand 12 mm off the face; the contact proxy (wrist + index, the
-            f = np.array([1.0, 0, 0] if push_face == "top" and dd[2] else [0, 0, 1.0])     # flagged bodies) sits on
-            h = flat_hand(side, -dd, f)        # the face where the earlier synthetic hand's did (wavy faces: 1-6 deg)
+        top = push_face == "top" and dd[2]
+        fa = np.array([1.0, 0, -1.0]) / np.sqrt(2) if top else -dd   # forearm: forward-down onto a top, else into
+
+        def place(i, p, side=side, dd=dd, idx=idx, fa=fa, top=top):  # flat hand 12 mm off the face; the contact
+            f = np.array([1.0, 0, 0] if top else [0, 0, 1.0])        # proxy (wrist + index, the flagged bodies)
+            h = flat_hand(side, -dd, f)        # sits where the earlier synthetic hand's did (wavy faces: 1-6 deg)
             sh = (hand_offsets(side)[:4] * [0.8, 0.8, -0.8]).mean(0) - h[:4].mean(0)
-            return p + h + sh - (sh @ dd) * dd
+            body[i, idx] = p + h + sh - (sh @ dd) * dd
+            body[i, om.BODY_INDEX[f"{side}_Elbow"]] = body[i, idx[0]] - 0.25 * fa
 
         for i in np.flatnonzero(rpush):          # palm on the chosen face
-            body[i, idx] = hand(on_face(i))
+            place(i, on_face(i))
             flags[i, idx[:4]] = 1
         if push:                                 # straight in along the inward normal, straight out after
             i0, i1 = int(np.flatnonzero(rpush)[0]), int(np.flatnonzero(rpush)[-1])
             for i in np.flatnonzero((t >= 0.5) & (t < 1.0)):
-                body[i, idx] = hand(on_face(i0) + dd * 0.25 * (i0 - i) / 15)
+                place(i, on_face(i0) + dd * 0.25 * (i0 - i) / 15)
             for i in np.flatnonzero((t >= 3.0) & (t < 4.0)):
-                body[i, idx] = hand(on_face(i1) + dd * 0.25 * min(1.0, (i - i1) / 15))
+                place(i, on_face(i1) + dd * 0.25 * min(1.0, (i - i1) / 15))
     for i in np.flatnonzero(lift):
         for side, y in (("L", 1), ("R", -1)):
             idx = om.HAND_BODIES[side]

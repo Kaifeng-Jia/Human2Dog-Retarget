@@ -14,9 +14,9 @@ Inputs: task files from ``scripts/common/prepare_tasks.py`` and the prior from `
    metrics of the mesh (edge direction and heading errors, extra foot slide) on the contact frames;
 2. for each layout and each contact frame, three problems with the multi-start, collision-aware arm IK
    (``h2d/learned/reach.py``): position (joint limits only), position + direction (joint limits only),
-   position + direction within +-budget around the prior. The direction is the task's tool approach target (from
-   the palm, spec v0.8 §5.4; the inward normal for older tasks or when the palm is not used), with the palm's jaw
-   axis as a soft roll target;
+   position + direction within +-budget around the prior. The direction is the task's tool approach target (the
+   human forearm within a cone about the inward normal, spec v0.8 §5.4; the inward normal for older tasks), with
+   the hand's roll as a soft roll target;
 3. per problem: frames feasible (error <= pos_tol, angle <= max_angle, no self / floor / arm-object
    collision), failure labels, joint speed over consecutive feasible frames against the Z1 limit, arm change
    (per-joint max and RMS, deg), jump to the prior at the segment ends; the frozen body's penetration of the
@@ -77,9 +77,11 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     if y_all[:, 2].min() < -0.02:
         out["flags"].append(f"target below the floor ({y_all[:, 2].min():.3f} m)")
     obj = load_object(task["object"])
+    if "forearm_used" in task and not task["forearm_used"]:
+        out["notes"].append(f"forearm points away ({float(task['forearm_face_deg']):.0f}° from the inward normal): "
+                            "approach = inward normal")
     if "palm_used" in task and not task["palm_used"]:
-        out["notes"].append(f"palm not used (palm vs inward normal {float(task['palm_face_deg']):.0f}°): "
-                            "approach = inward normal, no roll target")
+        out["notes"].append(f"palm faces away ({float(task['palm_face_deg']):.0f}°): no roll target")
     hull = ObjectHull.from_vertices(obj.hull_verts)
     arm_idx = slice(12, 18)
 
@@ -145,6 +147,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     for lay, T in ((k, placed[k]) for k in layouts if k in placed):
         n_c = len(cf)
         prior_q = np.array([motion.dof_pos[t][arm_idx] for t in cf])
+        psi_c = np.broadcast_to(np.asarray(T.psi, float), (n_c,)).copy()                 # body placement per frame
+        b_c = np.asarray(T.b, float).reshape(-1, 2) if isinstance(T, SE2Track) else np.tile(np.asarray(T.b, float), (n_c, 1))
         scene, prior_site, dist_sh = np.zeros(n_c), np.zeros((n_c, 3)), np.zeros(n_c)
         res = {p: {"q": np.zeros((n_c, 6)), "err": np.zeros(n_c), "ang": np.zeros(n_c), "roll": np.zeros(n_c),
                    "ok": np.zeros(n_c, bool),
@@ -216,7 +220,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
             }
             out["labels"][f"{lay}/{p}"] = label
         out[lay] = lay_out
-        sol[lay] = res | {"prior_q": prior_q, "prior_site": prior_site, "dist_shoulder": dist_sh, "scene": scene}
+        sol[lay] = res | {"prior_q": prior_q, "prior_site": prior_site, "dist_shoulder": dist_sh, "scene": scene,
+                          "psi": psi_c, "b": b_c}
     out["_sol"] = sol
     out["_y"] = y_all
     return out
@@ -307,16 +312,22 @@ def main() -> int:
                            args.layouts)
             if "_sol" in r:
                 figure(tid, task, r, cfg, out_dir / "tasks" / f"{tid}.png")
-                np.savez_compressed(out_dir / "solutions" / f"{tid}.npz",
-                                    **{f"{lay}__{p}__{k}": np.asarray(v) for lay, res in r["_sol"].items()
-                                       for p, dd in res.items() if isinstance(dd, dict)
-                                       for k, v in dd.items() if k != "start"})
+                arrays = {}
+                for lay, res in r["_sol"].items():          # <layout>__<problem>__<key> and <layout>__<key>
+                    for k, v in res.items():
+                        if isinstance(v, dict):
+                            arrays.update({f"{lay}__{k}__{kk}": np.asarray(vv) for kk, vv in v.items() if kk != "start"})
+                        else:
+                            arrays[f"{lay}__{k}"] = np.asarray(v)
+                np.savez_compressed(out_dir / "solutions" / f"{tid}.npz", **arrays)
             r.pop("_sol", None)
             r.pop("_y", None)
             r["runtime_s"] = time.time() - t1
             results[tid] = {"clip": task["clip"], "object": task["object"], "mode": task["mode"],
                             "grip": task.get("grip", "press"), "palm_used": task.get("palm_used"),
-                            "palm_face_deg": task.get("palm_face_deg"), **r}
+                            "palm_face_deg": task.get("palm_face_deg"), "forearm_used": task.get("forearm_used"),
+                            "forearm_face_deg": task.get("forearm_face_deg"),
+                            "contact_moved": task.get("height", {}).get("contact_moved", ""), **r}
             print(f"  {tid}: {r['labels']}  ({r['runtime_s']:.0f} s)", flush=True)
         except Exception as e:  # noqa: BLE001 - report and continue
             import traceback

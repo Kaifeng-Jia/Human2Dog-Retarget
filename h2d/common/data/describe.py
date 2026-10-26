@@ -238,15 +238,16 @@ def _unit(v: np.ndarray) -> np.ndarray:
     return v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-12)
 
 
-def hand_frame(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:
-    """Palm normal (out of the palm) and finger direction (wrist -> middle knuckle), (n, 3) each, world frame, from
-    the wrist and the index / middle / pinky knuckles; "B": both hands averaged. OMOMO_new keeps one hand shape per
-    clip, but where the palm is and which way it faces are captured per frame (spec v0.8 §5.4)."""
+def hand_frame(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Palm normal (out of the palm), across the knuckles (index - pinky for the right hand, mirrored for the left so
+    that both hands map alike) and forearm direction (elbow -> wrist), (n, 3) each, world frame; "B": both hands
+    averaged. OMOMO_new keeps one hand shape per clip, but where the hand and the forearm are and which way they face
+    are captured per frame (spec v0.8 §5.4)."""
     if side == "B":
-        (nl, fl), (nr, fr) = hand_frame(clip, "L", frames), hand_frame(clip, "R", frames)
-        return _unit(nl + nr), _unit(fl + fr)
-    w, i, m, k = (clip.body_pos[frames][:, BODY_INDEX[f"{side}_{b}"]] for b in ("Wrist", "Index1", "Middle1", "Pinky1"))
-    return _unit(np.cross(i - w, k - w) * (1.0 if side == "R" else -1.0)), _unit(m - w)
+        return tuple(_unit(a + b) for a, b in zip(hand_frame(clip, "L", frames), hand_frame(clip, "R", frames)))
+    e, w, i, k = (clip.body_pos[frames][:, BODY_INDEX[f"{side}_{b}"]] for b in ("Elbow", "Wrist", "Index1", "Pinky1"))
+    sgn = 1.0 if side == "R" else -1.0
+    return _unit(np.cross(i - w, k - w) * sgn), _unit((i - k) * sgn), _unit(w - e)
 
 
 def _hand_proxy(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:

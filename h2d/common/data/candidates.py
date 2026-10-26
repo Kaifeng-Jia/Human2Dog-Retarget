@@ -114,7 +114,7 @@ def contact_shape_ok(row: dict) -> bool:
 
 
 def criteria(max_yaw_deg: float = 20.0, band: dict | None = None,
-             interactions: tuple[str, ...] = ("push",)) -> tuple[list, list]:
+             interactions: tuple[str, ...] = ("push",), grips: tuple[str, ...] = ()) -> tuple[list, list]:
     """Criteria lists; ``max_yaw_deg`` replaces the yaw limit, ``band`` ({face: [z_lo, z_hi]}) adds a push criterion
     on the contact height (the field ``in_reach_band`` is set by the caller with ``in_band``). ``interactions``
     other than push only: the push criterion becomes ``interaction in interactions`` (fields ``interaction`` from
@@ -127,6 +127,8 @@ def criteria(max_yaw_deg: float = 20.0, band: dict | None = None,
         push += [("interaction", "interaction", "in", tuple(interactions),
                   f"object moves away from (push) or towards (pull) the hand, abs(cos) >= 0.7: {'/'.join(interactions)}"),
                  ("contact_shape", "contact_shape_ok", "==", True, "one flat face (press), or a grasp")]
+    if grips:
+        push.append(("grip", "grip", "in", tuple(grips), f"robot grip: {'/'.join(grips)}"))
     if band:
         desc = ", ".join(f"{k} {v[0]:g}-{v[1]:g} m" for k, v in band.items())
         push.append(("reach_band", "in_reach_band", "==", True, f"contact height within the arm's band ({desc})"))
