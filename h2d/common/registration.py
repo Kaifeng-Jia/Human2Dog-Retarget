@@ -1,0 +1,88 @@
+"""Scene registration: one constant SE(2) per demonstration (spec learned v0.6 §4 step 3).
+
+The robot root trajectory is mapped by T(psi, b): p -> R_z(psi) p + b (xy; z unchanged), q -> R_z(psi) q. The object
+trajectory is never changed.
+
+* start-anchored (no dependence on any method's output beyond the prior's own start): the output start goes back to
+  the source origin and the yaw follows the source, psi_a = yaw_src0 - yaw_out0, b_a = xy_src0 - R(psi_a) xy_out0;
+* contact-fitted (main result): min over psi, b of the weighted mean of |R(psi) p_t + b - y_t|^2 over contact frames
+  (p_t: the prior's contact site, y_t: the object-frame contact target in the world, both xy) plus
+  lambda_psi wrap(psi - psi_a)^2. For fixed psi the best b is closed form; psi is found on a grid and refined.
+  If the targets barely move, psi is not identifiable and is fixed to psi_a.
+"""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+
+import numpy as np
+from scipy.optimize import minimize_scalar
+from scipy.spatial.transform import Rotation as R
+
+
+def wrap(a):
+    return (np.asarray(a) + np.pi) % (2 * np.pi) - np.pi
+
+
+def rot2(psi: float) -> np.ndarray:
+    c, s = np.cos(psi), np.sin(psi)
+    return np.array([[c, -s], [s, c]])
+
+
+@dataclass
+class SE2:
+    psi: float
+    b: tuple[float, float]
+    kind: str = ""
+    info: dict | None = None
+
+    def apply_points(self, p: np.ndarray) -> np.ndarray:
+        p = np.array(p, dtype=np.float64)
+        p[..., :2] = p[..., :2] @ rot2(self.psi).T + np.asarray(self.b)
+        return p
+
+    def apply_root(self, root_pos: np.ndarray, root_rot_xyzw: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        q = (R.from_euler("z", self.psi) * R.from_quat(root_rot_xyzw)).as_quat()
+        return self.apply_points(root_pos), q
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["psi_deg"] = float(np.degrees(self.psi))
+        return d
+
+
+def start_anchored(src_xy0, src_yaw0: float, out_xy0, out_yaw0: float) -> SE2:
+    psi = float(wrap(src_yaw0 - out_yaw0))
+    b = np.asarray(src_xy0, float)[:2] - rot2(psi) @ np.asarray(out_xy0, float)[:2]
+    return SE2(psi, (float(b[0]), float(b[1])), "start_anchored")
+
+
+def contact_fit(p: np.ndarray, y: np.ndarray, w: np.ndarray | None, psi_anchor: float, lambda_psi: float = 0.08,
+                min_spread_m: float = 0.05, grid_deg: float = 0.25) -> SE2:
+    """p, y: (n, 2+) robot contact site (prior, untransformed) and world targets over the contact frames."""
+    p, y = np.asarray(p, float)[:, :2], np.asarray(y, float)[:, :2]
+    w = np.ones(len(p)) if w is None else np.asarray(w, float)
+    w = w / w.sum()
+    pm, ym = w @ p, w @ y
+    P, Y = p - pm, y - ym
+    spread = float(np.sqrt(w @ np.sum(Y ** 2, 1)))
+
+    def cost(psi):
+        return float(w @ np.sum((P @ rot2(psi).T - Y) ** 2, 1)) + lambda_psi * float(wrap(psi - psi_anchor)) ** 2
+
+    if spread < min_spread_m:
+        psi, fixed = float(psi_anchor), True
+    else:
+        grid = np.radians(np.arange(-180.0, 180.0, grid_deg))
+        c = np.array([cost(g) for g in grid])
+        g0 = grid[int(np.argmin(c))]
+        step = np.radians(grid_deg)
+        r = minimize_scalar(cost, bounds=(g0 - step, g0 + step), method="bounded", options={"xatol": 1e-7})
+        psi, fixed = float(wrap(r.x)), False
+    b = ym - rot2(psi) @ pm
+    res = np.linalg.norm(p @ rot2(psi).T + b - y, axis=1)
+    info = {"target_spread_m": spread, "yaw_fixed_to_anchor": fixed, "lambda_psi": lambda_psi,
+            "psi_minus_anchor_deg": float(np.degrees(wrap(psi - psi_anchor))),
+            "residual_xy_rms_m": float(np.sqrt(w @ res ** 2)), "residual_xy_max_m": float(res.max()),
+            "n_frames": int(len(p))}
+    return SE2(psi, (float(b[0]), float(b[1])), "contact_fit", info)

@@ -59,7 +59,8 @@ python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 | Push candidates (right hand, same-face push, near-normal approach): ranked proposals + exclusion reasons | v0.1.4, R005 |
 | Kevin confirmed 3 one-hand candidates (R005) | done |
 | Virtual hand restored (spec v0.6): two-hand same-face candidates | v0.1.5, R006 |
-| D0 chain on the confirmed candidates | next |
+| Task targets, D0 chain on the candidates | v0.1.5, R007 |
+| Registration + frozen-body reachability diagnostic (§7.1) | v0.1.5 code, R008 |
 | Scene registration (start-anchored / contact-fitted) | next |
 | Frozen-body reachability diagnostic (§7.1) → tag `m1-reachability` | next |
 | B1 / B2 / M arm refinement and evaluation | later |

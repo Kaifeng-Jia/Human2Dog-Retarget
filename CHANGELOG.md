@@ -21,6 +21,16 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   a sheet per task, checks; also for every candidate of a candidates.csv, so a later confirmation needs no rerun.
 - `configs/push_candidates.yaml`: per-segment `mode`.
 - [learned] `d0_chain.py --clips-file` (e.g. `clips_omomo.txt` from `prepare_tasks.py`).
+- [common] Scene registration (`h2d/common/registration.py`, `configs/registration.yaml`; spec §4 step 3):
+  start-anchored and contact-fitted SE(2) of the robot root trajectory (grid + bounded refine over yaw with a
+  prior towards the anchor, closed-form translation, yaw fixed when the targets barely move).
+- [common] Collision checks (`h2d/common/collision.py`): moving arm vs body / itself / floor from MuJoCo geom
+  distances (pairs overlapping in the folded home pose excluded), robot sample points vs the object's convex
+  hull (arm, tool and frozen body reported apart).
+- [learned] Frozen-body reachability diagnostic (`h2d/learned/reach.py`, `scripts/learned/reach_diag.py`,
+  `configs/learned/reach.yaml`; spec §7.1): per contact frame, position / position + direction / budgeted IK
+  with avoidance residuals and multi-start; failure labels with a rigorous reach bound (sum of segment lengths);
+  joint speed vs the Z1 limit (180 deg/s), arm change, scene feasibility; both registrations.
 
 ## [0.1.4] — 2026-10-25 (merge `8dfde27`)
 

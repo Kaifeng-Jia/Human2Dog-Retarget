@@ -1,0 +1,10 @@
+# Scene registration (spec learned v0.6 §4 step 3), shared by every method of both lines.
+# One constant SE(2) per demonstration, applied to the whole robot root trajectory; object trajectory unchanged;
+# no height compensation.
+contact_fit:
+  # cost = weighted mean squared xy error [m^2] + lambda_psi * wrap(psi - psi_anchor)^2 [rad^2]
+  # 0.08: a 10 deg turn away from the start-anchored yaw costs as much as ~5 cm RMS contact error.
+  lambda_psi: 0.08
+  # if the contact targets barely move (weighted xy std below this), yaw is not identifiable: keep psi_anchor
+  min_target_spread_m: 0.05
+  psi_grid_deg: 0.25
