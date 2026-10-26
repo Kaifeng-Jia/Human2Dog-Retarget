@@ -1,0 +1,2265 @@
+{
+  "provenance": {
+    "run_id": "R013_d0",
+    "started_utc": "2026-10-26T16:33:10+00:00",
+    "h2d_version": "0.1.5",
+    "git": {
+      "commit": "fa9ae090c8351b431f27ee85ff3e9865f1b43253",
+      "branch": "HEAD",
+      "describe": "v0.1.3-14-gfa9ae09",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      },
+      "gmr": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/GMR",
+        "pinned": "25f56db79ac411258b377b6d4ccba0c8ff3372ac",
+        "present": true,
+        "actual": "25f56db79ac411258b377b6d4ccba0c8ff3372ac",
+        "match": true,
+        "dirty": false
+      },
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "96ae9f58e9c6a965",
+      "external.yaml": "847b4b4bf499bd9e",
+      "learned/xmorph.yaml": "810f2480029d83ea",
+      "data.yaml": "f1b886e5ad6d93ee"
+    },
+    "command": "d0_chain.py --run-id R013_d0 --clips-file outputs/R013_tasks/clips_omomo.txt",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "device": "cuda:0",
+  "smplx_root": "/home/kevin/CS6758Project/data/smplx_models",
+  "clips": {
+    "sub11_monitor_063": {
+      "name": "sub11_monitor_063",
+      "object": "monitor",
+      "frames": 161,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub11_monitor_063",
+        "object": "monitor",
+        "subject": "sub11",
+        "frames": 161,
+        "duration_s": 5.366666666666666,
+        "dropped_first_frame": false,
+        "mode_none": 0.2546583850931677,
+        "mode_left": 0.0,
+        "mode_right": 0.7453416149068323,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.7453416149068323,
+        "first_contact_s": 0.5,
+        "last_release_s": 4.5,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 4.0,
+        "obj_disp_xy_m": 0.6840289336360215,
+        "obj_path_xy_m": 0.7206718099037291,
+        "obj_clear_max_m": 0.001156508308451959,
+        "obj_tilt_max_deg": 8.142127093772496,
+        "obj_yaw_end_deg": 22.09178979478532,
+        "root_path_xy_m": 1.0723824429022573,
+        "root_disp_xy_m": 0.6870857588700965,
+        "heading_change_deg": -5.941591211984786,
+        "pelvis_stand_z_m": 0.9478209614753723,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.7453416149068323,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7453416149068323,
+        "frac_any_body_flag": 0.7453416149068323,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.002195029499431622,
+        "obj_lowest_z_min_m": -0.002479777411363404,
+        "toe_z_min_m": 0.029481958597898483,
+        "check_contact_hand_median_m": 0.014202085783043192,
+        "check_free_hand_median_m": 0.9173219355073275
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub11_monitor_063_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub11_monitor_063_g1_smplx.npz",
+        "frames_in": 161,
+        "frames_g1": 161,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.39804051200917456,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.020789734549264,
+            "p95_m": 0.026087795563236083
+          },
+          "right_wrist": {
+            "median_m": 0.03521274342524594,
+            "p95_m": 0.03642386869673933
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 161,
+        "out_n_frames_raw": 164,
+        "out_n_frames": 161,
+        "runtime_s": 2.101539398005116
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 15,
+        "end": 135,
+        "hand_height_m": [
+          0.3316442035138607,
+          0.41299930214881897
+        ],
+        "gripper_height_prior_m": [
+          0.9315232169715915,
+          1.1579485841701278
+        ],
+        "hand_in_object_frame_start_m": [
+          0.34415044508006065,
+          0.08618024170275083,
+          0.012754453305058255
+        ]
+      },
+      "prior": {
+        "path_g1_m": 0.8886237477795609,
+        "path_b2_m": 0.7173036467389289,
+        "turn_g1_deg": -8.529001545396515,
+        "turn_b2_deg": 1.1071349213507877,
+        "gripper_height_range_m": [
+          0.8331380041586776,
+          1.1579485841701278
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub11_monitor_077": {
+      "name": "sub11_monitor_077",
+      "object": "monitor",
+      "frames": 125,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub11_monitor_077",
+        "object": "monitor",
+        "subject": "sub11",
+        "frames": 125,
+        "duration_s": 4.166666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.4,
+        "mode_left": 0.0,
+        "mode_right": 0.6,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.6,
+        "first_contact_s": 0.6333333333333333,
+        "last_release_s": 3.1333333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.5,
+        "obj_disp_xy_m": 0.5915793064007987,
+        "obj_path_xy_m": 0.6144887045970834,
+        "obj_clear_max_m": -0.00282552103224043,
+        "obj_tilt_max_deg": 9.720628432555815,
+        "obj_yaw_end_deg": -2.2256562420087316,
+        "root_path_xy_m": 1.3981869323963807,
+        "root_disp_xy_m": 1.1394877732968856,
+        "heading_change_deg": 52.31477609544841,
+        "pelvis_stand_z_m": 0.9523893594741821,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.6,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.6,
+        "frac_any_body_flag": 0.6,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0028779359152772688,
+        "obj_lowest_z_min_m": -0.007252490165444353,
+        "toe_z_min_m": 0.027575284242630005,
+        "check_contact_hand_median_m": 0.0015924374470331645,
+        "check_free_hand_median_m": 0.7789123572447445
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub11_monitor_077_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub11_monitor_077_g1_smplx.npz",
+        "frames_in": 125,
+        "frames_g1": 125,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.29860689700581133,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.022797856038376772,
+            "p95_m": 0.02831524979425982
+          },
+          "right_wrist": {
+            "median_m": 0.0317649507867787,
+            "p95_m": 0.03415355210276925
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 125,
+        "out_n_frames_raw": 128,
+        "out_n_frames": 125,
+        "runtime_s": 2.067164285996114
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 19,
+        "end": 94,
+        "hand_height_m": [
+          0.3948638830333948,
+          0.46710314974188805
+        ],
+        "gripper_height_prior_m": [
+          0.9496810450580867,
+          1.174392651595364
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.23928746921494434,
+          0.27307652020058837,
+          0.025855659706721767
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.1572943099386395,
+        "path_b2_m": 0.9908990108144333,
+        "turn_g1_deg": 49.0261831946907,
+        "turn_b2_deg": 25.50652096389521,
+        "gripper_height_range_m": [
+          0.7829567166184105,
+          1.174392651595364
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub12_largebox_000": {
+      "name": "sub12_largebox_000",
+      "object": "largebox",
+      "frames": 258,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub12_largebox_000",
+        "object": "largebox",
+        "subject": "sub12",
+        "frames": 258,
+        "duration_s": 8.6,
+        "dropped_first_frame": false,
+        "mode_none": 0.09302325581395349,
+        "mode_left": 0.011627906976744186,
+        "mode_right": 0.0,
+        "mode_both": 0.8953488372093024,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.9069767441860465,
+        "first_contact_s": 0.0,
+        "last_release_s": 7.8,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "both",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 7.8,
+        "obj_disp_xy_m": 0.8327157984155272,
+        "obj_path_xy_m": 0.8573045627256537,
+        "obj_clear_max_m": 0.001621527324470906,
+        "obj_tilt_max_deg": 1.140649518605296,
+        "obj_yaw_end_deg": 26.73834641781018,
+        "root_path_xy_m": 1.1843739568656244,
+        "root_disp_xy_m": 0.8618820709574917,
+        "heading_change_deg": 17.19278906552161,
+        "pelvis_stand_z_m": 0.7308900237083438,
+        "clipfrac_L_hand": 0.9069767441860465,
+        "clipfrac_R_hand": 0.8953488372093024,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.9069767441860465,
+        "frac_any_body_flag": 0.9069767441860465,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.00044136410374751023,
+        "obj_lowest_z_min_m": -0.0021811623521942325,
+        "toe_z_min_m": 0.05869526416063309,
+        "check_contact_hand_median_m": 0.0008234792505028412,
+        "check_free_hand_median_m": 0.09813573044661913
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub12_largebox_000_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub12_largebox_000_g1_smplx.npz",
+        "frames_in": 258,
+        "frames_g1": 258,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.6016128930059494,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.036134796021144805,
+            "p95_m": 0.03840664986001565
+          },
+          "right_wrist": {
+            "median_m": 0.03470096244429449,
+            "p95_m": 0.03894634016283168
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 258,
+        "out_n_frames_raw": 260,
+        "out_n_frames": 258,
+        "runtime_s": 2.160085618001176
+      },
+      "contact_interval": {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 0,
+        "end": 234,
+        "hand_height_m": [
+          0.3274618573486805,
+          0.48458709195256233
+        ],
+        "gripper_height_prior_m": [
+          0.9146745486506775,
+          1.5811472517317677
+        ],
+        "hand_in_object_frame_start_m": [
+          0.03191133827771439,
+          0.12170088722746274,
+          -0.1586412244509212
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.1478363381883943,
+        "path_b2_m": 1.1702729739077236,
+        "turn_g1_deg": 5.506771852128683,
+        "turn_b2_deg": 11.64628136182905,
+        "gripper_height_range_m": [
+          0.9146745486506775,
+          1.5811472517317677
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub12_smalltable_009": {
+      "name": "sub12_smalltable_009",
+      "object": "smalltable",
+      "frames": 125,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub12_smalltable_009",
+        "object": "smalltable",
+        "subject": "sub12",
+        "frames": 125,
+        "duration_s": 4.166666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.288,
+        "mode_left": 0.712,
+        "mode_right": 0.0,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.712,
+        "first_contact_s": 0.5666666666666667,
+        "last_release_s": 3.533333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "left",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.966666666666667,
+        "obj_disp_xy_m": 1.550683668087267,
+        "obj_path_xy_m": 1.6042868230485547,
+        "obj_clear_max_m": 0.017031213266107403,
+        "obj_tilt_max_deg": 2.214159199715615,
+        "obj_yaw_end_deg": -16.80354404626281,
+        "root_path_xy_m": 2.4740559477097475,
+        "root_disp_xy_m": 1.9366346828271512,
+        "heading_change_deg": 118.67667355418112,
+        "pelvis_stand_z_m": 0.9972578763961792,
+        "clipfrac_L_hand": 0.712,
+        "clipfrac_R_hand": 0.0,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.712,
+        "frac_any_body_flag": 0.712,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0006494093928959832,
+        "obj_lowest_z_min_m": -0.0007647464031082518,
+        "toe_z_min_m": 0.044596411287784576,
+        "check_contact_hand_median_m": 0.0035177597024410694,
+        "check_free_hand_median_m": 0.5957236211509801
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub12_smalltable_009_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub12_smalltable_009_g1_smplx.npz",
+        "frames_in": 125,
+        "frames_g1": 125,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.303148469000007,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.04141998319055871,
+            "p95_m": 0.043491601381268875
+          },
+          "right_wrist": {
+            "median_m": 0.03141970801610062,
+            "p95_m": 0.033916135708707745
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 125,
+        "out_n_frames_raw": 128,
+        "out_n_frames": 125,
+        "runtime_s": 2.1417947220033966
+      },
+      "contact_interval": {
+        "hands": "left",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "L",
+        "start": 17,
+        "end": 106,
+        "hand_height_m": [
+          0.3297579623758793,
+          0.43646468594670296
+        ],
+        "gripper_height_prior_m": [
+          0.8181022327193903,
+          1.0247542337522615
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.056890272102933945,
+          0.15234896304736098,
+          0.18853677990297432
+        ]
+      },
+      "prior": {
+        "path_g1_m": 2.060956173602167,
+        "path_b2_m": 1.7049487773497969,
+        "turn_g1_deg": 117.81227941379305,
+        "turn_b2_deg": 55.35396936325982,
+        "gripper_height_range_m": [
+          0.8181022327193903,
+          1.0247542337522615
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub15_largetable_003": {
+      "name": "sub15_largetable_003",
+      "object": "largetable",
+      "frames": 109,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub15_largetable_003",
+        "object": "largetable",
+        "subject": "sub15",
+        "frames": 109,
+        "duration_s": 3.6333333333333333,
+        "dropped_first_frame": false,
+        "mode_none": 0.0,
+        "mode_left": 0.0,
+        "mode_right": 0.07339449541284404,
+        "mode_both": 0.926605504587156,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 1.0,
+        "first_contact_s": 0.0,
+        "last_release_s": 3.6333333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "both",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 3.6333333333333333,
+        "obj_disp_xy_m": 0.7496353789441681,
+        "obj_path_xy_m": 0.8367155770473959,
+        "obj_clear_max_m": 0.0014713355665735839,
+        "obj_tilt_max_deg": 8.329417796959223,
+        "obj_yaw_end_deg": -28.583120959331858,
+        "root_path_xy_m": 0.9905297883750104,
+        "root_disp_xy_m": 0.9124134190069138,
+        "heading_change_deg": -38.05151990502624,
+        "pelvis_stand_z_m": 0.9065345883369446,
+        "clipfrac_L_hand": 0.926605504587156,
+        "clipfrac_R_hand": 1.0,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 1.0,
+        "frac_any_body_flag": 1.0,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.001764118729746078,
+        "obj_lowest_z_min_m": -0.004634017865831175,
+        "toe_z_min_m": 0.0602111890912056,
+        "check_contact_hand_median_m": 0.00207101540329102,
+        "check_free_hand_median_m": 0.041254339650709064
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub15_largetable_003_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub15_largetable_003_g1_smplx.npz",
+        "frames_in": 109,
+        "frames_g1": 109,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.2718336719990475,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.07015306634711468,
+            "p95_m": 0.07153776404732975
+          },
+          "right_wrist": {
+            "median_m": 0.07248792490702782,
+            "p95_m": 0.07316430536312325
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232591718435287,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 109,
+        "out_n_frames_raw": 112,
+        "out_n_frames": 109,
+        "runtime_s": 2.090289321000455
+      },
+      "contact_interval": {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 0,
+        "end": 109,
+        "hand_height_m": [
+          0.43720628693699837,
+          0.5494857616722584
+        ],
+        "gripper_height_prior_m": [
+          0.6915988064715534,
+          1.1430899912694172
+        ],
+        "hand_in_object_frame_start_m": [
+          0.2938927643934567,
+          0.06278563530003793,
+          -0.16762562148032153
+        ]
+      },
+      "prior": {
+        "path_g1_m": 0.821323202254572,
+        "path_b2_m": 0.635018371406611,
+        "turn_g1_deg": -47.396218118118995,
+        "turn_b2_deg": -21.491074569913604,
+        "gripper_height_range_m": [
+          0.6915988064715534,
+          1.1430899912694172
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub15_plasticbox_048": {
+      "name": "sub15_plasticbox_048",
+      "object": "plasticbox",
+      "frames": 116,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub15_plasticbox_048",
+        "object": "plasticbox",
+        "subject": "sub15",
+        "frames": 116,
+        "duration_s": 3.8666666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.11206896551724138,
+        "mode_left": 0.0,
+        "mode_right": 0.6810344827586207,
+        "mode_both": 0.20689655172413793,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.8879310344827587,
+        "first_contact_s": 0.3,
+        "last_release_s": 3.7333333333333334,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 3.433333333333333,
+        "obj_disp_xy_m": 0.6441325344694611,
+        "obj_path_xy_m": 0.6647132016343781,
+        "obj_clear_max_m": 0.004357740966654644,
+        "obj_tilt_max_deg": 6.030105227315643,
+        "obj_yaw_end_deg": 17.48453527676267,
+        "root_path_xy_m": 1.6666921038041886,
+        "root_disp_xy_m": 1.5484948702828454,
+        "heading_change_deg": 95.0391461013343,
+        "pelvis_stand_z_m": 0.8822855353355408,
+        "clipfrac_L_hand": 0.25,
+        "clipfrac_R_hand": 0.8879310344827587,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.8879310344827587,
+        "frac_any_body_flag": 0.8879310344827587,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.007155981063344918,
+        "obj_lowest_z_min_m": -0.007968503198178711,
+        "toe_z_min_m": 0.05207672715187073,
+        "check_contact_hand_median_m": 0.0020282400218566334,
+        "check_free_hand_median_m": 0.032520209527632044
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub15_plasticbox_048_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub15_plasticbox_048_g1_smplx.npz",
+        "frames_in": 116,
+        "frames_g1": 116,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.315824777004309,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.06809501818951226,
+            "p95_m": 0.07240132274973728
+          },
+          "right_wrist": {
+            "median_m": 0.06151477842630872,
+            "p95_m": 0.06443186273549714
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 116,
+        "out_n_frames_raw": 116,
+        "out_n_frames": 116,
+        "runtime_s": 2.0523841430112952
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 9,
+        "end": 112,
+        "hand_height_m": [
+          0.2862626165151596,
+          0.34986475110054016
+        ],
+        "gripper_height_prior_m": [
+          0.9127019701110366,
+          1.2102295275422994
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.2459911233069279,
+          0.1970342576131606,
+          -0.060699596894791694
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.3936482335078488,
+        "path_b2_m": 1.0887066931135112,
+        "turn_g1_deg": 101.10613372161296,
+        "turn_b2_deg": 47.114929476340954,
+        "gripper_height_range_m": [
+          0.7536393014118958,
+          1.2102295275422994
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub16_largebox_041": {
+      "name": "sub16_largebox_041",
+      "object": "largebox",
+      "frames": 135,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub16_largebox_041",
+        "object": "largebox",
+        "subject": "sub16",
+        "frames": 135,
+        "duration_s": 4.5,
+        "dropped_first_frame": false,
+        "mode_none": 0.4222222222222222,
+        "mode_left": 0.08888888888888889,
+        "mode_right": 0.37777777777777777,
+        "mode_both": 0.1111111111111111,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.5777777777777777,
+        "first_contact_s": 0.8333333333333334,
+        "last_release_s": 3.433333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.6,
+        "obj_disp_xy_m": 1.0906563099855224,
+        "obj_path_xy_m": 1.1049821571892413,
+        "obj_clear_max_m": 0.001080923989164817,
+        "obj_tilt_max_deg": 1.39331701551812,
+        "obj_yaw_end_deg": 13.793531554400648,
+        "root_path_xy_m": 2.0763328622065202,
+        "root_disp_xy_m": 1.7040830238780498,
+        "heading_change_deg": 74.54655633084852,
+        "pelvis_stand_z_m": 0.9522490262985229,
+        "clipfrac_L_hand": 0.2,
+        "clipfrac_R_hand": 0.4888888888888889,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.5777777777777777,
+        "frac_any_body_flag": 0.5777777777777777,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.002166562649074777,
+        "obj_lowest_z_min_m": -0.004203775132077897,
+        "toe_z_min_m": 0.05231943354010582,
+        "check_contact_hand_median_m": 0.0018565654663328123,
+        "check_free_hand_median_m": 0.5076115946037465
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub16_largebox_041_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub16_largebox_041_g1_smplx.npz",
+        "frames_in": 135,
+        "frames_g1": 135,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.3010739049932454,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.03213870888765507,
+            "p95_m": 0.037968855606375015
+          },
+          "right_wrist": {
+            "median_m": 0.03295828459953168,
+            "p95_m": 0.03870677045092228
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 135,
+        "out_n_frames_raw": 136,
+        "out_n_frames": 135,
+        "runtime_s": 2.0827805589942727
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 25,
+        "end": 103,
+        "hand_height_m": [
+          0.3015934079885483,
+          0.524406423792243
+        ],
+        "gripper_height_prior_m": [
+          0.7847842340323282,
+          1.0683660054421147
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.026027500535362763,
+          -0.5657125363846469,
+          -0.28419540904352314
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.7439312790086587,
+        "path_b2_m": 1.3813513017883383,
+        "turn_g1_deg": 72.39564579450372,
+        "turn_b2_deg": 36.63804507467978,
+        "gripper_height_range_m": [
+          0.706896008613197,
+          1.0711749768602494
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub1_largetable_009": {
+      "name": "sub1_largetable_009",
+      "object": "largetable",
+      "frames": 168,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub1_largetable_009",
+        "object": "largetable",
+        "subject": "sub1",
+        "frames": 168,
+        "duration_s": 5.6,
+        "dropped_first_frame": false,
+        "mode_none": 0.26785714285714285,
+        "mode_left": 0.0,
+        "mode_right": 0.7321428571428571,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.7321428571428571,
+        "first_contact_s": 0.36666666666666664,
+        "last_release_s": 4.466666666666667,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 4.1,
+        "obj_disp_xy_m": 1.727150255872366,
+        "obj_path_xy_m": 1.7467978788834455,
+        "obj_clear_max_m": 0.0017542170521873124,
+        "obj_tilt_max_deg": 7.985447201186518,
+        "obj_yaw_end_deg": 17.57981395256305,
+        "root_path_xy_m": 2.020430995386557,
+        "root_disp_xy_m": 1.3729234178055876,
+        "heading_change_deg": -14.28300327995926,
+        "pelvis_stand_z_m": 0.9126935601234436,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.7321428571428571,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7321428571428571,
+        "frac_any_body_flag": 0.7321428571428571,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -1.4485843734701742e-05,
+        "obj_lowest_z_min_m": -0.0024280339300288833,
+        "toe_z_min_m": 0.0480283685028553,
+        "check_contact_hand_median_m": 0.0035740854709654197,
+        "check_free_hand_median_m": 0.5686919278640516
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub1_largetable_009_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub1_largetable_009_g1_smplx.npz",
+        "frames_in": 168,
+        "frames_g1": 168,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.35234480499639176,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.06257500417681153,
+            "p95_m": 0.06476454799659079
+          },
+          "right_wrist": {
+            "median_m": 0.0783476013276597,
+            "p95_m": 0.07942532676059309
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 168,
+        "out_n_frames_raw": 168,
+        "out_n_frames": 168,
+        "runtime_s": 2.0893771539995214
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 11,
+        "end": 134,
+        "hand_height_m": [
+          0.4480072185397148,
+          0.5277395807206631
+        ],
+        "gripper_height_prior_m": [
+          0.8377222343656325,
+          1.134284503290309
+        ],
+        "hand_in_object_frame_start_m": [
+          0.3445805481782863,
+          0.10562947529396553,
+          0.05448549850739451
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.687352147484828,
+        "path_b2_m": 1.372374582811245,
+        "turn_g1_deg": -16.68244154780289,
+        "turn_b2_deg": -8.390541424232588,
+        "gripper_height_range_m": [
+          0.689562652494296,
+          1.134284503290309
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub1_suitcase_085": {
+      "name": "sub1_suitcase_085",
+      "pass": false,
+      "error": ": <unknown function> + 0x1d2a4c (0x5b35b7bc3a4c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #39: PyEval_EvalCode + 0x85 (0x5b35b7bc3995 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #40: <unknown function> + 0x1d9c29 (0x5b35b7bcac29 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #41: <unknown function> + 0x13c423 (0x5b35b7b2d423 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #42: _PyEval_EvalFrameDefault + 0x59d6 (0x5b35b7b22726 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #43: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #44: _PyEval_EvalFrameDefault + 0x49ae (0x5b35b7b216fe in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #45: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #46: _PyEval_EvalFrameDefault + 0x6fb (0x5b35b7b1d44b in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #47: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #48: _PyEval_EvalFrameDefault + 0x313 (0x5b35b7b1d063 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #49: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #50: _PyEval_EvalFrameDefault + 0x313 (0x5b35b7b1d063 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #51: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #52: <unknown function> + 0x13baa5 (0x5b35b7b2caa5 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #53: _PyObject_CallMethodIdObjArgs + 0x139 (0x5b35b7b3c5e9 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #54: PyImport_ImportModuleLevelObject + 0x85f (0x5b35b7b3beaf in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #55: _PyEval_EvalFrameDefault + 0x3ad8 (0x5b35b7b20828 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #56: <unknown function> + 0x1d2a4c (0x5b35b7bc3a4c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #57: PyEval_EvalCode + 0x85 (0x5b35b7bc3995 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #58: <unknown function> + 0x1d9c29 (0x5b35b7bcac29 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #59: <unknown function> + 0x13c423 (0x5b35b7b2d423 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #60: _PyEval_EvalFrameDefault + 0x313 (0x5b35b7b1d063 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #61: _PyFunction_Vectorcall + 0x6c (0x5b35b7b2d25c in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\nframe #62: _PyEval_EvalFrameDefault + 0x313 (0x5b35b7b1d063 in /home/kevin/.holosoma_deps/miniconda3/envs/h2d/bin/python)\n\n\n"
+    },
+    "sub5_largetable_030": {
+      "name": "sub5_largetable_030",
+      "object": "largetable",
+      "frames": 159,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub5_largetable_030",
+        "object": "largetable",
+        "subject": "sub5",
+        "frames": 159,
+        "duration_s": 5.3,
+        "dropped_first_frame": false,
+        "mode_none": 0.25157232704402516,
+        "mode_left": 0.0,
+        "mode_right": 0.031446540880503145,
+        "mode_both": 0.7169811320754716,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.7484276729559748,
+        "first_contact_s": 0.5666666666666667,
+        "last_release_s": 4.533333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "both",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 3.966666666666667,
+        "obj_disp_xy_m": 1.6268249303601046,
+        "obj_path_xy_m": 1.6435590855564604,
+        "obj_clear_max_m": -0.0006259839805660694,
+        "obj_tilt_max_deg": 0.7462543423728198,
+        "obj_yaw_end_deg": -4.376334549932428,
+        "root_path_xy_m": 1.9294340537634815,
+        "root_disp_xy_m": 1.6674495819651618,
+        "heading_change_deg": -3.3114402578843567,
+        "pelvis_stand_z_m": 0.9931630492210388,
+        "clipfrac_L_hand": 0.7169811320754716,
+        "clipfrac_R_hand": 0.7484276729559748,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7484276729559748,
+        "frac_any_body_flag": 0.7484276729559748,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0007008405818319519,
+        "obj_lowest_z_min_m": -0.005143130128054618,
+        "toe_z_min_m": 0.05596395954489708,
+        "check_contact_hand_median_m": 0.001747737400486449,
+        "check_free_hand_median_m": 0.040616888191891395
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub5_largetable_030_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub5_largetable_030_g1_smplx.npz",
+        "frames_in": 159,
+        "frames_g1": 159,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.34436075799749233,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.03964542816183714,
+            "p95_m": 0.04099959682736786
+          },
+          "right_wrist": {
+            "median_m": 0.04066277805495632,
+            "p95_m": 0.04351976116192236
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 159,
+        "out_n_frames_raw": 160,
+        "out_n_frames": 159,
+        "runtime_s": 2.087306842004182
+      },
+      "contact_interval": {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 17,
+        "end": 136,
+        "hand_height_m": [
+          0.45400059036910534,
+          0.5427873730659485
+        ],
+        "gripper_height_prior_m": [
+          0.9106084743286508,
+          1.1704920610734655
+        ],
+        "hand_in_object_frame_start_m": [
+          0.3152467342838598,
+          0.15598342125177675,
+          -0.23730176535328693
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.6100120873906558,
+        "path_b2_m": 1.3203755315416505,
+        "turn_g1_deg": -5.988808279365996,
+        "turn_b2_deg": -1.3753430112519485,
+        "gripper_height_range_m": [
+          0.770440563487374,
+          1.1704920610734655
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub6_largetable_033": {
+      "name": "sub6_largetable_033",
+      "object": "largetable",
+      "frames": 186,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub6_largetable_033",
+        "object": "largetable",
+        "subject": "sub6",
+        "frames": 186,
+        "duration_s": 6.2,
+        "dropped_first_frame": false,
+        "mode_none": 0.20967741935483872,
+        "mode_left": 0.0,
+        "mode_right": 0.021505376344086023,
+        "mode_both": 0.7688172043010753,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.7903225806451613,
+        "first_contact_s": 0.1,
+        "last_release_s": 5.0,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "both",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 4.9,
+        "obj_disp_xy_m": 2.0102560050110863,
+        "obj_path_xy_m": 2.183502696492262,
+        "obj_clear_max_m": 0.009503185583552232,
+        "obj_tilt_max_deg": 3.6240243371215537,
+        "obj_yaw_end_deg": -9.002366366193263,
+        "root_path_xy_m": 2.396151379414122,
+        "root_disp_xy_m": 2.072392639913913,
+        "heading_change_deg": -9.633638904322083,
+        "pelvis_stand_z_m": 0.9737841486930847,
+        "clipfrac_L_hand": 0.7688172043010753,
+        "clipfrac_R_hand": 0.7903225806451613,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7903225806451613,
+        "frac_any_body_flag": 0.7903225806451613,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0004638913667714961,
+        "obj_lowest_z_min_m": -0.0005911102535088308,
+        "toe_z_min_m": 0.05892942100763321,
+        "check_contact_hand_median_m": 0.0013547891689267982,
+        "check_free_hand_median_m": 0.04390531967473787
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub6_largetable_033_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub6_largetable_033_g1_smplx.npz",
+        "frames_in": 186,
+        "frames_g1": 186,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.37503538200689945,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.030615630870571134,
+            "p95_m": 0.03343918652048976
+          },
+          "right_wrist": {
+            "median_m": 0.03334724939497495,
+            "p95_m": 0.040948546445852524
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232573091983795,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 186,
+        "out_n_frames_raw": 188,
+        "out_n_frames": 186,
+        "runtime_s": 2.075100134999957
+      },
+      "contact_interval": {
+        "hands": "both",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 3,
+        "end": 150,
+        "hand_height_m": [
+          0.4469719883054495,
+          0.5368670616298914
+        ],
+        "gripper_height_prior_m": [
+          0.9781869680225036,
+          1.2253262083031013
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.12802708012883135,
+          0.17084036185875376,
+          -0.2839241882814758
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.9931861156788182,
+        "path_b2_m": 1.6871319392368949,
+        "turn_g1_deg": -11.459018773086024,
+        "turn_b2_deg": -1.8543454980295766,
+        "gripper_height_range_m": [
+          0.8590590398828943,
+          1.2253262083031013
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub6_trashcan_003": {
+      "name": "sub6_trashcan_003",
+      "object": "trashcan",
+      "frames": 192,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub6_trashcan_003",
+        "object": "trashcan",
+        "subject": "sub6",
+        "frames": 192,
+        "duration_s": 6.4,
+        "dropped_first_frame": false,
+        "mode_none": 0.2916666666666667,
+        "mode_left": 0.0,
+        "mode_right": 0.7083333333333334,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.7083333333333334,
+        "first_contact_s": 0.8,
+        "last_release_s": 5.333333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 4.533333333333333,
+        "obj_disp_xy_m": 2.227883714765432,
+        "obj_path_xy_m": 2.2447978599191716,
+        "obj_clear_max_m": 0.0013458718898318733,
+        "obj_tilt_max_deg": 1.188127591456783,
+        "obj_yaw_end_deg": -3.892291810707958,
+        "root_path_xy_m": 2.410335991655241,
+        "root_disp_xy_m": 2.0957394414211175,
+        "heading_change_deg": -6.379108794741001,
+        "pelvis_stand_z_m": 0.9618619203567504,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.7083333333333334,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7083333333333334,
+        "frac_any_body_flag": 0.7083333333333334,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0010335513221899073,
+        "obj_lowest_z_min_m": -0.0014208560190317188,
+        "toe_z_min_m": 0.05520057678222656,
+        "check_contact_hand_median_m": 0.002238465265144999,
+        "check_free_hand_median_m": 0.764730753250424
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub6_trashcan_003_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub6_trashcan_003_g1_smplx.npz",
+        "frames_in": 192,
+        "frames_g1": 192,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.39878995101025794,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.02654505886163854,
+            "p95_m": 0.03287320235345295
+          },
+          "right_wrist": {
+            "median_m": 0.03045488372512386,
+            "p95_m": 0.039627479150908855
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 192,
+        "out_n_frames_raw": 192,
+        "out_n_frames": 192,
+        "runtime_s": 2.11427000000549
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 24,
+        "end": 160,
+        "hand_height_m": [
+          0.1182420440018177,
+          0.19065801426768303
+        ],
+        "gripper_height_prior_m": [
+          0.9369112860726319,
+          1.1975472812908095
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.16590251047606552,
+          0.004158777774713528,
+          -0.11374322337976348
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.9979671850144567,
+        "path_b2_m": 1.6133931710352636,
+        "turn_g1_deg": -6.1049757655877475,
+        "turn_b2_deg": -0.6652623354665901,
+        "gripper_height_range_m": [
+          0.7283608809642748,
+          1.1975472812908095
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub7_largebox_041": {
+      "name": "sub7_largebox_041",
+      "object": "largebox",
+      "frames": 165,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub7_largebox_041",
+        "object": "largebox",
+        "subject": "sub7",
+        "frames": 165,
+        "duration_s": 5.5,
+        "dropped_first_frame": false,
+        "mode_none": 0.48484848484848486,
+        "mode_left": 0.0,
+        "mode_right": 0.5151515151515151,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.5151515151515151,
+        "first_contact_s": 1.1666666666666667,
+        "last_release_s": 4.0,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.8333333333333335,
+        "obj_disp_xy_m": 1.6175327058776114,
+        "obj_path_xy_m": 1.6253107581060662,
+        "obj_clear_max_m": -0.0003451120889428061,
+        "obj_tilt_max_deg": 0.36734401985876713,
+        "obj_yaw_end_deg": -0.34257699999200664,
+        "root_path_xy_m": 2.2650604601544524,
+        "root_disp_xy_m": 2.0484365542718987,
+        "heading_change_deg": 0.6106235979409433,
+        "pelvis_stand_z_m": 0.9695132493972778,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.5151515151515151,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.5151515151515151,
+        "frac_any_body_flag": 0.5151515151515151,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.002258464039797181,
+        "obj_lowest_z_min_m": -0.002985832558111412,
+        "toe_z_min_m": 0.058138374239206314,
+        "check_contact_hand_median_m": 0.0029583028760009344,
+        "check_free_hand_median_m": 0.590292313026726
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub7_largebox_041_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub7_largebox_041_g1_smplx.npz",
+        "frames_in": 165,
+        "frames_g1": 165,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.339409161999356,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.06606383604549733,
+            "p95_m": 0.07750351611932013
+          },
+          "right_wrist": {
+            "median_m": 0.0643207469775327,
+            "p95_m": 0.08047050685487672
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 165,
+        "out_n_frames_raw": 168,
+        "out_n_frames": 165,
+        "runtime_s": 2.1426656330004334
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 35,
+        "end": 120,
+        "hand_height_m": [
+          0.35433266684412956,
+          0.432199202477932
+        ],
+        "gripper_height_prior_m": [
+          0.8740273108855074,
+          1.1254187432214176
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.08517175893463715,
+          -0.16338074319635337,
+          -0.2423645430693419
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.8843096415954697,
+        "path_b2_m": 1.5375473537439943,
+        "turn_g1_deg": -3.382432388547187,
+        "turn_b2_deg": -0.12294494894672484,
+        "gripper_height_range_m": [
+          0.7399165453458068,
+          1.1254187432214176
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub7_smallbox_041": {
+      "name": "sub7_smallbox_041",
+      "object": "smallbox",
+      "frames": 173,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub7_smallbox_041",
+        "object": "smallbox",
+        "subject": "sub7",
+        "frames": 173,
+        "duration_s": 5.766666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.5433526011560693,
+        "mode_left": 0.0,
+        "mode_right": 0.45664739884393063,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.45664739884393063,
+        "first_contact_s": 1.3666666666666667,
+        "last_release_s": 4.0,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.6333333333333333,
+        "obj_disp_xy_m": 1.8392675470590563,
+        "obj_path_xy_m": 1.8561489731895786,
+        "obj_clear_max_m": -0.0018199057100562743,
+        "obj_tilt_max_deg": 0.8924696281085485,
+        "obj_yaw_end_deg": -1.4554970328526493,
+        "root_path_xy_m": 3.0280310220586677,
+        "root_disp_xy_m": 2.654233531835973,
+        "heading_change_deg": -152.90787367554267,
+        "pelvis_stand_z_m": 0.9694032788276672,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.45664739884393063,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.45664739884393063,
+        "frac_any_body_flag": 0.45664739884393063,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.00340887798297021,
+        "obj_lowest_z_min_m": -0.004602384175871235,
+        "toe_z_min_m": 0.05330746993422508,
+        "check_contact_hand_median_m": 0.001944491630881344,
+        "check_free_hand_median_m": 0.9288220354370504
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub7_smallbox_041_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub7_smallbox_041_g1_smplx.npz",
+        "frames_in": 173,
+        "frames_g1": 173,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.3753735210048035,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.06389377124879855,
+            "p95_m": 0.0750503809307241
+          },
+          "right_wrist": {
+            "median_m": 0.06485568385384607,
+            "p95_m": 0.07870842175394123
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 173,
+        "out_n_frames_raw": 176,
+        "out_n_frames": 173,
+        "runtime_s": 2.0698207759996876
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 41,
+        "end": 120,
+        "hand_height_m": [
+          0.163273137062788,
+          0.23091553151607513
+        ],
+        "gripper_height_prior_m": [
+          0.8734258437365379,
+          1.2159361468305738
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.0585567577957871,
+          0.2114887536092767,
+          0.07791305571689218
+        ]
+      },
+      "prior": {
+        "path_g1_m": 2.530876387729608,
+        "path_b2_m": 2.072480856902947,
+        "turn_g1_deg": -155.31695982980204,
+        "turn_b2_deg": -78.57603894102891,
+        "gripper_height_range_m": [
+          0.8099812092098098,
+          1.2159361468305738
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub8_plasticbox_038": {
+      "name": "sub8_plasticbox_038",
+      "object": "plasticbox",
+      "frames": 143,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub8_plasticbox_038",
+        "object": "plasticbox",
+        "subject": "sub8",
+        "frames": 143,
+        "duration_s": 4.766666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.45454545454545453,
+        "mode_left": 0.0,
+        "mode_right": 0.5454545454545454,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.5454545454545454,
+        "first_contact_s": 0.3333333333333333,
+        "last_release_s": 2.933333333333333,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.6,
+        "obj_disp_xy_m": 1.8394506962353956,
+        "obj_path_xy_m": 1.9139678300746605,
+        "obj_clear_max_m": 0.000799719608569005,
+        "obj_tilt_max_deg": 6.837203011200753,
+        "obj_yaw_end_deg": -8.188312577215722,
+        "root_path_xy_m": 2.0398889216168854,
+        "root_disp_xy_m": 1.5873653136735375,
+        "heading_change_deg": -40.4596292294204,
+        "pelvis_stand_z_m": 1.0318265199661254,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.5454545454545454,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.5454545454545454,
+        "frac_any_body_flag": 0.5454545454545454,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0010944393494533855,
+        "obj_lowest_z_min_m": -0.0029361137107794255,
+        "toe_z_min_m": 0.045911431312561035,
+        "check_contact_hand_median_m": 0.0036634444178278037,
+        "check_free_hand_median_m": 0.8232073021912514
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub8_plasticbox_038_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub8_plasticbox_038_g1_smplx.npz",
+        "frames_in": 143,
+        "frames_g1": 143,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.31777382899599615,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.024105994906906004,
+            "p95_m": 0.03375576852460192
+          },
+          "right_wrist": {
+            "median_m": 0.057841107114859125,
+            "p95_m": 0.06931230869096185
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.35140740871429443,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 143,
+        "out_n_frames_raw": 144,
+        "out_n_frames": 143,
+        "runtime_s": 2.1133863349969033
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 10,
+        "end": 88,
+        "hand_height_m": [
+          0.27668118476867676,
+          0.35502879694104195
+        ],
+        "gripper_height_prior_m": [
+          0.8557547477725553,
+          1.1402462230280823
+        ],
+        "hand_in_object_frame_start_m": [
+          0.3254470719373944,
+          0.1804902398580327,
+          -0.035615358789467894
+        ]
+      },
+      "prior": {
+        "path_g1_m": 1.7035430982945967,
+        "path_b2_m": 1.3194353265152172,
+        "turn_g1_deg": -43.58471783602296,
+        "turn_b2_deg": -18.86526281466345,
+        "gripper_height_range_m": [
+          0.7422048876043139,
+          1.1402462230280823
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub8_trashcan_045": {
+      "name": "sub8_trashcan_045",
+      "object": "trashcan",
+      "frames": 245,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub8_trashcan_045",
+        "object": "trashcan",
+        "subject": "sub8",
+        "frames": 245,
+        "duration_s": 8.166666666666666,
+        "dropped_first_frame": false,
+        "mode_none": 0.1836734693877551,
+        "mode_left": 0.39183673469387753,
+        "mode_right": 0.42448979591836733,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 2,
+        "contact_coverage": 0.8163265306122449,
+        "first_contact_s": 0.13333333333333333,
+        "last_release_s": 7.233333333333333,
+        "n_lifted": 0,
+        "n_tilted": 1,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "tilted",
+        "longest_human": "walk",
+        "longest_duration_s": 3.466666666666667,
+        "obj_disp_xy_m": 0.2895452055146955,
+        "obj_path_xy_m": 3.650456984968775,
+        "obj_clear_max_m": 0.007985576343442935,
+        "obj_tilt_max_deg": 21.57306242876358,
+        "obj_yaw_end_deg": -19.60555855781995,
+        "root_path_xy_m": 3.9175130943354226,
+        "root_disp_xy_m": 0.5266853679316109,
+        "heading_change_deg": -29.007380300353333,
+        "pelvis_stand_z_m": 0.9867703318595886,
+        "clipfrac_L_hand": 0.39183673469387753,
+        "clipfrac_R_hand": 0.42448979591836733,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.8163265306122449,
+        "frac_any_body_flag": 0.8163265306122449,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0014093786470997793,
+        "obj_lowest_z_min_m": -0.0023450791034065888,
+        "toe_z_min_m": 0.04668755829334259,
+        "check_contact_hand_median_m": 0.00859003538263375,
+        "check_free_hand_median_m": 0.8690106830829846
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub8_trashcan_045_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub8_trashcan_045_g1_smplx.npz",
+        "frames_in": 245,
+        "frames_g1": 245,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.48052970599383116,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.031417823751786804,
+            "p95_m": 0.0585353476851764
+          },
+          "right_wrist": {
+            "median_m": 0.03712947204223288,
+            "p95_m": 0.06549898462982608
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 245,
+        "out_n_frames_raw": 248,
+        "out_n_frames": 245,
+        "runtime_s": 2.1046776360017247
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "tilted",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 4,
+        "end": 108,
+        "hand_height_m": [
+          0.299070798791945,
+          0.35540108010172844
+        ],
+        "gripper_height_prior_m": [
+          0.9522224120867533,
+          1.2197278949115462
+        ],
+        "hand_in_object_frame_start_m": [
+          0.10835623108261067,
+          -0.22177294189570043,
+          0.12284066927916015
+        ]
+      },
+      "prior": {
+        "path_g1_m": 3.2971368172531266,
+        "path_b2_m": 2.774509335365953,
+        "turn_g1_deg": -27.851701387483903,
+        "turn_b2_deg": -13.721159807488016,
+        "gripper_height_range_m": [
+          0.8686794235132435,
+          1.2197278949115462
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub8_trashcan_046": {
+      "name": "sub8_trashcan_046",
+      "object": "trashcan",
+      "frames": 254,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub8_trashcan_046",
+        "object": "trashcan",
+        "subject": "sub8",
+        "frames": 254,
+        "duration_s": 8.466666666666667,
+        "dropped_first_frame": false,
+        "mode_none": 0.2637795275590551,
+        "mode_left": 0.3543307086614173,
+        "mode_right": 0.38188976377952755,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 2,
+        "contact_coverage": 0.7362204724409449,
+        "first_contact_s": 0.23333333333333334,
+        "last_release_s": 7.3,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 2,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 3.2333333333333334,
+        "obj_disp_xy_m": 0.16521087592636338,
+        "obj_path_xy_m": 3.516437289571356,
+        "obj_clear_max_m": 0.008150387919173746,
+        "obj_tilt_max_deg": 11.863098488443137,
+        "obj_yaw_end_deg": -0.06091732285841688,
+        "root_path_xy_m": 3.3847988716449784,
+        "root_disp_xy_m": 0.054461043568386186,
+        "heading_change_deg": -9.397379174781491,
+        "pelvis_stand_z_m": 1.0221583008766175,
+        "clipfrac_L_hand": 0.3543307086614173,
+        "clipfrac_R_hand": 0.38188976377952755,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.7362204724409449,
+        "frac_any_body_flag": 0.7362204724409449,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.001056993609175716,
+        "obj_lowest_z_min_m": -0.0015440295268640547,
+        "toe_z_min_m": 0.04748007655143738,
+        "check_contact_hand_median_m": 0.0057615329681514425,
+        "check_free_hand_median_m": 0.8466835850733687
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub8_trashcan_046_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub8_trashcan_046_g1_smplx.npz",
+        "frames_in": 254,
+        "frames_g1": 254,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.4683732470002724,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.030652884767059234,
+            "p95_m": 0.059046960373234446
+          },
+          "right_wrist": {
+            "median_m": 0.03692816285357349,
+            "p95_m": 0.06807334251755881
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.003123253583908081,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 254,
+        "out_n_frames_raw": 256,
+        "out_n_frames": 254,
+        "runtime_s": 2.11597264399461
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 7,
+        "end": 104,
+        "hand_height_m": [
+          0.3049289546906948,
+          0.37878109887242317
+        ],
+        "gripper_height_prior_m": [
+          0.9097574154840664,
+          1.1593542403307413
+        ],
+        "hand_in_object_frame_start_m": [
+          0.14650031405421024,
+          -0.24571479524664597,
+          0.05439637170459982
+        ]
+      },
+      "prior": {
+        "path_g1_m": 2.8366820229652667,
+        "path_b2_m": 2.310768947775802,
+        "turn_g1_deg": -13.724030169862349,
+        "turn_b2_deg": -3.9217267984125077,
+        "gripper_height_range_m": [
+          0.7693873854470596,
+          1.1593542403307413
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    },
+    "sub9_smalltable_003": {
+      "name": "sub9_smalltable_003",
+      "object": "smalltable",
+      "frames": 157,
+      "dropped_first_frame": false,
+      "stats": {
+        "name": "sub9_smalltable_003",
+        "object": "smalltable",
+        "subject": "sub9",
+        "frames": 157,
+        "duration_s": 5.233333333333333,
+        "dropped_first_frame": false,
+        "mode_none": 0.5987261146496815,
+        "mode_left": 0.0,
+        "mode_right": 0.4012738853503185,
+        "mode_both": 0.0,
+        "mode_body": 0.0,
+        "mode_unknown": 0.0,
+        "n_segments": 1,
+        "contact_coverage": 0.4012738853503185,
+        "first_contact_s": 0.0,
+        "last_release_s": 2.1,
+        "n_lifted": 0,
+        "n_tilted": 0,
+        "n_slid": 1,
+        "n_turned": 0,
+        "n_still": 0,
+        "longest_hands": "right",
+        "longest_state": "slid",
+        "longest_human": "walk",
+        "longest_duration_s": 2.1,
+        "obj_disp_xy_m": 2.520096600391972,
+        "obj_path_xy_m": 3.0349387539465167,
+        "obj_clear_max_m": 0.0012919779999473469,
+        "obj_tilt_max_deg": 3.5536907378281484,
+        "obj_yaw_end_deg": -118.3117235213534,
+        "root_path_xy_m": 3.3582631677594295,
+        "root_disp_xy_m": 2.3633349405276554,
+        "heading_change_deg": -75.59531868629396,
+        "pelvis_stand_z_m": 0.9164318323135376,
+        "clipfrac_L_hand": 0.0,
+        "clipfrac_R_hand": 0.4012738853503185,
+        "clipfrac_forearm": 0.0,
+        "clipfrac_upper_arm": 0.0,
+        "clipfrac_collar": 0.0,
+        "clipfrac_torso": 0.0,
+        "clipfrac_head_neck": 0.0,
+        "clipfrac_pelvis": 0.0,
+        "clipfrac_thigh": 0.0,
+        "clipfrac_shin": 0.0,
+        "clipfrac_foot": 0.0,
+        "frac_no_data": 0.0,
+        "frac_contact_obj": 0.4012738853503185,
+        "frac_any_body_flag": 0.4012738853503185,
+        "contact_obj_agreement": 1.0,
+        "obj_lowest_z_start_m": -0.0034896596433123817,
+        "obj_lowest_z_min_m": -0.004315448020635659,
+        "toe_z_min_m": 0.03454834222793579,
+        "check_contact_hand_median_m": 0.004020035868681528,
+        "check_free_hand_median_m": 0.25640004936882166
+      },
+      "g1": {
+        "g1_pkl": "outputs/R013_d0/sub9_smalltable_003_g1.pkl",
+        "smplx_npz": "outputs/R013_d0/sub9_smalltable_003_g1_smplx.npz",
+        "frames_in": 157,
+        "frames_g1": 157,
+        "fps": 30.0,
+        "human_height_used_m": 1.66,
+        "gmr_runtime_s": 0.40789775298617315,
+        "convention_check_pelvis_relative_wrist_error": {
+          "left_wrist": {
+            "median_m": 0.034402009594981346,
+            "p95_m": 0.038706850201506396
+          },
+          "right_wrist": {
+            "median_m": 0.040765950055072664,
+            "p95_m": 0.04416969508281462
+          }
+        },
+        "pelvis_offset_smplx_minus_recorded_median_m": [
+          0.0031232833862304688,
+          -0.3514074385166168,
+          0.012036561965942383
+        ]
+      },
+      "xmorph": {
+        "src_n_frames": 157,
+        "out_n_frames_raw": 160,
+        "out_n_frames": 157,
+        "runtime_s": 2.155870340997353
+      },
+      "contact_interval": {
+        "hands": "right",
+        "object_state": "slid",
+        "human": "walk",
+        "drawn_hand": "R",
+        "start": 0,
+        "end": 63,
+        "hand_height_m": [
+          0.32064544409513474,
+          0.3384839780628681
+        ],
+        "gripper_height_prior_m": [
+          0.7201952699028998,
+          1.1186835947138063
+        ],
+        "hand_in_object_frame_start_m": [
+          -0.207877711192414,
+          0.04956930896768247,
+          -0.006219397617952677
+        ]
+      },
+      "prior": {
+        "path_g1_m": 2.798175407373455,
+        "path_b2_m": 2.2636159603041395,
+        "turn_g1_deg": -90.86430299883386,
+        "turn_b2_deg": -46.5123973504333,
+        "gripper_height_range_m": [
+          0.7201952699028998,
+          1.1186835947138063
+        ]
+      },
+      "checks": {
+        "frames_consistent": true,
+        "pelvis_z_sane": true,
+        "convention_wrist_median_ok": true
+      },
+      "pass": true
+    }
+  },
+  "pass": false
+}

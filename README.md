@@ -34,3 +34,7 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R012_tasks | #18 | `e0b5d6e` | Ubuntu, CPU | pass=true; 19 tasks; confirmed 3 pass, 15 of 16 candidates fail task checks (patch coherence / normal spread) |
 | R012_d0 | #18 | `e0b5d6e` | Ubuntu RTX 5070 (cuda:0) | **pass=false**: 18/19 clips pass; sub3_largetable_028 left-wrist convention median 0.0826 m > 0.08 m. d0_chain figure not pushed (JPG q80 still 1.33 MB > 1 MB) |
 | R012_reach | #18 | `e0b5d6e` | Ubuntu, CPU | **pass=false**: 0/0 tasks selected (no passing press candidate; all candidates are grasp); see #18 |
+| R013_candidates | #19 | `fa9ae09` | Ubuntu, CPU, SMPL-H male | pass=true; 16 candidates (13 pull/grasp, 3 push/press), 67 segments pass all criteria |
+| R013_tasks | #19 | `fa9ae09` | Ubuntu, CPU | pass=true; 19 tasks; confirmed 3/3 pass, candidates 5/16 pass task checks |
+| R013_d0 | #19 | `fa9ae09` | Ubuntu RTX 5070 (cuda:0) | **pass=false**: 17/18 clips pass; sub1_suitcase_085 X-Morph aborted (exit -6, PyTorch c10 ApproximateClock "getCount is non-monotonic"); see #19 |
+| R013_reach | #19 | `fa9ae09` | Ubuntu, CPU | pass=true (3/3 tasks, 0 errors); feasible only reach_track/pos for c14 sub6_largetable_033 and c16 sub5_largetable_030 |

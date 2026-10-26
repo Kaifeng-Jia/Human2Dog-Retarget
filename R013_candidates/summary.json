@@ -1,0 +1,1181 @@
+{
+  "provenance": {
+    "run_id": "R013_candidates",
+    "started_utc": "2026-10-26T16:24:15+00:00",
+    "h2d_version": "0.1.5",
+    "git": {
+      "commit": "fa9ae090c8351b431f27ee85ff3e9865f1b43253",
+      "branch": "HEAD",
+      "describe": "v0.1.3-14-gfa9ae09",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "data.yaml": "f1b886e5ad6d93ee",
+      "external.yaml": "847b4b4bf499bd9e"
+    },
+    "command": "push_candidates.py --run-id R013_candidates --selection configs/candidate_selection.yaml --videos",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "datasets": [
+    "omomo_new",
+    "force"
+  ],
+  "data_versions": {
+    "omomo_new": {
+      "root": "/home/kevin/CS6758Project/data/omomo_new"
+    },
+    "force": {
+      "root": "/home/kevin/CS6758Project/data/force",
+      "force_commit": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_pinned": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_match": true,
+      "smplh_file": "SMPLH_male.pkl",
+      "smplh_bytes": 130422893,
+      "smplh_sha256_16": "996338a29346b4d4",
+      "smplh_joints": 52,
+      "smplh_vertices": 6890,
+      "src_fps_assumed": 60.0
+    }
+  },
+  "n_files": {
+    "omomo_new": 4421,
+    "force": 398
+  },
+  "n_segments": {
+    "omomo_new": 4270,
+    "force": 696
+  },
+  "n_slid_segments": 1183,
+  "errors": [],
+  "segment_params": {
+    "min_run_s": 0.2,
+    "max_gap_s": 0.3,
+    "min_seg_s": 0.3,
+    "lift_m": 0.05,
+    "lift_frac": 0.3,
+    "tilt_deg": 15.0,
+    "slide_m": 0.1,
+    "yaw_deg": 20.0,
+    "walk_m": 0.5
+  },
+  "criteria": [
+    {
+      "name": "slid",
+      "key": "object_state",
+      "op": "==",
+      "value": "slid",
+      "meaning": "object slides on the floor (moves >= 0.10 m, not lifted or tilted)"
+    },
+    {
+      "name": "on_floor",
+      "key": "obj_lifted_frac",
+      "op": "<=",
+      "value": 0.1,
+      "meaning": "object lowest point > 5 cm in at most 10 % of the frames"
+    },
+    {
+      "name": "one_mode",
+      "key": "hands",
+      "op": "in",
+      "value": [
+        "left",
+        "right",
+        "both"
+      ],
+      "meaning": "one hand, or both hands together, in >= 60 % of the contact frames (no switching)"
+    },
+    {
+      "name": "long_enough",
+      "key": "duration_s",
+      "op": ">=",
+      "value": 1.0,
+      "meaning": "contact lasts at least 1 s"
+    },
+    {
+      "name": "small_tilt",
+      "key": "obj_tilt_max_deg",
+      "op": "<",
+      "value": 10.0,
+      "meaning": "object tilts less than 10 deg"
+    },
+    {
+      "name": "small_yaw",
+      "key": "obj_yaw_maxabs_deg",
+      "op": "<",
+      "value": 45.0,
+      "meaning": "object turns less than 45 deg about z"
+    },
+    {
+      "name": "hand_only",
+      "key": "frac_body",
+      "op": "<",
+      "value": 0.05,
+      "meaning": "other body parts touch in < 5 % of the frames"
+    },
+    {
+      "name": "same_face",
+      "key": "hands_face_angle_deg",
+      "op": "<=",
+      "value": 30.0,
+      "meaning": "both hands on the same face (0 for one hand; squeeze fails)"
+    },
+    {
+      "name": "on_surface",
+      "key": "contact_surface_dist_median_m",
+      "op": "<=",
+      "value": 0.08,
+      "meaning": "hand contact proxy within 8 cm of the surface"
+    },
+    {
+      "name": "interaction",
+      "key": "interaction",
+      "op": "in",
+      "value": [
+        "push",
+        "pull"
+      ],
+      "meaning": "object moves away from (push) or towards (pull) the hand, abs(cos) >= 0.7: push/pull"
+    },
+    {
+      "name": "contact_shape",
+      "key": "contact_shape_ok",
+      "op": "==",
+      "value": true,
+      "meaning": "one flat face (press), or a grasp"
+    },
+    {
+      "name": "reach_band",
+      "key": "in_reach_band",
+      "op": "==",
+      "value": true,
+      "meaning": "contact height within the arm's band (side 0.5-1.2 m, top 0.3-0.8 m, slant 0.4-1.2 m, grasp 0.3-1.2 m)"
+    }
+  ],
+  "selection": {
+    "max_yaw_deg": 45,
+    "reach_band": {
+      "side": [
+        0.5,
+        1.2
+      ],
+      "top": [
+        0.3,
+        0.8
+      ],
+      "slant": [
+        0.4,
+        1.2
+      ],
+      "grasp": [
+        0.3,
+        1.2
+      ]
+    },
+    "interactions": [
+      "push",
+      "pull"
+    ]
+  },
+  "ranking": {
+    "near_normal_deg": 30.0,
+    "vertical_face_deg": 30.0,
+    "top": 16,
+    "per_object": 2
+  },
+  "funnel": {
+    "omomo_new": {
+      "all segments": 4270,
+      "slid": 1037,
+      "on_floor": 1022,
+      "one_mode": 936,
+      "long_enough": 899,
+      "small_tilt": 791,
+      "small_yaw": 469,
+      "hand_only": 436,
+      "same_face": 282,
+      "on_surface": 281,
+      "interaction": 247,
+      "contact_shape": 117,
+      "reach_band": 64
+    },
+    "force": {
+      "all segments": 696,
+      "slid": 146,
+      "on_floor": 145,
+      "one_mode": 108,
+      "long_enough": 97,
+      "small_tilt": 95,
+      "small_yaw": 15,
+      "hand_only": 14,
+      "same_face": 7,
+      "on_surface": 7,
+      "interaction": 5,
+      "contact_shape": 3,
+      "reach_band": 3
+    }
+  },
+  "by_object": {
+    "omomo_new/clothesstand": {
+      "slid": 23,
+      "passed": 0,
+      "first_failure": {
+        "small_yaw": 8,
+        "small_tilt": 3,
+        "interaction": 3,
+        "on_floor": 2
+      }
+    },
+    "omomo_new/floorlamp": {
+      "slid": 73,
+      "passed": 0,
+      "first_failure": {
+        "small_yaw": 27,
+        "interaction": 15,
+        "hand_only": 10,
+        "on_floor": 7
+      }
+    },
+    "omomo_new/largebox": {
+      "slid": 126,
+      "passed": 7,
+      "first_failure": {
+        "small_yaw": 41,
+        "contact_shape": 24,
+        "one_mode": 21,
+        "same_face": 16
+      }
+    },
+    "omomo_new/largetable": {
+      "slid": 124,
+      "passed": 14,
+      "first_failure": {
+        "small_yaw": 32,
+        "same_face": 32,
+        "small_tilt": 28,
+        "one_mode": 9
+      }
+    },
+    "omomo_new/monitor": {
+      "slid": 7,
+      "passed": 2,
+      "first_failure": {
+        "small_tilt": 3,
+        "small_yaw": 2
+      }
+    },
+    "omomo_new/plasticbox": {
+      "slid": 114,
+      "passed": 3,
+      "first_failure": {
+        "small_yaw": 23,
+        "contact_shape": 21,
+        "same_face": 17,
+        "small_tilt": 16
+      }
+    },
+    "omomo_new/smallbox": {
+      "slid": 132,
+      "passed": 0,
+      "first_failure": {
+        "contact_shape": 37,
+        "small_yaw": 31,
+        "reach_band": 26,
+        "same_face": 15
+      }
+    },
+    "omomo_new/smalltable": {
+      "slid": 123,
+      "passed": 13,
+      "first_failure": {
+        "small_yaw": 46,
+        "same_face": 18,
+        "contact_shape": 13,
+        "small_tilt": 13
+      }
+    },
+    "omomo_new/suitcase": {
+      "slid": 115,
+      "passed": 2,
+      "first_failure": {
+        "small_yaw": 52,
+        "same_face": 24,
+        "contact_shape": 16,
+        "one_mode": 9
+      }
+    },
+    "omomo_new/trashcan": {
+      "slid": 65,
+      "passed": 21,
+      "first_failure": {
+        "small_tilt": 14,
+        "small_yaw": 11,
+        "same_face": 8,
+        "reach_band": 8
+      }
+    },
+    "omomo_new/tripod": {
+      "slid": 7,
+      "passed": 0,
+      "first_failure": {
+        "small_tilt": 3,
+        "on_floor": 2,
+        "same_face": 1,
+        "long_enough": 1
+      }
+    },
+    "omomo_new/whitechair": {
+      "slid": 74,
+      "passed": 2,
+      "first_failure": {
+        "small_yaw": 36,
+        "same_face": 10,
+        "small_tilt": 9,
+        "one_mode": 7
+      }
+    },
+    "omomo_new/woodchair": {
+      "slid": 54,
+      "passed": 0,
+      "first_failure": {
+        "small_yaw": 13,
+        "small_tilt": 12,
+        "hand_only": 9,
+        "same_face": 9
+      }
+    },
+    "force/backpack": {
+      "slid": 3,
+      "passed": 1,
+      "first_failure": {
+        "small_tilt": 1,
+        "contact_shape": 1
+      }
+    },
+    "force/box_huge": {
+      "slid": 56,
+      "passed": 1,
+      "first_failure": {
+        "small_yaw": 25,
+        "one_mode": 16,
+        "long_enough": 7,
+        "same_face": 4
+      }
+    },
+    "force/chair": {
+      "slid": 86,
+      "passed": 1,
+      "first_failure": {
+        "small_yaw": 55,
+        "one_mode": 21,
+        "long_enough": 4,
+        "same_face": 3
+      }
+    },
+    "force/plasticcontainer": {
+      "slid": 1,
+      "passed": 0,
+      "first_failure": {
+        "on_floor": 1
+      }
+    }
+  },
+  "passed_by_mode": {
+    "omomo_new/R": 30,
+    "omomo_new/L": 26,
+    "omomo_new/B": 8,
+    "force/R": 2,
+    "force/L": 1
+  },
+  "passed_by_interaction_grip": {
+    "omomo_new/pull/grasp": 53,
+    "omomo_new/push/press": 11,
+    "force/push/press": 1,
+    "force/pull/grasp": 2
+  },
+  "reached_by_interaction_grip": {
+    "omomo_new//press": 62,
+    "omomo_new/push/press": 285,
+    "omomo_new/pull/press": 16,
+    "omomo_new/pull/grasp": 73,
+    "force/push/press": 4,
+    "force/pull/grasp": 7,
+    "force/pull/press": 1,
+    "force//press": 2
+  },
+  "finger_motion_std_m_median": {
+    "omomo_new": 8.473190993413755e-08,
+    "force": 0.0006526458534344801
+  },
+  "checks": {
+    "all_files_processed": {
+      "pass": true,
+      "n_errors": 0
+    },
+    "enough_candidates": {
+      "pass": true,
+      "threshold": 3,
+      "n_candidates": 16,
+      "n_passing_segments": 67
+    },
+    "contact_proxy_on_surface": {
+      "pass": true,
+      "threshold_m": 0.08,
+      "median_m": 0.015107851794335065,
+      "n_segments": 450
+    },
+    "force_data_pinned": {
+      "pass": true,
+      "actual": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "pinned": "695c8b8616f0915dd61658862751e40ec658b81c"
+    }
+  },
+  "pass": true,
+  "candidates": [
+    {
+      "rank": 1,
+      "tier": "B",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "smalltable",
+      "name": "sub9_smalltable_003",
+      "subject": "sub9",
+      "start_s": 0.0,
+      "duration_s": 2.1,
+      "obj_disp_xy_m": 1.3984257333139494,
+      "push_alignment": -0.981009413394565,
+      "normal_spread_p90_deg": 47.52840185322666,
+      "normal_tilt_median_deg": 2.9714631366144704,
+      "patch_coherence_median": 0.7232554663654327,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": null,
+      "retreat_angle_deg": null,
+      "approach_available_s": 0.0,
+      "contact_z_median_m": 0.3264572024345398,
+      "robot_contact_z_m": 0.3264572024345398,
+      "contact_surface_dist_median_m": 0.026353425476012778,
+      "obj_tilt_max_deg": 1.464480901203986,
+      "obj_yaw_maxabs_deg": 35.96540696607275,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.4479770506507228,
+      "human": "walk",
+      "obj_size_m": "0.37x0.35x0.35",
+      "normal_local": [
+        -0.9999552621543736,
+        0.006856005150508769,
+        -0.006516815415077583
+      ],
+      "start": 0,
+      "end": 63,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/01_sub9_smalltable_003.png",
+      "file": "sub9_smalltable_003.pt",
+      "file_sha256_16": "8bd3a9086bb5ec51"
+    },
+    {
+      "rank": 2,
+      "tier": "B",
+      "mode": "B",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "largetable",
+      "name": "sub15_largetable_003",
+      "subject": "sub15",
+      "start_s": 0.0,
+      "duration_s": 3.6333333333333333,
+      "obj_disp_xy_m": 0.7496353789441681,
+      "push_alignment": -0.7810181585597543,
+      "normal_spread_p90_deg": 44.64767385174361,
+      "normal_tilt_median_deg": 10.442774460481917,
+      "patch_coherence_median": 0.7465938295971852,
+      "hands_face_angle_deg": 12.132176683895322,
+      "approach_angle_deg": null,
+      "retreat_angle_deg": null,
+      "approach_available_s": 0.0,
+      "contact_z_median_m": 0.5116667151451111,
+      "robot_contact_z_m": 0.5116667151451111,
+      "contact_surface_dist_median_m": 0.016340704307242826,
+      "obj_tilt_max_deg": 8.329417796959223,
+      "obj_yaw_maxabs_deg": 29.95677638897241,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.9124134190069138,
+      "human": "walk",
+      "obj_size_m": "0.56x0.56x0.46",
+      "normal_local": [
+        0.9999825418740981,
+        0.0059086799143522346,
+        -5.8725527521420356e-05
+      ],
+      "start": 0,
+      "end": 109,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/02_sub15_largetable_003.png",
+      "file": "sub15_largetable_003.pt",
+      "file_sha256_16": "eaf1af086efe3e8a"
+    },
+    {
+      "rank": 3,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "largetable",
+      "name": "sub1_largetable_009",
+      "subject": "sub1",
+      "start_s": 0.36666666666666664,
+      "duration_s": 4.1,
+      "obj_disp_xy_m": 1.7273681335285365,
+      "push_alignment": -0.9950187014046667,
+      "normal_spread_p90_deg": 24.865321789566924,
+      "normal_tilt_median_deg": 11.661240899040813,
+      "patch_coherence_median": 0.7273573335628121,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 34.415712726928,
+      "retreat_angle_deg": 83.3519335581758,
+      "approach_available_s": 0.36666666666666664,
+      "contact_z_median_m": 0.47426193952560425,
+      "robot_contact_z_m": 0.47426193952560425,
+      "contact_surface_dist_median_m": 0.02218893415758694,
+      "obj_tilt_max_deg": 7.993991234763295,
+      "obj_yaw_maxabs_deg": 22.71962512258266,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.3618691513232304,
+      "human": "walk",
+      "obj_size_m": "0.56x0.56x0.46",
+      "normal_local": [
+        0.9903569197659287,
+        0.1385393807533719,
+        -0.00010701501842504828
+      ],
+      "start": 11,
+      "end": 134,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/03_sub1_largetable_009.png",
+      "file": "sub1_largetable_009.pt",
+      "file_sha256_16": "0e325f47428a3ab6"
+    },
+    {
+      "rank": 4,
+      "tier": "C",
+      "mode": "L",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "trashcan",
+      "name": "sub8_trashcan_045",
+      "subject": "sub8",
+      "start_s": 4.033333333333333,
+      "duration_s": 3.2,
+      "obj_disp_xy_m": 1.6725146939967088,
+      "push_alignment": -0.9828653436565106,
+      "normal_spread_p90_deg": 24.947696532690607,
+      "normal_tilt_median_deg": 2.716184174532464,
+      "patch_coherence_median": 0.7398790661092935,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 127.68103115056566,
+      "retreat_angle_deg": 128.63347407806168,
+      "approach_available_s": 4.033333333333333,
+      "contact_z_median_m": 0.3344389796257019,
+      "robot_contact_z_m": 0.3344389796257019,
+      "contact_surface_dist_median_m": 0.019670246093724985,
+      "obj_tilt_max_deg": 9.935884949133081,
+      "obj_yaw_maxabs_deg": 42.69181117632281,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.7098343069698685,
+      "human": "walk",
+      "obj_size_m": "0.37x0.33x0.31",
+      "normal_local": [
+        -0.7540451995627684,
+        0.13665645878065222,
+        -0.6424491024897433
+      ],
+      "start": 121,
+      "end": 217,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/04_sub8_trashcan_045.png",
+      "file": "sub8_trashcan_045.pt",
+      "file_sha256_16": "a161c36e2701eb43"
+    },
+    {
+      "rank": 5,
+      "tier": "C",
+      "mode": "L",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "trashcan",
+      "name": "sub8_trashcan_046",
+      "subject": "sub8",
+      "start_s": 4.3,
+      "duration_s": 3.0,
+      "obj_disp_xy_m": 1.7373655883065189,
+      "push_alignment": -0.9048801758530863,
+      "normal_spread_p90_deg": 51.206526168803414,
+      "normal_tilt_median_deg": 1.7284770635650037,
+      "patch_coherence_median": 0.5961904924733252,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 130.0025775090605,
+      "retreat_angle_deg": 93.0435942324376,
+      "approach_available_s": 4.3,
+      "contact_z_median_m": 0.3467443287372589,
+      "robot_contact_z_m": 0.3467443287372589,
+      "contact_surface_dist_median_m": 0.00440552298509256,
+      "obj_tilt_max_deg": 9.711191825600128,
+      "obj_yaw_maxabs_deg": 27.188620491438783,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.4655858201397565,
+      "human": "walk",
+      "obj_size_m": "0.37x0.33x0.31",
+      "normal_local": [
+        -0.9989440354905096,
+        0.009213316823105415,
+        0.045010318273176315
+      ],
+      "start": 129,
+      "end": 219,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/05_sub8_trashcan_046.png",
+      "file": "sub8_trashcan_046.pt",
+      "file_sha256_16": "c19c676bae4471fa"
+    },
+    {
+      "rank": 6,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "plasticbox",
+      "name": "sub8_plasticbox_038",
+      "subject": "sub8",
+      "start_s": 0.3333333333333333,
+      "duration_s": 2.6,
+      "obj_disp_xy_m": 1.8394219762492774,
+      "push_alignment": -0.977150247561368,
+      "normal_spread_p90_deg": 9.771771572629483,
+      "normal_tilt_median_deg": 3.1193752375347277,
+      "patch_coherence_median": 0.8489511233468057,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 81.56531301685145,
+      "retreat_angle_deg": 73.21943692113695,
+      "approach_available_s": 0.3333333333333333,
+      "contact_z_median_m": 0.3090289831161499,
+      "robot_contact_z_m": 0.3090289831161499,
+      "contact_surface_dist_median_m": 0.0373843334041466,
+      "obj_tilt_max_deg": 6.845008320579754,
+      "obj_yaw_maxabs_deg": 22.470629787366423,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.6872095202506228,
+      "human": "walk",
+      "obj_size_m": "0.56x0.39x0.28",
+      "normal_local": [
+        0.9993129564678512,
+        -0.037040048843084296,
+        0.001284452094979026
+      ],
+      "start": 10,
+      "end": 88,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/06_sub8_plasticbox_038.png",
+      "file": "sub8_plasticbox_038.pt",
+      "file_sha256_16": "eaaa3b5a0300c893"
+    },
+    {
+      "rank": 7,
+      "tier": "C",
+      "mode": "L",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "smalltable",
+      "name": "sub12_smalltable_009",
+      "subject": "sub12",
+      "start_s": 0.5666666666666667,
+      "duration_s": 2.966666666666667,
+      "obj_disp_xy_m": 1.5509592205950316,
+      "push_alignment": -0.9256556201027947,
+      "normal_spread_p90_deg": 61.738404983655165,
+      "normal_tilt_median_deg": 15.139636412641483,
+      "patch_coherence_median": 0.6654659521924328,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 133.89527188471257,
+      "retreat_angle_deg": 108.04877655243392,
+      "approach_available_s": 0.5666666666666667,
+      "contact_z_median_m": 0.3369617760181427,
+      "robot_contact_z_m": 0.3369617760181427,
+      "contact_surface_dist_median_m": 0.019437837042601748,
+      "obj_tilt_max_deg": 2.180629632171161,
+      "obj_yaw_maxabs_deg": 37.49392469226828,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.8319875735005071,
+      "human": "walk",
+      "obj_size_m": "0.37x0.35x0.35",
+      "normal_local": [
+        0.0035511369297964203,
+        -0.29101892593901624,
+        0.9567107055802225
+      ],
+      "start": 17,
+      "end": 106,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/07_sub12_smalltable_009.png",
+      "file": "sub12_smalltable_009.pt",
+      "file_sha256_16": "71d594022aa24e56"
+    },
+    {
+      "rank": 8,
+      "tier": "C",
+      "mode": "L",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "suitcase",
+      "name": "sub1_suitcase_085",
+      "subject": "sub1",
+      "start_s": 3.0,
+      "duration_s": 2.566666666666667,
+      "obj_disp_xy_m": 1.116984218330525,
+      "push_alignment": -0.9781235719805552,
+      "normal_spread_p90_deg": 92.85835842105443,
+      "normal_tilt_median_deg": 4.929156760327342,
+      "patch_coherence_median": 0.6611990917344056,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 69.68771099096014,
+      "retreat_angle_deg": 34.227695859070785,
+      "approach_available_s": 3.0,
+      "contact_z_median_m": 0.5406774282455444,
+      "robot_contact_z_m": 0.5406774282455444,
+      "contact_surface_dist_median_m": 0.005637026114683689,
+      "obj_tilt_max_deg": 2.3337028058005336,
+      "obj_yaw_maxabs_deg": 15.014216519248393,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.5454333917188043,
+      "human": "walk",
+      "obj_size_m": "0.53x0.41x0.41",
+      "normal_local": [
+        0.6569393903345774,
+        0.1291140828743786,
+        0.742805621296946
+      ],
+      "start": 90,
+      "end": 167,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/08_sub1_suitcase_085.png",
+      "file": "sub1_suitcase_085.pt",
+      "file_sha256_16": "9d63c6ec9d2cf4c5"
+    },
+    {
+      "rank": 9,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "largebox",
+      "name": "sub16_largebox_041",
+      "subject": "sub16",
+      "start_s": 0.8333333333333334,
+      "duration_s": 2.6,
+      "obj_disp_xy_m": 1.0867277111433935,
+      "push_alignment": -0.9479062932607663,
+      "normal_spread_p90_deg": 146.8025979812086,
+      "normal_tilt_median_deg": 7.264957640511094,
+      "patch_coherence_median": 0.9741634485903036,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 66.42154308301672,
+      "retreat_angle_deg": 143.5397417626816,
+      "approach_available_s": 0.8333333333333334,
+      "contact_z_median_m": 0.32000336050987244,
+      "robot_contact_z_m": 0.32000336050987244,
+      "contact_surface_dist_median_m": 0.0045930406442085655,
+      "obj_tilt_max_deg": 1.3812066942282581,
+      "obj_yaw_maxabs_deg": 24.100773565313997,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.57815623971364,
+      "human": "walk",
+      "obj_size_m": "0.47x0.46x0.41",
+      "normal_local": [
+        0.930584933333444,
+        0.36002005288903605,
+        -0.06631171367537539
+      ],
+      "start": 25,
+      "end": 103,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/09_sub16_largebox_041.png",
+      "file": "sub16_largebox_041.pt",
+      "file_sha256_16": "8595537a5ec5b824"
+    },
+    {
+      "rank": 10,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "monitor",
+      "name": "sub11_monitor_063",
+      "subject": "sub11",
+      "start_s": 0.5,
+      "duration_s": 4.0,
+      "obj_disp_xy_m": 0.6840059637377047,
+      "push_alignment": -0.9820611296671332,
+      "normal_spread_p90_deg": 120.25651946619692,
+      "normal_tilt_median_deg": 8.532118540242887,
+      "patch_coherence_median": 0.7785297924730961,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 61.84402758953267,
+      "retreat_angle_deg": 46.078134921540205,
+      "approach_available_s": 0.5,
+      "contact_z_median_m": 0.39250779151916504,
+      "robot_contact_z_m": 0.39250779151916504,
+      "contact_surface_dist_median_m": 0.028368077012437806,
+      "obj_tilt_max_deg": 8.110259717876529,
+      "obj_yaw_maxabs_deg": 22.093962423277205,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.7041758248334846,
+      "human": "walk",
+      "obj_size_m": "0.56x0.46x0.17",
+      "normal_local": [
+        0.4025715503322321,
+        0.1945274091279136,
+        -0.8944804268183203
+      ],
+      "start": 15,
+      "end": 135,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/10_sub11_monitor_063.png",
+      "file": "sub11_monitor_063.pt",
+      "file_sha256_16": "16256b0629abf87e"
+    },
+    {
+      "rank": 11,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "plasticbox",
+      "name": "sub15_plasticbox_048",
+      "subject": "sub15",
+      "start_s": 0.3,
+      "duration_s": 3.433333333333333,
+      "obj_disp_xy_m": 0.6440579509062309,
+      "push_alignment": -0.9179483428394261,
+      "normal_spread_p90_deg": 114.30101832801637,
+      "normal_tilt_median_deg": 26.279288354077796,
+      "patch_coherence_median": 0.7114697657894387,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 109.00223094250718,
+      "retreat_angle_deg": null,
+      "approach_available_s": 0.3,
+      "contact_z_median_m": 0.30048808455467224,
+      "robot_contact_z_m": 0.30048808455467224,
+      "contact_surface_dist_median_m": 0.015461538813092063,
+      "obj_tilt_max_deg": 6.047265642542471,
+      "obj_yaw_maxabs_deg": 19.2254347979507,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.2066930809264507,
+      "human": "walk",
+      "obj_size_m": "0.56x0.39x0.28",
+      "normal_local": [
+        -0.8889793238500556,
+        0.457911450086037,
+        -0.005732856809720791
+      ],
+      "start": 9,
+      "end": 112,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/11_sub15_plasticbox_048.png",
+      "file": "sub15_plasticbox_048.pt",
+      "file_sha256_16": "1b254241fd692029"
+    },
+    {
+      "rank": 12,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "omomo_new",
+      "object": "monitor",
+      "name": "sub11_monitor_077",
+      "subject": "sub11",
+      "start_s": 0.6333333333333333,
+      "duration_s": 2.5,
+      "obj_disp_xy_m": 0.5913243678917491,
+      "push_alignment": -0.9173902276593926,
+      "normal_spread_p90_deg": 9.897201950398738,
+      "normal_tilt_median_deg": 1.761079432928758,
+      "patch_coherence_median": 0.7702565045610998,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 103.27004319100101,
+      "retreat_angle_deg": 58.710015312382424,
+      "approach_available_s": 0.6333333333333333,
+      "contact_z_median_m": 0.4093714654445648,
+      "robot_contact_z_m": 0.4093714654445648,
+      "contact_surface_dist_median_m": 0.018139321152707798,
+      "obj_tilt_max_deg": 9.689594451500009,
+      "obj_yaw_maxabs_deg": 14.991091791338427,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.8622664822073419,
+      "human": "walk",
+      "obj_size_m": "0.56x0.46x0.17",
+      "normal_local": [
+        -0.2003041818391573,
+        -0.16691751810478483,
+        0.9654101599255545
+      ],
+      "start": 19,
+      "end": 94,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/12_sub11_monitor_077.png",
+      "file": "sub11_monitor_077.pt",
+      "file_sha256_16": "238a41e49b263d6a"
+    },
+    {
+      "rank": 13,
+      "tier": "C",
+      "mode": "L",
+      "interaction": "pull",
+      "grip": "grasp",
+      "face": "side",
+      "dataset": "force",
+      "object": "chair",
+      "name": "260923_04_3_1",
+      "subject": "session260923",
+      "start_s": 8.2,
+      "duration_s": 1.1,
+      "obj_disp_xy_m": 0.22272051810999363,
+      "push_alignment": -0.9385770146403783,
+      "normal_spread_p90_deg": 8.039530419568724,
+      "normal_tilt_median_deg": 19.871127476767697,
+      "patch_coherence_median": 0.9966483723348096,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 39.56093911522433,
+      "retreat_angle_deg": 85.77023805368924,
+      "approach_available_s": 8.2,
+      "contact_z_median_m": 0.7587031108852182,
+      "robot_contact_z_m": 0.7587031108852182,
+      "contact_surface_dist_median_m": 0.04374616065356417,
+      "obj_tilt_max_deg": 2.3210906730225194,
+      "obj_yaw_maxabs_deg": 12.112884590469838,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.2895906765723645,
+      "human": "stand",
+      "obj_size_m": "0.97x0.66x0.53",
+      "normal_local": [
+        0.23622266495837466,
+        -0.2974119806664386,
+        -0.9250648443844515
+      ],
+      "start": 246,
+      "end": 279,
+      "ann_hands": "B",
+      "ann_dir": "",
+      "ann_weight_kg": 0.0,
+      "figure": "candidates/13_260923_04_3_1.png",
+      "file": "260923_04_3_1.npz",
+      "file_sha256_16": "5242f0b4b95c3f9b"
+    },
+    {
+      "rank": 14,
+      "tier": "C",
+      "mode": "B",
+      "interaction": "push",
+      "grip": "press",
+      "face": "top",
+      "dataset": "omomo_new",
+      "object": "largetable",
+      "name": "sub6_largetable_033",
+      "subject": "sub6",
+      "start_s": 0.1,
+      "duration_s": 4.9,
+      "obj_disp_xy_m": 2.010188504264838,
+      "push_alignment": 0.9397891904240308,
+      "normal_spread_p90_deg": 0.7023514445641287,
+      "normal_tilt_median_deg": 89.17906944475922,
+      "patch_coherence_median": 0.9999999517656516,
+      "hands_face_angle_deg": 0.0057879322385136255,
+      "approach_angle_deg": null,
+      "retreat_angle_deg": 147.68243245925913,
+      "approach_available_s": 0.1,
+      "contact_z_median_m": 0.4594326317310333,
+      "robot_contact_z_m": 0.4594326317310333,
+      "contact_surface_dist_median_m": 0.0156699607592975,
+      "obj_tilt_max_deg": 3.625535394718184,
+      "obj_yaw_maxabs_deg": 24.895974065523397,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.9607937510708993,
+      "human": "walk",
+      "obj_size_m": "0.56x0.56x0.46",
+      "normal_local": [
+        -5.50777699405379e-06,
+        -0.9999946946012334,
+        -0.0032574129382867273
+      ],
+      "start": 3,
+      "end": 150,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/14_sub6_largetable_033.png",
+      "file": "sub6_largetable_033.pt",
+      "file_sha256_16": "e0ba59bef7913fc7"
+    },
+    {
+      "rank": 15,
+      "tier": "C",
+      "mode": "B",
+      "interaction": "push",
+      "grip": "press",
+      "face": "top",
+      "dataset": "omomo_new",
+      "object": "largebox",
+      "name": "sub12_largebox_000",
+      "subject": "sub12",
+      "start_s": 0.0,
+      "duration_s": 7.8,
+      "obj_disp_xy_m": 0.8317460150209842,
+      "push_alignment": 0.9654644818383054,
+      "normal_spread_p90_deg": 1.4350041535955593,
+      "normal_tilt_median_deg": 86.25441590335427,
+      "patch_coherence_median": 0.9946537232577758,
+      "hands_face_angle_deg": 3.7932931721752388,
+      "approach_angle_deg": null,
+      "retreat_angle_deg": 145.09399376381768,
+      "approach_available_s": 0.0,
+      "contact_z_median_m": 0.3358728289604187,
+      "robot_contact_z_m": 0.3358728289604187,
+      "contact_surface_dist_median_m": 0.019472319604500014,
+      "obj_tilt_max_deg": 1.140649518605296,
+      "obj_yaw_maxabs_deg": 27.21290528162599,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.820627744796007,
+      "human": "walk",
+      "obj_size_m": "0.47x0.46x0.41",
+      "normal_local": [
+        -0.1688443505658375,
+        0.13642610309962314,
+        0.9761554710572755
+      ],
+      "start": 0,
+      "end": 234,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/15_sub12_largebox_000.png",
+      "file": "sub12_largebox_000.pt",
+      "file_sha256_16": "6355f646fcb215ca"
+    },
+    {
+      "rank": 16,
+      "tier": "C",
+      "mode": "B",
+      "interaction": "push",
+      "grip": "press",
+      "face": "top",
+      "dataset": "omomo_new",
+      "object": "largetable",
+      "name": "sub5_largetable_030",
+      "subject": "sub5",
+      "start_s": 0.5666666666666667,
+      "duration_s": 3.966666666666667,
+      "obj_disp_xy_m": 1.626803181252814,
+      "push_alignment": 0.9955821932602547,
+      "normal_spread_p90_deg": 2.8676501603586986,
+      "normal_tilt_median_deg": 87.30917078702696,
+      "patch_coherence_median": 0.9999999993679533,
+      "hands_face_angle_deg": 0.0003100691492087354,
+      "approach_angle_deg": 133.78867525226119,
+      "retreat_angle_deg": 139.6197642431899,
+      "approach_available_s": 0.5666666666666667,
+      "contact_z_median_m": 0.46085554361343384,
+      "robot_contact_z_m": 0.46085554361343384,
+      "contact_surface_dist_median_m": 0.011960196457022246,
+      "obj_tilt_max_deg": 0.7565977259347362,
+      "obj_yaw_maxabs_deg": 5.186549705388186,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 1.653215765072214,
+      "human": "walk",
+      "obj_size_m": "0.56x0.56x0.46",
+      "normal_local": [
+        0.024539133540714117,
+        -0.9996988700761401,
+        -9.672627283277784e-06
+      ],
+      "start": 17,
+      "end": 136,
+      "ann_hands": null,
+      "ann_dir": null,
+      "ann_weight_kg": null,
+      "figure": "candidates/16_sub5_largetable_030.png",
+      "file": "sub5_largetable_030.pt",
+      "file_sha256_16": "d4355bac8357ab82"
+    }
+  ],
+  "elapsed_s": 481.47252440452576
+}
