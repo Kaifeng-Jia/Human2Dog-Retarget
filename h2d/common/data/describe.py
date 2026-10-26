@@ -234,6 +234,21 @@ def palm_point(clip: Clip, side: str, frames) -> np.ndarray:
     return clip.body_pos[frames][:, [BODY_INDEX[f"{side}_{n}"] for n in PALM]].mean(1)
 
 
+def _unit(v: np.ndarray) -> np.ndarray:
+    return v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-12)
+
+
+def hand_frame(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:
+    """Palm normal (out of the palm) and finger direction (wrist -> middle knuckle), (n, 3) each, world frame, from
+    the wrist and the index / middle / pinky knuckles; "B": both hands averaged. OMOMO_new keeps one hand shape per
+    clip, but where the palm is and which way it faces are captured per frame (spec v0.8 §5.4)."""
+    if side == "B":
+        (nl, fl), (nr, fr) = hand_frame(clip, "L", frames), hand_frame(clip, "R", frames)
+        return _unit(nl + nr), _unit(fl + fr)
+    w, i, m, k = (clip.body_pos[frames][:, BODY_INDEX[f"{side}_{b}"]] for b in ("Wrist", "Index1", "Middle1", "Pinky1"))
+    return _unit(np.cross(i - w, k - w) * (1.0 if side == "R" else -1.0)), _unit(m - w)
+
+
 def _hand_proxy(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:
     idx = HAND_BODIES[side]
     pos = clip.body_pos[frames][:, idx]

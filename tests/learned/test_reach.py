@@ -35,3 +35,21 @@ def test_collision_home_pose_and_ik_in_free_space():
     assert r2.collision["arm_obj_depth_m"] <= 0.002
     far = shoulder(ROBOT) + np.array([bound + 0.2, 0, 0])
     assert not ik.solve(far, np.array([-1.0, 0, 0]), np.zeros(6), full=False).feasible
+
+
+@needs_model
+def test_soft_roll_follows_the_palm():
+    from h2d.common.collision import RobotCollision
+    from h2d.learned.reach import ArmIK, shoulder
+
+    q = ROBOT.model.qpos0.copy()
+    q[2] = 0.55
+    ROBOT.set_qpos(q)
+    ik = ArmIK(ROBOT, RobotCollision(ROBOT), n_random=8)
+    y, n = shoulder(ROBOT) + np.array([0.35, 0.15, 0.10]), np.array([-1.0, 0, 0])
+    assert np.isnan(ik.solve(y, n, np.zeros(6), use_dir=True).roll_deg)          # no reference: no roll term
+    for z_ref in ([0, 0, 1.0], [0, 1.0, 0]):
+        r = ik.solve(y, n, np.zeros(6), use_dir=True, z_ref=z_ref)
+        assert r.feasible and r.roll_deg < 10, (z_ref, r.roll_deg)
+    r = ik.solve(y, n, np.zeros(6), use_dir=True, z_ref=[0, 0, -1.0])    # joint 6 stops at +-160 deg: the roll
+    assert r.feasible and r.roll_deg > 5                                  # yields, feasibility does not

@@ -23,6 +23,7 @@ tool:
   contact_site_local: [0.149, 0.0, 0.0]   # r_c in tool frame [m]
   contact_body: gripperMover               # at gripper_lock, r_c lies on the mover front face
   approach_axis_local: [1.0, 0.0, 0.0]     # tool x axis
+  jaw_axis_local: [0.0, 0.0, 1.0]          # jaws close along tool z (jointGripper turns about tool y)
   front_face_x: 0.149                      # front-face plane in tool frame [m]
   front_face_tol: 1.0e-4                   # vertex tolerance when collecting front-face triangles [m]
 

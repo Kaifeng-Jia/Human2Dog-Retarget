@@ -169,6 +169,44 @@ def test_task_targets(tmp_path, face, hands):
 
 
 @needs_mesh
+@pytest.mark.parametrize("face,hands,palm,fingers", [("side", "R", [1, 0, 0], [0, 0, 1]),
+                                                     ("side", "B", [1, 0, 0], [0, 0, 1]),
+                                                     ("top", "R", [0, 0, -1], [1, 0, 0])])
+def test_palm_frame_gives_the_tool_pose(face, hands, palm, fingers):
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import hand_frame
+    from h2d.common.data.tasks import build_task
+
+    c = make_clip(push_face=face, push_hands=hands)
+    s, e = segments(c)[0]
+    n, f = hand_frame(c, hands, np.arange(s, e))
+    assert np.all(n @ palm > 0.999) and np.all(f @ fingers > 0.999)      # palm on the face, fingers up / forward
+    for grip, x_w, z_w in (("press", palm, fingers), ("grasp", fingers, palm)):
+        t = build_task(c, BOX, (s, e), hands, grip=grip)
+        assert t["palm_used"] and t["palm_face_deg"] < 10                # the largebox faces are wavy (1-6 deg)
+        k = np.flatnonzero(t["in_contact"])[0]
+        rot = R.from_quat(t["obj_rot_xyzw"][k])
+        assert rot.apply(t["tool_x_local"][k]) @ x_w > 0.999 and rot.apply(t["tool_z_local"][k]) @ z_w > 0.999
+
+
+@needs_mesh
+def test_flipped_hand_falls_back_to_the_inward_normal():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.omomo_new import BODY_INDEX
+    from h2d.common.data.tasks import build_task
+
+    c = make_clip()
+    s, e = segments(c)[0]
+    i, k = BODY_INDEX["R_Index1"], BODY_INDEX["R_Pinky1"]
+    c.body_pos[:, [i, k]] = c.body_pos[:, [k, i]]                     # mirrored palm: faces away from the box
+    t = build_task(c, BOX, (s, e), "R")
+    assert not t["palm_used"] and t["palm_face_deg"] > 150
+    assert np.allclose(t["tool_x_local"], -t["n_bar_local"]) and np.isnan(t["tool_z_local"]).all()
+
+
+@needs_mesh
 def test_task_height_adaptation_moves_along_the_same_face():
     from synthetic_hoi import make_clip
 

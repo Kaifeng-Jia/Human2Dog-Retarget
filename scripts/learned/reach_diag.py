@@ -11,7 +11,9 @@ Inputs: task files from ``scripts/common/prepare_tasks.py`` and the prior from `
    contact fit of the prior's contact site (R008 / R010: puts the body too close) is recorded only;
 2. for each layout and each contact frame, three problems with the multi-start, collision-aware arm IK
    (``h2d/learned/reach.py``): position (joint limits only), position + direction (joint limits only),
-   position + direction within +-budget around the prior;
+   position + direction within +-budget around the prior. The direction is the task's tool approach target (from
+   the palm, spec v0.8 §5.4; the inward normal for older tasks or when the palm is not used), with the palm's jaw
+   axis as a soft roll target;
 3. per problem: frames feasible (error <= pos_tol, angle <= max_angle, no self / floor / arm-object
    collision), failure labels, joint speed over consecutive feasible frames against the Z1 limit, arm change
    (per-joint max and RMS, deg), jump to the prior at the segment ends; the frozen body's penetration of the
@@ -71,6 +73,9 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     if y_all[:, 2].min() < -0.02:
         out["flags"].append(f"target below the floor ({y_all[:, 2].min():.3f} m)")
     obj = load_object(task["object"])
+    if "palm_used" in task and not task["palm_used"]:
+        out["notes"].append(f"palm not used (palm vs inward normal {float(task['palm_face_deg']):.0f}°): "
+                            "approach = inward normal, no roll target")
     hull = ObjectHull.from_vertices(obj.hull_verts)
     arm_idx = slice(12, 18)
 
@@ -110,7 +115,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
         out["notes"].append(f"contact-fit residual {fit.info['residual_xy_rms_m']:.2f} m (prior path drift)")
 
     ik = ArmIK(robot, coll, cfg["pos_tol_m"], cfg["max_angle_deg"], cfg["n_random_starts"],
-               margin_m=cfg["avoid_margin_m"], w_prev=cfg.get("prev_weight_m_per_rad", 0.0))
+               margin_m=cfg["avoid_margin_m"], w_prev=cfg.get("prev_weight_m_per_rad", 0.0),
+               w_roll=cfg.get("roll_weight_m", 0.0))
     vmax = np.asarray(cfg["joint_speed_limit_rad_s"])
     budget = np.radians(cfg["budget_deg"])
     fps = float(task["fps"])
@@ -119,7 +125,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
         n_c = len(cf)
         prior_q = np.array([motion.dof_pos[t][arm_idx] for t in cf])
         scene, prior_site, dist_sh = np.zeros(n_c), np.zeros((n_c, 3)), np.zeros(n_c)
-        res = {p: {"q": np.zeros((n_c, 6)), "err": np.zeros(n_c), "ang": np.zeros(n_c), "ok": np.zeros(n_c, bool),
+        res = {p: {"q": np.zeros((n_c, 6)), "err": np.zeros(n_c), "ang": np.zeros(n_c), "roll": np.zeros(n_c),
+                   "ok": np.zeros(n_c, bool),
                    "self": np.zeros(n_c), "floor": np.zeros(n_c), "armobj": np.zeros(n_c), "toolobj": np.zeros(n_c),
                    "start": []} for p, *_ in PROBLEMS}
         prev = {p: None for p, *_ in PROBLEMS}
@@ -128,7 +135,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
             base_q = robot.data.qpos.copy()
             k = int(np.flatnonzero(fr == t)[0])
             op = ObjectPose(hull, task["obj_pos"][k], R.from_quat(task["obj_rot_xyzw"][k]).as_matrix())
-            n_w = op.rot @ task["n_bar_local"]
+            n_w = -(op.rot @ task["tool_x_local"][k]) if "tool_x_local" in task else op.rot @ task["n_bar_local"]
+            z_ref = op.rot @ task["tool_z_local"][k] if "tool_z_local" in task else None
             y = task["target_world"][k]
             prior_site[i] = robot.contact_site()
             dist_sh[i] = float(np.linalg.norm(y - shoulder(robot)))
@@ -136,9 +144,10 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
             for p, use_dir, use_budget in PROBLEMS:
                 robot.set_qpos(base_q)
                 full = i % cfg["full_search_every"] == 0 or prev[p] is not None
-                r = ik.solve(y, n_w, prior_q[i], prev[p], use_dir, budget if use_budget else None, op, full)
+                r = ik.solve(y, n_w, prior_q[i], prev[p], use_dir, budget if use_budget else None, op, full, z_ref)
                 d = res[p]
                 d["q"][i], d["err"][i], d["ang"][i], d["ok"][i] = r.q, r.pos_err_m, r.angle_deg, r.feasible
+                d["roll"][i] = r.roll_deg
                 d["self"][i], d["floor"][i] = r.collision["self_min_dist_m"], r.collision["floor_min_dist_m"]
                 d["armobj"][i], d["toolobj"][i] = r.collision["arm_obj_depth_m"], r.collision["tool_obj_depth_m"]
                 d["start"].append(r.start)
@@ -175,6 +184,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
                 "n_proven_unreachable": int(unreachable.sum()), "fail_reasons": why,
                 "pos_err_max_m": float(d["err"].max()), "pos_err_median_m": float(np.median(d["err"])),
                 "angle_max_deg": float(d["ang"].max()), "angle_median_deg": float(np.median(d["ang"])),
+                "roll_median_deg": float(np.nanmedian(d["roll"])) if np.isfinite(d["roll"]).any() else None,
                 "arm_change_max_deg": dq[ok].max(0).tolist() if ok.any() else None,
                 "arm_change_rms_deg": float(np.sqrt(np.mean(dq[ok] ** 2))) if ok.any() else None,
                 "speed_ratio_max": float(ratio.max()) if ratio.size else None,
@@ -207,7 +217,7 @@ def figure(tid: str, task: dict, out: dict, cfg: dict, path: Path) -> None:
     ax[1].axhline(cfg["max_angle_deg"], color="#888", ls="--", lw=0.8)
     ax[2].axhline(cfg["budget_deg"], color="#888", ls="--", lw=0.8)
     ax[0].set_title("contact-site error [cm] (x = infeasible frame)", fontsize=9, loc="left")
-    ax[1].set_title("tool axis vs inward normal [deg]", fontsize=9, loc="left")
+    ax[1].set_title("tool axis vs approach target [deg]", fontsize=9, loc="left")
     ax[2].set_title("largest joint change from the prior [deg]", fontsize=9, loc="left")
     y = out["_y"]
     ax[3].plot(y[:, 0], y[:, 1], color="#2b2b2b", lw=2, label="contact target")
@@ -280,7 +290,9 @@ def main() -> int:
             r.pop("_sol", None)
             r.pop("_y", None)
             r["runtime_s"] = time.time() - t1
-            results[tid] = {"clip": task["clip"], "object": task["object"], "mode": task["mode"], **r}
+            results[tid] = {"clip": task["clip"], "object": task["object"], "mode": task["mode"],
+                            "grip": task.get("grip", "press"), "palm_used": task.get("palm_used"),
+                            "palm_face_deg": task.get("palm_face_deg"), **r}
             print(f"  {tid}: {r['labels']}  ({r['runtime_s']:.0f} s)", flush=True)
         except Exception as e:  # noqa: BLE001 - report and continue
             import traceback
@@ -299,8 +311,9 @@ def main() -> int:
              f"{len(results)}/{len(ids)} tasks · reach bound {bound:.3f} m (sampled max {sampled:.3f} m) · "
              f"{summary['elapsed_s'] / 60:.1f} min", "",
              "| task | layout | registration (psi, residual RMS) | scene body in object [m] | target–shoulder [m] | problem "
-             "| label | feasible | err max [cm] | angle median / max [°] | arm change max / RMS [°] | speed ratio max |",
-             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+             "| label | feasible | err max [cm] | angle median / max [°] | roll median [°] | arm change max / RMS [°] "
+             "| speed ratio max |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for tid, r in results.items():
         for lay in LAYOUTS:
             if lay not in r:
@@ -314,7 +327,7 @@ def main() -> int:
                 lines.append(f"| {tid} | {lay} | {reg['psi_deg']:.1f}°, {f(reg['info']['residual_xy_rms_m'])} m{extra} | "
                              f"{f(L['scene_body_depth_max_m'], 3)} | {f(L['target_to_shoulder_m'][0])}–{f(L['target_to_shoulder_m'][1])} | "
                              f"{p} | {q['label']} | {100 * q['feasible_frac']:.0f} % | {f(100 * q['pos_err_max_m'], 1)} | "
-                             f"{f(q['angle_median_deg'], 0)} / {f(q['angle_max_deg'], 0)} | "
+                             f"{f(q['angle_median_deg'], 0)} / {f(q['angle_max_deg'], 0)} | {f(q['roll_median_deg'], 0)} | "
                              f"{f(max(ch) if ch else None, 0)} / {f(q['arm_change_rms_deg'], 0)} | {f(q['speed_ratio_max'])} |")
     notes = [f"- `{tid}`: " + "; ".join(r.get("flags", []) + r.get("notes", [])) for tid, r in results.items()
              if r.get("flags") or r.get("notes")]

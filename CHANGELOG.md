@@ -2,6 +2,20 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.1.6] — unreleased
+
+### Added (method: spec learned v0.8 §5.4, Kevin)
+- Tool pose from the human palm: per frame, palm normal and finger direction from the wrist and the index / middle /
+  pinky knuckles (`describe.hand_frame`; finger curl is not used, OMOMO_new keeps one hand shape per clip). Press:
+  tool x = palm normal, jaw axis (tool z) = fingers; grasp: tool x = fingers, jaw axis = palm normal
+  (`tasks.gripper_axes`). Used when the palm faces the contact (press <= 30 deg, grasp <= 90 deg), else the inward
+  normal (e.g. a flipped hand). Task files v2: `tool_x_local`, `tool_z_local`, `palm_face_deg`, `palm_used`.
+- Arm IK: the approach target is the task's tool x; soft roll term on the jaw axis (`roll_weight_m` 0.02, does not
+  decide feasibility); `roll_median_deg` in the reachability report. Jaw axis in `configs/b2z1.yaml`.
+- Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact),
+  the same for press and grasp; implemented with the output motion.
+- Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
+
 ## [0.1.5] — unreleased
 
 ### Changed (method: spec learned v0.6)
