@@ -25,7 +25,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   shape: 9.7 and 10.7 cm).
 - Found in R016 (mesh 9/10 fully reached, = script; relations still closer to the human): the stronger reach
   preference outweighed the clearance (c04: body 2.8 cm into the box, foot slide up to 1.56 m/s). Clearance weight
-  10 -> 100, body samples per geom 8 -> 16, smoothness 30 -> 60.
+  10 -> 40 (twice the reach preference; light contact tolerated), body samples per geom 8 -> 16, smoothness 30 -> 60.
 - Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
 - Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame

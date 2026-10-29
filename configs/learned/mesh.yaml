@@ -8,8 +8,9 @@ r_min_m: 0.35
 r_max_m: 0.75             # rigorous reach bound is 0.94 m (R008); R015: 0.67-0.76 m lost the direction on 1/3 of frames
 w_reach_pref: 20.0        # Z1 base - contact target distance towards the arm's comfortable reach [m] (R015: 5 too weak)
 reach_pref_m: 0.60        # dry run: 0.60 m feasible with direction, 0.75-0.81 m not
-w_clear: 100.0            # hinge on trunk / leg samples inside the object hull [m]; must dominate the reach preference
-                          # (R016: w_reach_pref 20 > w_clear 10 put the body 2.8 cm into the box, c04)
+w_clear: 40.0             # hinge on trunk / leg samples inside the object hull [m]; twice the reach preference, so it
+                          # wins a conflict but tolerates light contact (R016: 10 < 20 put the body 2.8 cm into the box, c04;
+                          # Kevin: 100 too strict, mild penetration is acceptable and reported)
 clear_margin_m: 0.03
 w_smooth: 60.0            # trunk step [m] and 0.5 m x turn per frame (30 fps: 1 cm/frame = 0.3 m/s); R016 slide 0.68 m/s
 w_anchor: 0.1             # weak pull to the constant registration (keeps the problem well posed)
