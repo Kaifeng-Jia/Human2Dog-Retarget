@@ -61,7 +61,7 @@ class PriorPoints:
     body: np.ndarray        # (n, m, 3) trunk and leg collision samples
 
 
-def prior_points(robot, coll, motion, frames, per_geom: int = 8) -> PriorPoints:
+def prior_points(robot, coll, motion, frames, per_geom: int = 16) -> PriorPoints:
     from h2d.learned.reach import shoulder
 
     base, feet = robot._bid("base_link"), [robot._bid(f) for f in FEET]

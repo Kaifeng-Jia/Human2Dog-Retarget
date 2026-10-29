@@ -23,6 +23,9 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   reach (0.67-0.76 m, the human reaching across the box) lost the direction on a third of the frames: human points
   smoothed over 1 s, reach preference 5 -> 20 and r_max 0.80 -> 0.75 m. D0 wrist check 0.10 -> 0.12 m (sub3 mean
   shape: 9.7 and 10.7 cm).
+- Found in R016 (mesh 9/10 fully reached, = script; relations still closer to the human): the stronger reach
+  preference outweighed the clearance (c04: body 2.8 cm into the box, foot slide up to 1.56 m/s). Clearance weight
+  10 -> 100, body samples per geom 8 -> 16, smoothness 30 -> 60.
 - Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
 - Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame
