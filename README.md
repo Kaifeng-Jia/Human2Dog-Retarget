@@ -46,3 +46,4 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R015_tasks | #22 | `1fd1edb` | Ubuntu, CPU | pass=true; 14 tasks, all 14 pass task checks (candidate 5 = confirmed largebox_top) |
 | R015_d0 | #22 | `1fd1edb` | Ubuntu RTX 5070 (cuda:0) | **pass=false**: 12/13 clips pass; sub3_largebox_032 left-wrist convention median 0.107 m > 0.10 m; see #22 |
 | R015_reach | #22 | `1fd1edb` | Ubuntu, CPU | pass=true (10/10 tasks, 0 errors); feasible pos / pos_dir / pos_dir_budget: mesh 9/7/0, reach_track 9/9/0, reach_fit 6/3/0; layout videos rendered (mp4 on Drive) |
+| R016_reach | #23 | `6af8c5f` | Ubuntu, CPU | pass=true (10/10 tasks, 0 errors; tasks and priors from R015); feasible pos / pos_dir / pos_dir_budget: mesh 9/9/0, reach_track 9/9/0, reach_fit 6/3/0; mesh foot slide median 0.68 m/s (R015 0.54); layout videos rendered (mp4 on Drive) |
