@@ -19,6 +19,10 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - Found in R014: the palm side is the side that touches (`palm_flipped`: the hand's points gave the palm facing
   away, 149-173 deg, on all two-hand pushes); mesh smoothness counts the trunk's actual step (the placement turns
   about the world origin, so parameter differences under-weighted turns: extra foot slide 0.4-0.7 m/s).
+- Found in R015: the mesh's foot slide stayed at 0.4-0.65 m/s (the human's gait sway reached the dog), and a far
+  reach (0.67-0.76 m, the human reaching across the box) lost the direction on a third of the frames: human points
+  smoothed over 1 s, reach preference 5 -> 20 and r_max 0.80 -> 0.75 m. D0 wrist check 0.10 -> 0.12 m (sub3 mean
+  shape: 9.7 and 10.7 cm).
 - Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
 - Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame

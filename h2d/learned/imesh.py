@@ -7,7 +7,9 @@ by frame, so that the dog keeps the human's body-object relations and not only t
 * correspondences: human pelvis -> B2 trunk centre, human chest -> Z1 base (joint1 anchor), human virtual hand ->
   the gripper's contact target (fixed here; the arm IK reaches it afterwards);
 * mesh: per frame, a Delaunay tetrahedralisation of the human side (pelvis, chest, hand, object surface samples);
-  the edges from the pelvis or the chest to the hand or an object sample are kept;
+  the edges from the pelvis or the chest to the hand or an object sample are kept. The human points are smoothed
+  over ``human_smooth_s`` first: the relation is transferred, not the sway of the human gait (R015: the dog's
+  extra foot slide stayed at 0.4-0.65 m/s);
 * placement: a per-frame SE(2) of the raw prior, world = R(psi_t) p + b_t (z unchanged), solved over the window at
   once (least squares, sparse finite differences) for
   - edge directions: each edge's horizontal unit direction matches the human's (lengths free: another body size);
@@ -26,6 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.ndimage import uniform_filter1d
 from scipy.optimize import least_squares
 from scipy.sparse import coo_matrix
 from scipy.spatial import Delaunay
@@ -94,8 +97,10 @@ class InteractionMesh:
         Rm = R.from_quat(task["obj_rot_xyzw"]).as_matrix()
         self.Rm, self.pos = Rm, task["obj_pos"]
         O = np.einsum("nij,kj->nki", Rm, obj_local) + self.pos[:, None]                 # (n, k, 3)
-        H = task["body_world"]                                                            # pelvis, chest, L/R shoulder
-        fix_h = np.concatenate([task["palm_world"][:, None], O], 1)                      # hand, object samples
+        k = max(1, round(cfg.get("human_smooth_s", 0.0) * self.fps)) | 1                 # odd, centred
+        H = uniform_filter1d(task["body_world"], k, axis=0, mode="nearest")             # pelvis, chest, L/R shoulder
+        hand = uniform_filter1d(task["palm_world"], k, axis=0, mode="nearest")
+        fix_h = np.concatenate([hand[:, None], O], 1)                                    # hand, object samples
         fix_d = np.concatenate([task["target_world"][:, None], O], 1)                    # gripper target, samples
         E = []
         for t in range(n):
