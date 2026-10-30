@@ -35,9 +35,7 @@
 
 | 标签 | 内容 | 计划日期 |
 |---|---|---|
-| `m1-reachability` | 冻结身体可达性诊断 | 10/31 |
-| `m2-baselines` | B1 / B2 | 11/07 |
-| `m3-mesh` | M 与分层比较 | 11/14 |
+| `learned-course` | 学习式线课程版：可达性诊断与三种身体布局对比（R017，`docs/results/learned_course_zh.md`）；取代原计划的 m1 / m2 / m3 | 10/30 |
 | `spotlight` | spotlight 所用结果 | 12 月初 |
 | `final-report` | 期末报告所用结果 | 12/13 |
 

@@ -61,9 +61,10 @@ python scripts/common/b01_check_tool_geometry.py --run-id R001_b01
 | Virtual hand restored (spec v0.6): two-hand same-face candidates | v0.1.5, R006 |
 | Task targets, D0 chain on the candidates | v0.1.5, R007 |
 | Registration + frozen-body reachability diagnostic (§7.1) | v0.1.5 code, R008 |
-| Scene registration (start-anchored / contact-fitted) | next |
-| Frozen-body reachability diagnostic (§7.1) → tag `m1-reachability` | next |
-| B1 / B2 / M arm refinement and evaluation | later |
+| Pulls, grip from the interaction and the face; reach-point registration and body tracking | v0.1.5, R010–R013 |
+| Tool pose from the forearm and the hand; top pushes from the robot's side; interaction-mesh body placement (spec v0.8) | v0.2.0, R014–R017 |
+| Learned line, course version: 10 OMOMO pushes, prior / script / mesh layouts, MuJoCo videos → tag `learned-course` | **done** (`docs/results/learned_course_zh.md`) |
+| Full-optimization line | next |
 
 ### B01 result (X-Morph `a9f4a77`)
 

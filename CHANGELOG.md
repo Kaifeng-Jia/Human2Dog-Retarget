@@ -2,7 +2,7 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.6] — unreleased
+## [0.2.0] — 2026-10-30 (learned line, course version; results: `docs/results/learned_course_zh.md`)
 
 ### Added (method: spec learned v0.8 §5.4–5.6, Kevin)
 - Tool pose from the human forearm and hand (§5.4): approach = forearm (elbow -> wrist, the direction the human
@@ -27,6 +27,12 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   preference outweighed the clearance (c04: body 2.8 cm into the box, foot slide up to 1.56 m/s). Clearance weight
   10 -> 40 (twice the reach preference; light contact tolerated), body samples per geom 8 -> 16, smoothness 30 -> 60.
 - Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
+- Videos: `scripts/learned/render_layouts.py` (silhouettes, no OpenGL) and `scripts/learned/render_mujoco.py` (Kevin:
+  MuJoCo, X-Morph-demo style 2 x 3 grid: human, G1, B2-Z1 straight out of X-Morph; the three body layouts with the
+  arm IK; camera across the human-object line, panning with the object). `reach_diag.py` saves the body placement
+  of every layout in the solution files.
+- Results of the course version: `docs/results/learned_course_zh.md` (R017: mesh 9/10 fully reached like the
+  script, relations closer to the human, about twice the extra foot slide).
 - Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
 - Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame
   SE(2) of the prior's body from the human's body-object mesh (pelvis -> trunk, chest -> Z1 base, hand -> contact
@@ -35,7 +41,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   (`reach_fit`), `--layouts`, relation metrics for every layout (edge / heading error, extra foot slide). Task
   files carry the human pelvis, chest and shoulders. Course scope for 11/1: OMOMO pushes and top-face drags.
 
-## [0.1.5] — unreleased
+## [0.1.5] — 2026-10-30 (released together with 0.2.0)
 
 ### Changed (method: spec learned v0.6)
 - Virtual hand restored (Kevin; it was in the first method draft and narrowed to "right hand only" in v0.5):

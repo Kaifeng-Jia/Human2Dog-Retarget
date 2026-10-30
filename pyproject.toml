@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "h2d"
-version = "0.1.5"
+version = "0.2.0"
 description = "Human2Dog: functional interaction retargeting from human-object demonstrations to a B2-Z1 quadruped manipulator"
 requires-python = ">=3.10,<3.12"
 # Kinematics and collision use MuJoCo directly; torch is only needed inside X-Morph inference.
