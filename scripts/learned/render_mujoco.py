@@ -30,11 +30,12 @@ import numpy as np
 os.environ.setdefault("MUJOCO_GL", "egl")
 import mujoco  # noqa: E402
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
+from scipy.ndimage import uniform_filter1d  # noqa: E402
 from scipy.spatial.transform import Rotation as R  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.collision import MOVING_ARM  # noqa: E402
-from h2d.common.data.omomo_new import BODY_PARENTS  # noqa: E402
+from h2d.common.data.omomo_new import BODY_INDEX, BODY_PARENTS  # noqa: E402
 from h2d.common.data.omomo_objects import load_object  # noqa: E402
 from h2d.common.data.tasks import load_task  # noqa: E402
 from h2d.common.registration import SE2  # noqa: E402
@@ -112,14 +113,18 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
     renderer = mujoco.Renderer(model, args.height, args.width)
     nb = robot.model.nq                                          # the B2-Z1's qpos come first
 
-    v = task["obj_pos"][ci[-1]] - task["obj_pos"][ci[0]]
-    push = np.degrees(np.arctan2(v[1], v[0])) if np.linalg.norm(v[:2]) > 1e-3 else 0.0
+    # camera: across the line from the object to the human (both side by side), panning with the object (1 s
+    # moving average) so that nothing leaves the frame (R017: the push carried the dog out of a fixed view)
+    pelvis = task["skeleton_world"][ci][:, BODY_INDEX["Pelvis"]]
+    side = np.median(pelvis[:, :2] - task["obj_pos"][ci][:, :2], axis=0)
+    side = side / max(np.linalg.norm(side), 1e-9)
+    k = max(1, round(task["fps"])) | 1
+    look = uniform_filter1d(task["obj_pos"][ci], k, axis=0, mode="nearest") + 0.45 * np.r_[side, 0.0]
+    look[:, 2] = 0.6
     cam = mujoco.MjvCamera()
     cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-    centre = task["obj_pos"][ci].mean(0)
-    back = -np.r_[np.cos(np.radians(push)), np.sin(np.radians(push)), 0.0]
-    cam.lookat[:] = centre + 0.45 * back + [0, 0, 0.6 - centre[2]]
-    cam.distance, cam.elevation, cam.azimuth = args.distance, args.elevation, push + args.azimuth_offset
+    cam.distance, cam.elevation = args.distance, args.elevation
+    cam.azimuth = np.degrees(np.arctan2(side[1], side[0])) + args.azimuth_offset
     rel = {lay: (summary.get(lay) or {}).get("relations") or {} for lay in layouts}
 
     def b2_qpos(lay, i, j, arm):
@@ -131,6 +136,7 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
         return q
 
     def tile(i, j, kind, lay=None):
+        cam.lookat[:] = look[j]
         data.mocap_pos[mocap] = task["obj_pos"][i]
         data.mocap_quat[mocap] = R.from_quat(task["obj_rot_xyzw"][i]).as_quat(scalar_first=True)
         q = model.qpos0.copy()
@@ -208,7 +214,8 @@ def main() -> int:
     ap.add_argument("--height", type=int, default=480)
     ap.add_argument("--distance", type=float, default=3.8, help="camera distance [m]")
     ap.add_argument("--elevation", type=float, default=-18.0, help="camera elevation [deg]")
-    ap.add_argument("--azimuth-offset", type=float, default=120.0, help="camera azimuth relative to the push [deg]")
+    ap.add_argument("--azimuth-offset", type=float, default=90.0,
+                    help="camera azimuth relative to the object -> human direction [deg] (90: from the side)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     rd = Path(args.reach_dir)
