@@ -2,6 +2,24 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.2.1] — 2026-10-30 (G1 placement; results of the course version unchanged)
+
+### Fixed (Kevin, R018 videos: the G1 sank into the object by a near-constant amount)
+- SMPL-X input to GMR: `trans` is the recorded pelvis minus the SMPL-X rest pelvis joint (`human_to_g1.pelvis_rest`).
+  SMPL-X adds that joint unrotated, so the human reached GMR 0.35 m off along world -y; D0 reported the offset
+  (`pelvis_offset_smplx_minus_recorded_median_m`) but did not check it. Now a D0 check (`pelvis_matches_recorded`,
+  1 cm).
+- GMR scales the human's scene about the world origin (0.83 for the mean shape: feet stay planted, but the G1 ends
+  up at 0.83 x the human's position next to an unscaled object). The scale is saved in the G1 file (`world_scale`);
+  `render_mujoco.py` shows the G1 with the object scaled the same way. The G1's arms are scaled 0.74, so its hands
+  stop 12-20 cm short of the surface (GMR does not know the object).
+- Start-anchored registration took the G1's start (0.2-0.6 m off from the human's, both causes above); it now takes
+  the human's (`src_root_pos0` = G1 start xy / world_scale). Not used by the course comparison.
+
+Not affected: X-Morph reads joint angles, the root velocity in the heading frame and the turn rate and integrates
+from the origin, so the dog prior does not depend on where the G1 is; `reach_fit`, `reach_track` and `mesh` use the
+human and the object (and only the yaw of the start anchor).
+
 ## [0.2.0] — 2026-10-30 (learned line, course version; results: `docs/results/learned_course_zh.md`)
 
 ### Added (method: spec learned v0.8 §5.4–5.6, Kevin)
