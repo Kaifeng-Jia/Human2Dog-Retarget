@@ -2,7 +2,71 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.4] — unreleased
+## [0.1.5] — unreleased
+
+### Changed (method: spec learned v0.6)
+- Virtual hand restored (Kevin; it was in the first method draft and narrowed to "right hand only" in v0.5):
+  one hand (left or right) uses that hand; both hands on the same face use the midpoint of the two contacts;
+  squeezing (opposite faces) and hand switching are excluded. Spec `docs/spec/learned/v0.6_zh.md` (Codex review
+  pending); approach direction no longer required, it only ranks (no near-normal right-hand push in R005).
+- `describe.contact_point` / `palm_point` take side "B"; `push_descriptors` reports `hands_face_angle_deg`.
+- Candidates: `right_hand` -> `one_mode` (left / right / both), new push criterion `same_face`; mode shown in the
+  tables, sheets (both hands drawn behind the midpoint) and gallery; 16 candidates by default.
+- Test clip: `push_hands` = R / B (both on one face) / squeeze (opposite faces).
+
+### Fixed (found in R007)
+- SMPL-X export for GMR: 16 betas (mean shape) instead of 10; smplx builds SMPL-X with 16 betas plus 10
+  expression coefficients, so 10 betas failed in `blend_shapes` for every clip.
+
+- Reachability diagnostic (found in R008): a large contact-fit residual (the prior's path drift, spec O2) no
+  longer turns every problem into `coordinate_or_tool_offset_error`; it is a note. IK is regularised towards the
+  previous frame's solution (0.01 m/rad) to keep the arm on one branch between frames.
+
+### Changed (found in R012)
+- Robot grip from the interaction and the face, not from the human's fingers: OMOMO_new carries a fixed hand shape
+  (finger motion 0.0 mm), and its thumb / finger contacts marked every R012 candidate a grasp. Push, and pull on a
+  top face (drag): press with the closed gripper; pull on a side / slant face: grasp. The finger-based label stays
+  as `human_grip` (information only).
+- D0 chain: one small figure per clip (`figures/<clip>.png`; the joint figure of 19 clips exceeded 1 MB); wrist
+  convention tolerance 0.10 m (a large subject reached 8.3 cm with the mean shape; convention errors are tens of cm).
+
+### Added
+- Pulls (Kevin): `interactions: [push, pull]` in `configs/candidate_selection.yaml`; `describe.grip_descriptors`
+  (grasp = thumb and fingers on opposite-facing patches, else press), `finger_motion_std_m` (is there real finger
+  capture? FORCE: none on chair / box_huge, ~0.02 rad on suitcase), `candidates.interaction_of / contact_shape_ok`,
+  `reach_band.grasp`; caps per (dataset, object, interaction); tasks carry interaction / grip; `reach_diag` skips
+  grasps until the jaw site exists.
+- Reach-point registration and body tracking (found in R010; Kevin: the dog's body has to move with the
+  interaction): `registration.reach_points / track / SE2Track`, `configs/registration.yaml` (reach point 0.6 /
+  0.75 / 0.7 m ahead for top / side / slant faces; 1 s smoothing). Fitting the prior's contact site placed the
+  body too close (the X-Morph arm stays raised), so the tool could reach top faces but not point down at them.
+  `reach_diag.py` layouts: reach_fit, reach_track (extra base motion reported), start_anchored.
+- Contact height adaptation (spec v0.7 §5.1, Kevin): on side / slant faces the robot's contact moves up or down the
+  same face into the arm's band (same face, normal and position along the face); `tasks.adapt_height`,
+  `prepare_tasks.py --selection`, `ObjectMesh.face_points`, descriptors `face_z_min_m / face_z_max_m`,
+  `candidates.adapted_height` (selection uses the adapted height).
+- Candidate selection for reachable cases (Kevin: low objects are out): `configs/candidate_selection.yaml` (yaw
+  limit 45 deg; contact-height band per face class: side 0.5-1.2 m, top 0.3-0.8 m), `push_candidates.py
+  --selection`, `candidates.criteria / face_of / in_band`; `scripts/learned/workspace_map.py` (where the Z1 can
+  push around a level B2), `reach_diag.py --tasks-csv --max-tasks`.
+- [common] Task targets (`h2d/common/data/tasks.py`, `scripts/common/prepare_tasks.py`; spec v0.6 §4 step 1,
+  §5.2): per segment the object trajectory, contact frames, object-local contact target on the surface, one
+  normal, approach / retreat distance d_t (palm-thickness zeroed) and the world target path; `tasks/<id>.npz`,
+  a sheet per task, checks; also for every candidate of a candidates.csv, so a later confirmation needs no rerun.
+- `configs/push_candidates.yaml`: per-segment `mode`.
+- [learned] `d0_chain.py --clips-file` (e.g. `clips_omomo.txt` from `prepare_tasks.py`).
+- [common] Scene registration (`h2d/common/registration.py`, `configs/registration.yaml`; spec §4 step 3):
+  start-anchored and contact-fitted SE(2) of the robot root trajectory (grid + bounded refine over yaw with a
+  prior towards the anchor, closed-form translation, yaw fixed when the targets barely move).
+- [common] Collision checks (`h2d/common/collision.py`): moving arm vs body / itself / floor from MuJoCo geom
+  distances (pairs overlapping in the folded home pose excluded), robot sample points vs the object's convex
+  hull (arm, tool and frozen body reported apart).
+- [learned] Frozen-body reachability diagnostic (`h2d/learned/reach.py`, `scripts/learned/reach_diag.py`,
+  `configs/learned/reach.yaml`; spec §7.1): per contact frame, position / position + direction / budgeted IK
+  with avoidance residuals and multi-start; failure labels with a rigorous reach bound (sum of segment lengths);
+  joint speed vs the Z1 limit (180 deg/s), arm change, scene feasibility; both registrations.
+
+## [0.1.4] — 2026-10-25 (merge `8dfde27`)
 
 ### Added
 - [common] Push candidates for the reachability diagnostic (spec §7.1 step 1; `docs/data/push_candidates.md`):

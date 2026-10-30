@@ -1,0 +1,22 @@
+# Scene registration (spec learned v0.6 §4 step 3), shared by every method of both lines.
+# One constant SE(2) per demonstration, applied to the whole robot root trajectory; object trajectory unchanged;
+# no height compensation.
+contact_fit:
+  # cost = weighted mean squared xy error [m^2] + lambda_psi * wrap(psi - psi_anchor)^2 [rad^2]
+  # 0.08: a 10 deg turn away from the start-anchored yaw costs as much as ~5 cm RMS contact error.
+  lambda_psi: 0.08
+  # if the contact targets barely move (weighted xy std below this), yaw is not identifiable: keep psi_anchor
+  min_target_spread_m: 0.05
+  psi_grid_deg: 0.25
+
+# Reach-point registration (R010: fitting the prior's contact site puts the body too close, because the X-Morph arm
+# stays raised above the trunk; the arm then cannot point the tool at the face). The robot is placed so that a
+# nominal reach point, fixed in the base frame (horizontal, ahead of the base origin), lies on the contact targets.
+# Values: centre of the workspace map band per face class (R010_workspace: top faces 0.5-0.7 m ahead, side faces
+# 0.5-1.0 m ahead).
+reach_point:
+  ahead_m: {top: 0.6, side: 0.75, slant: 0.7}
+# Body tracking (the body follows the object, Kevin): on top of the reach-point fit, a per-frame translation of the
+# whole robot so the reach point stays on the target; moving average over smooth_s. Reported as the extra base motion.
+track:
+  smooth_s: 1.0

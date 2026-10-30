@@ -1,0 +1,13 @@
+# Frozen-body reachability diagnostic (spec learned v0.6 §7.1). Development initial values, frozen before evaluation.
+pos_tol_m: 0.01              # single-frame position IK target error
+max_angle_deg: 15.0          # tool axis vs inward normal (two-point direction target, lever 0.05 m)
+budget_deg: 20.0             # per-joint budget around the prior for the "small correction" variant
+n_random_starts: 16          # after the previous frame's solution and the prior (full search)
+full_search_every: 10        # full search on every 10th frame and after a feasible frame; else 3 random starts
+avoid_margin_m: 0.01         # avoidance residuals become active closer than this
+penetration_tol_m: 0.002     # collision = penetration deeper than this (numerical tolerance of the primitives)
+scene_body_depth_m: 0.02     # frozen body inside the object deeper than this: scene infeasible (arm cannot fix it)
+# Z1 Pro: 180 deg/s for all six joints (Unitree Z1 Pro product sheet, e.g. store.ired.co.uk/products/z1-pro-robotics-arm)
+joint_speed_limit_rad_s: [3.1416, 3.1416, 3.1416, 3.1416, 3.1416, 3.1416]
+registration_residual_suspect_m: 0.30   # contact-fit xy RMS above this: noted as prior path drift (not a label)
+prev_weight_m_per_rad: 0.01  # IK regularisation towards the previous frame's solution (continuity), when there is one

@@ -114,3 +114,105 @@ def test_push_descriptors_top_face():
     # the hand goes straight down and up in the world; the mesh's top is ~9 deg off level in this test world
     off = 90.0 - d["normal_tilt_median_deg"]
     assert abs(d["approach_angle_deg"] - off) < 1 and abs(d["retreat_angle_deg"] - off) < 1
+
+
+@needs_mesh
+def test_virtual_hand_both_same_face_and_squeeze():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import contact_point, push_descriptors
+
+    c = make_clip(push_hands="B")
+    seg = describe_clip(c, BOX)["segments"][0]
+    assert seg["hands"] == "both" and seg["object_state"] == "slid"
+    s, e = seg["start"], seg["end"]
+    mid = contact_point(c, "B", slice(s, e))
+    assert np.allclose(mid, 0.5 * (contact_point(c, "L", slice(s, e)) + contact_point(c, "R", slice(s, e))))
+    d = push_descriptors(c, BOX, (s, e), "B")
+    assert d["hands_face_angle_deg"] < 5 and d["push_alignment"] > 0.9 and d["normal_tilt_median_deg"] < 5
+    assert d["approach_angle_deg"] < 3 and d["contact_surface_dist_median_m"] < 0.05     # midpoint lies on the face
+    assert push_descriptors(c, BOX, (s, e), "R")["hands_face_angle_deg"] == 0.0         # one hand: one face
+
+    sq = make_clip(push_hands="squeeze")
+    seg = describe_clip(sq, BOX)["segments"][0]
+    d = push_descriptors(sq, BOX, (seg["start"], seg["end"]), "B")
+    assert d["hands_face_angle_deg"] > 150                                              # opposite faces
+
+
+@needs_mesh
+@pytest.mark.parametrize("face,hands", [("side", "R"), ("top", "R"), ("side", "B")])
+def test_task_targets(tmp_path, face, hands):
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.tasks import build_task, load_task, save_task, task_checks
+
+    c = make_clip(push_face=face, push_hands=hands)
+    s, e = segments(c)[0]
+    t = build_task(c, BOX, (s, e), hands)
+    ck = task_checks(t)
+    assert ck["contact_frames"] == e - s and ck["target_equals_c_bar_in_contact_m"] < 1e-9
+    assert ck["patch_coherence_median"] > 0.9 and ck["normal_spread_p90_deg"] < 5
+    # the hand comes 0.25 m straight in over 0.5 s and leaves 0.25 m straight out: d = 0.25 at both ends of that
+    w0 = t["window"][0]
+    d_in, d_out = t["d"][s - 15 - w0], t["d"][e - 1 + 15 - w0]
+    assert abs(d_in - 0.25) < 0.02 and abs(d_out - 0.25) < 0.02 and np.all(t["d"][t["in_contact"]] == 0)
+    assert np.all(np.diff(t["d"][s - 15 - w0:s - w0]) <= 1e-9)            # decreasing towards contact
+    # targets on the surface in contact, off it along the normal outside; world = object pose applied
+    dist = BOX.surface_distance(t["target_local"][t["in_contact"]])
+    assert dist.max() < 1e-6
+    i = 0
+    w = R.from_quat(t["obj_rot_xyzw"][i]).apply(t["target_local"][i]) + t["obj_pos"][i]
+    assert np.allclose(w, t["target_world"][i])
+    save_task(t, tmp_path / "t.npz")
+    back = load_task(tmp_path / "t.npz")
+    assert back["clip"] == c.name and np.allclose(back["target_world"], t["target_world"])
+
+
+@needs_mesh
+def test_task_height_adaptation_moves_along_the_same_face():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.tasks import build_task, task_checks
+
+    c = make_clip()                                         # right palm on the -x face, contact ~0.25 m high
+    s, e = segments(c)[0]
+    plain = build_task(c, BOX, (s, e), "R")
+    z_h = plain["height"]["human_contact_z_m"]
+    t = build_task(c, BOX, (s, e), "R", band={"side": [z_h + 0.06, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]})
+    h = t["height"]
+    assert h["face"] == "side" and h["height_adapted"] and abs(h["height_shift_m"] - 0.06) < 1e-6
+    tw = t["target_world"][t["in_contact"]]
+    assert abs(np.median(tw[:, 2]) - (z_h + 0.06)) < 0.005                               # robot contacts 6 cm higher
+    pw = plain["target_world"][plain["in_contact"]]
+    assert np.allclose(tw[:, :2], pw[:, :2], atol=0.01)                                  # same place on the face
+    assert np.allclose(t["n_bar_local"], plain["n_bar_local"])
+    ck = task_checks(t)
+    assert ck["target_on_face_m"] < 0.02 and ck["in_band"]
+    # the band above the face's top: no overlap, flagged, targets unchanged
+    t2 = build_task(c, BOX, (s, e), "R", band={"side": [0.9, 1.2], "top": [0.3, 0.8], "slant": [0.4, 1.2]})
+    assert not t2["height"]["in_band"] and not t2["height"]["height_adapted"]
+
+
+@needs_mesh
+def test_grip_press_vs_grasp_and_finger_motion():
+    from synthetic_hoi import face_point, face_yaw_deg, make_clip
+
+    from h2d.common.data import omomo_new as om
+    from h2d.common.data.describe import finger_motion_std_m, grip_descriptors
+
+    c = make_clip()
+    s, e = segments(c)[0]
+    assert grip_descriptors(c, BOX, (s, e), "R")["grip"] == "press"       # flat palm on one face
+    assert finger_motion_std_m(make_clip(push=False, carry=False), "R") < 1e-6   # fixed hand shape: 0
+    assert finger_motion_std_m(c, "R") > 0.01                                     # the test hand changes shape
+    # thumb on the +y face, the other fingers on the -y face: wraps the box (opposite normals) = grasp
+    q = R.from_euler("z", face_yaw_deg("largebox"), degrees=True)
+    for side_dir, names in (([0, 1, 0], ("Thumb1", "Thumb2", "Thumb3")),
+                            ([0, -1, 0], ("Index1", "Index2", "Index3", "Middle1", "Middle2", "Middle3"))):
+        p = q.apply(face_point(q.inv().apply(side_dir))) + 0.01 * np.array(side_dir)
+        for nm in names:
+            j = om.BODY_INDEX[f"R_{nm}"]
+            c.body_pos[s:e, j] = c.obj_pos[s:e] + p
+            c.contact_body[s:e, j] = 1
+    g = grip_descriptors(c, BOX, (s, e), "R")
+    assert g["grip"] == "grasp" and g["grasp_frac"] > 0.9

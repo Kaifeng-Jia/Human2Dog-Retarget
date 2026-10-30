@@ -223,21 +223,36 @@ def describe_clip(clip: Clip, obj: ObjectMesh, p: dict = DEFAULTS, mesh_check_fr
 
 # ------------------------------------------------------------------------------ push descriptors
 PALM = ("Wrist", "Index1", "Middle1", "Pinky1", "Ring1")
+# Virtual hand (spec v0.6 §5.1): "L" / "R" = that hand; "B" = both hands on the same face, midpoint of the two.
+MODE_OF_HANDS = {"left": "L", "right": "R", "both": "B"}
 
 
 def palm_point(clip: Clip, side: str, frames) -> np.ndarray:
-    """Palm centre (n, 3): mean of the wrist and the four finger base bodies."""
+    """Palm centre (n, 3): mean of the wrist and the four finger base bodies; for "B" the midpoint of both palms."""
+    if side == "B":
+        return 0.5 * (palm_point(clip, "L", frames) + palm_point(clip, "R", frames))
     return clip.body_pos[frames][:, [BODY_INDEX[f"{side}_{n}"] for n in PALM]].mean(1)
 
 
-def contact_point(clip: Clip, side: str, frames: slice) -> np.ndarray:
-    """Per-frame hand contact proxy (n, 3): mean of the hand's flagged bodies, else the palm centre."""
+def _hand_proxy(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray]:
     idx = HAND_BODIES[side]
     pos = clip.body_pos[frames][:, idx]
     fl = (clip.contact_body[frames][:, idx] == 1).astype(float)
-    palm = palm_point(clip, side, frames)
     k = fl.sum(1, keepdims=True)
-    return np.where(k > 0, (pos * fl[..., None]).sum(1) / np.maximum(k, 1), palm)
+    return np.where(k > 0, (pos * fl[..., None]).sum(1) / np.maximum(k, 1), palm_point(clip, side, frames)), k[:, 0] > 0
+
+
+def contact_point(clip: Clip, side: str, frames) -> np.ndarray:
+    """Per-frame contact proxy (n, 3) of the virtual hand: for "L" / "R" the mean of that hand's flagged bodies,
+    else its palm centre; for "B" the midpoint of the two hands' proxies where both touch, the touching hand's
+    proxy where one does, the palm midpoint where none does."""
+    if side != "B":
+        return _hand_proxy(clip, side, frames)[0]
+    (pl, fl), (pr, fr) = _hand_proxy(clip, "L", frames), _hand_proxy(clip, "R", frames)
+    out = 0.5 * (pl + pr)
+    out[fl & ~fr] = pl[fl & ~fr]
+    out[fr & ~fl] = pr[fr & ~fl]
+    return out
 
 
 def alignment_series(clip: Clip, obj: ObjectMesh, frames: slice, side: str, min_speed: float = 0.05) -> np.ndarray:
@@ -258,14 +273,18 @@ def alignment_series(clip: Clip, obj: ObjectMesh, frames: slice, side: str, min_
 
 def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: str, min_speed: float = 0.05,
                      path_m: float = 0.10, search_s: float = 2.0, patch_m: float = 0.03) -> dict:
-    """How one hand moves the object in a segment: push vs pull, which face, how the hand came in.
+    """How the virtual hand (``side`` "L", "R" or "B", see ``contact_point``) moves the object in a segment: push vs
+    pull, which face, how the hand came in.
 
     * ``push_alignment``: mean of ``alignment_series`` over the segment frames where the object moves faster than
       ``min_speed`` (``moving_frac`` of the segment).
     * ``normal_*``: normal of the surface patch (radius ``patch_m``) under the contact proxy, pointing to the
       hand (``ObjectMesh.patch_normals``); ``normal_local`` = its segment mean in the object frame, spread of
       the per-frame normals around it (one face or several), tilt of the mean from the horizontal (0 = vertical
-      face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner).
+      face, 90 = top face); ``patch_coherence_median`` (1 = flat patch, low = edge / corner);
+      ``hands_face_angle_deg``: for "B", median angle between the patch normals under the two hands while both
+      touch (0 = same face, 180 = opposite faces, i.e. squeezing); 0 for one hand; ``face_z_min_m`` /
+      ``face_z_max_m``: height range of the touched flat face in the world at first contact.
       ``contact_surface_dist_*``: distance of the contact proxy to the surface (body positions are joint
       centres, so a few cm is normal; tens of cm means the proxy is not on the object).
     * ``approach_*`` / ``retreat_*``: the last ``path_m`` of palm path before first contact and the first
@@ -284,16 +303,33 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
     n_mean = n_loc.mean(0)
     n_mean /= max(np.linalg.norm(n_mean), 1e-9)
     spread = np.degrees(np.arccos(np.clip(n_loc @ n_mean, -1, 1)))
+    faces_deg = 0.0                                    # one hand: one face by definition
+    if side == "B":                                    # angle between the faces under the two hands, both touching
+        (pl, fl), (pr, fr) = _hand_proxy(clip, "L", sl), _hand_proxy(clip, "R", sl)
+        both = np.flatnonzero(fl & fr)
+        if both.size:
+            nl = obj.patch_normals(obj.to_local(pl[both, None], clip.obj_pos[sl][both], clip.obj_rot_xyzw[sl][both])[:, 0],
+                                   patch_m)[2]
+            nr = obj.patch_normals(obj.to_local(pr[both, None], clip.obj_pos[sl][both], clip.obj_rot_xyzw[sl][both])[:, 0],
+                                   patch_m)[2]
+            faces_deg = float(np.median(np.degrees(np.arccos(np.clip(np.sum(nl * nr, 1), -1, 1)))))
+        else:
+            faces_deg = float("nan")
     n_world = R.from_quat(clip.obj_rot_xyzw[sl]).apply(n_mean)
     tilt = np.degrees(np.arcsin(np.clip(np.abs(n_world[:, 2]), 0, 1)))
     out = {
         "push_alignment": float(np.mean(cosv[mov])) if mov.any() else float("nan"), "moving_frac": float(mov.mean()),
         "normal_spread_median_deg": float(np.median(spread)), "normal_spread_p90_deg": float(np.percentile(spread, 90)),
         "normal_tilt_median_deg": float(np.median(tilt)), "normal_local": n_mean.tolist(),
-        "patch_coherence_median": float(np.median(coh)),
+        "patch_coherence_median": float(np.median(coh)), "hands_face_angle_deg": faces_deg,
         "contact_surface_dist_median_m": float(np.median(dist)), "contact_surface_dist_max_m": float(dist.max()),
         "approach_available_s": s / fps, "retreat_available_s": (clip.n - e) / fps,
     }
+    # extent of the touched face in the world at first contact (height adaptation, spec v0.7 §5.1)
+    fp = obj.face_points(np.median(loc, 0), n_mean)
+    fz = obj.world_points(clip.obj_pos[s], clip.obj_rot_xyzw[s], fp)[:, 2] if len(fp) else np.zeros(0)
+    out["face_z_min_m"] = float(fz.min()) if fz.size else float("nan")
+    out["face_z_max_m"] = float(fz.max()) if fz.size else float("nan")
     k = int(round(search_s * fps))
     for name, fr, ref, nrm in (("approach", np.arange(s - 1, max(-1, s - 1 - k), -1), s, -n_mean),
                                ("retreat", np.arange(e, min(clip.n, e + k)), e - 1, n_mean)):
@@ -309,3 +345,46 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
                 dt = j / fps
         out[f"{name}_angle_deg"], out[f"{name}_time_s"] = ang, dt
     return out
+
+
+
+# ------------------------------------------------------------------------------ grip (push / press vs grasp)
+THUMB = ("Thumb1", "Thumb2", "Thumb3")
+FINGERS4 = tuple(f"{f}{k}" for f in ("Index", "Middle", "Ring", "Pinky") for k in (1, 2, 3))
+TIPS = ("Index3", "Middle3", "Ring3", "Pinky3", "Thumb3")
+
+
+def finger_motion_std_m(clip: Clip, side: str = "R") -> float:
+    """Mean over the fingertips of the std of the tip position in the wrist frame (m). ~0 when the data carries a
+    fixed hand shape (no finger capture), several mm to cm with real finger motion."""
+    w = BODY_INDEX[f"{side}_Wrist"]
+    Rw = R.from_quat(clip.body_rot_xyzw[:, w])
+    out = []
+    for tip in TIPS:
+        rel = clip.body_pos[:, BODY_INDEX[f"{side}_{tip}"]] - clip.body_pos[:, w]
+        out.append(np.linalg.norm(Rw.inv().apply(rel).std(0)))
+    return float(np.mean(out))
+
+
+def grip_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: str, patch_m: float = 0.03) -> dict:
+    """Does the hand wrap the object (grasp) or lie on it (press)? Per contact frame of each hand of the mode, the
+    thumb and the other fingers both flagged, on surface patches whose normals point apart by more than 90 deg
+    (thumb and fingers on opposite sides of a handle or an edge) = grasp. ``grasp_frac``: share of the segment's
+    frames where some hand of the mode grasps; ``grip`` = "grasp" when >= 0.5, else "press"."""
+    s, e = seg
+    sides = ("L", "R") if side == "B" else (side,)
+    fl = clip.contact_body[s:e] == 1
+    grasp = np.zeros(e - s, bool)
+    for sd in sides:
+        th = [BODY_INDEX[f"{sd}_{b}"] for b in THUMB]
+        fi = [BODY_INDEX[f"{sd}_{b}"] for b in FINGERS4]
+        both = fl[:, th].any(1) & fl[:, fi].any(1)
+        for i in np.flatnonzero(both):
+            t = s + i
+            pt = clip.body_pos[t, th][fl[i, th]].mean(0)
+            pf = clip.body_pos[t, fi][fl[i, fi]].mean(0)
+            loc = obj.to_local(np.stack([pt, pf])[None], clip.obj_pos[t], clip.obj_rot_xyzw[t])[0]
+            n = obj.patch_normals(loc, patch_m)[2]
+            grasp[i] |= bool(n[0] @ n[1] < 0.0)
+    frac = float(grasp.mean()) if e > s else 0.0
+    return {"grasp_frac": frac, "grip": "grasp" if frac >= 0.5 else "press"}

@@ -58,7 +58,7 @@ def test_modes_both_hands():
 def test_smplx_params_root_frame_permutation():
     c = make_clip()
     p = om.smplx_params(c)
-    assert p["pose_body"].shape == (60, 63) and p["betas"].shape == (10,)
+    assert p["pose_body"].shape == (60, 63) and p["betas"].shape == (16,)
     expect = (R.identity() * om._YUP_TO_ZUP).as_rotvec()
     assert np.allclose(p["root_orient"][0], expect, atol=1e-6)
     # per-joint reorder [1, 2, 0]: dof triple (a, b, c) -> (b, c, a)

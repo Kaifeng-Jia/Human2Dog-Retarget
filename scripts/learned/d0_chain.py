@@ -13,6 +13,7 @@ Clips are chosen explicitly, after looking at the data profile (scripts/common/p
 
 Usage:
   python scripts/learned/d0_chain.py --run-id R00x_d0 --clips sub10_largebox_011 sub3_floorlamp_004
+  python scripts/learned/d0_chain.py --run-id R00x_d0 --clips-file outputs/R00x_tasks/clips_omomo.txt
 """
 
 from __future__ import annotations
@@ -39,7 +40,9 @@ from h2d.learned.human_to_g1 import retarget_to_g1  # noqa: E402
 from h2d.learned.prior import load_motion, run_xmorph, yaw_from_xyzw  # noqa: E402
 from h2d.paths import data_path  # noqa: E402
 
-WRIST_TOL_M = 0.08
+# Mean shape vs the recorded skeleton gives a few cm (up to 8.3 cm for a large subject, R012 sub3_largetable_028); a
+# wrong body-frame convention gives tens of cm. 0.10 m keeps that separation.
+WRIST_TOL_M = 0.10
 
 
 def hand_center(clip, side: str) -> np.ndarray:
@@ -145,7 +148,9 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
 def main() -> int:
     ap = argparse.ArgumentParser()
     add_run_args(ap)
-    ap.add_argument("--clips", nargs="+", required=True)
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--clips", nargs="+")
+    g.add_argument("--clips-file", help="text file, one clip name per line (e.g. prepare_tasks.py clips_omomo.txt)")
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--root", default=None)
     args = ap.parse_args()
@@ -156,25 +161,29 @@ def main() -> int:
     except ProvenanceError as e:
         print(f"[refused] {e}", file=sys.stderr)
         return 2
-    names = list(args.clips)
+    names = list(args.clips) if args.clips else [ln.strip() for ln in Path(args.clips_file).read_text().splitlines()
+                                                    if ln.strip()]
     root = Path(args.root).expanduser() if args.root else data_path("omomo_new")
     smplx_root = data_path("smplx_models")
     out = Path(args.out or f"outputs/{args.run_id}")
     out.mkdir(parents=True, exist_ok=True)
 
     robot = B2Z1Robot()
-    fig, axes = plt.subplots(len(names), 4, figsize=(20, 3.8 * len(names)), squeeze=False)
+    (out / "figures").mkdir(exist_ok=True)
     results = {"provenance": prov, "device": args.device, "smplx_root": str(smplx_root), "clips": {}}
     for i, name in enumerate(names):
         try:
-            results["clips"][name] = run_clip(name, root, smplx_root, out, args.device, robot, axes[i])
+            fig, axes = plt.subplots(1, 4, figsize=(20, 3.8), squeeze=False)      # one small figure per clip
+            results["clips"][name] = run_clip(name, root, smplx_root, out, args.device, robot, axes[0])
+            fig.tight_layout()
+            fig.savefig(out / "figures" / f"{name}.png", dpi=80)
+            plt.close(fig)
         except Exception as e:  # noqa: BLE001 - report and continue
             import traceback
 
+            plt.close("all")
             results["clips"][name] = {"name": name, "pass": False, "error": traceback.format_exc()[-3000:]}
             print(f"[error] {name}: {e}", file=sys.stderr)
-    fig.tight_layout()
-    fig.savefig(out / "d0_chain.png", dpi=100)
     results["pass"] = all(r.get("pass") for r in results["clips"].values())
     (out / "summary.json").write_text(json.dumps(results, indent=2, default=float), encoding="utf-8")
 
@@ -200,7 +209,7 @@ def main() -> int:
             f"{r['prior']['path_g1_m']:.2f} / {r['prior']['path_b2_m']:.2f} | {r['prior']['turn_g1_deg']:.0f} / "
             f"{r['prior']['turn_b2_deg']:.0f} | {r['pass']} |"
         )
-    lines += ["", "![d0](d0_chain.png)", ""]
+    lines += ["", "Figures: `figures/<clip>.png` (one per clip).", ""]
     (out / "report.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines[4:-2]))
     return 0 if results["pass"] else 1

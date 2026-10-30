@@ -10,7 +10,6 @@ source_run: R005_push_candidates
 source_commit: 01985ab
 confirmed_by: Kevin
 confirmed_on: 2026-10-25
-side: R
 segments:
   - id: trashcan_side
     dataset: omomo_new
@@ -24,6 +23,7 @@ segments:
     object_moves_m: 2.23
     approach_retreat_deg: [74.3, 45.3]
     r005_rank: 2
+    mode: R                    # virtual hand (spec v0.6 §5.1)
   - id: smallbox_top
     dataset: omomo_new
     clip: sub7_smallbox_041
@@ -36,6 +36,7 @@ segments:
     object_moves_m: 1.83
     approach_retreat_deg: [30.8, 24.5]
     r005_rank: 4
+    mode: R                    # virtual hand (spec v0.6 §5.1)
   - id: largebox_top
     dataset: omomo_new
     clip: sub7_largebox_041
@@ -48,3 +49,4 @@ segments:
     object_moves_m: 1.60
     approach_retreat_deg: [42.3, 31.6]
     r005_rank: 6
+    mode: R                    # virtual hand (spec v0.6 §5.1)

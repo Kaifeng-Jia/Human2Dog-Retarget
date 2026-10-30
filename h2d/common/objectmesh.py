@@ -265,6 +265,27 @@ class ObjectMesh:
             n[i] = m / max(coh[i], 1e-12)
         return q, np.linalg.norm(p - q, axis=1), n, coh
 
+    def face_points(self, c_local: np.ndarray, n_local: np.ndarray, plane_tol_m: float = 0.015,
+                    normal_tol_deg: float = 20.0) -> np.ndarray:
+        """Surface samples of the flat face through ``c_local`` with normal ``n_local``: on the plane (within
+        ``plane_tol_m``), with a face normal within ``normal_tol_deg`` (either winding), and connected to the sample
+        nearest ``c_local`` (neighbours within 3 sample spacings)."""
+        from scipy.sparse.csgraph import connected_components
+
+        pts, F, _ = self._samples()
+        c, n = np.asarray(c_local, float), np.asarray(n_local, float) / np.linalg.norm(n_local)
+        m = (np.abs((pts - c) @ n) < plane_tol_m) & (np.abs(self.face_normals[F] @ n) > np.cos(np.radians(normal_tol_deg)))
+        P = pts[m]
+        if len(P) == 0:
+            return P
+        tree = cKDTree(P)
+        pairs = tree.query_pairs(3 * self.sample_spacing, output_type="ndarray")
+        import scipy.sparse as sp
+
+        g = sp.coo_matrix((np.ones(len(pairs)), (pairs[:, 0], pairs[:, 1])), shape=(len(P), len(P)))
+        _, lab = connected_components(g, directed=False)
+        return P[lab == lab[int(tree.query(c)[1])]]
+
 
 # ----------------------------------------------------------------------------- relative object motion
 def tilt_and_yaw(rot_xyzw: np.ndarray, ref: int = 0) -> tuple[np.ndarray, np.ndarray]:
