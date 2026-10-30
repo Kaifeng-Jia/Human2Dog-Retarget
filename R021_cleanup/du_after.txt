@@ -1,0 +1,19 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p6  345G  226G  102G  70% /
+500K	outputs/R001_b01
+500K	outputs/R002_b01_mj311
+144K	outputs/R002_omomo_new_format
+340K	outputs/R002_xmorph_smoke
+19M	outputs/R003_profile
+17M	outputs/R004b_force_profile
+15M	outputs/R004_force_profile
+5.5M	outputs/R005_push_candidates
+9.1M	outputs/R015_candidates
+4.4M	outputs/R015_tasks
+2.7M	outputs/R020_d0
+16M	outputs/R020_reach
+132K	outputs/R021_cleanup
+1.6G	external
+6.9G	/home/kevin/.cache/pip
+# runner addition: conda is not on PATH, so $(conda info --base) was empty; h2d env lives in holosoma's miniconda:
+2.8G	/home/kevin/.holosoma_deps/miniconda3/pkgs

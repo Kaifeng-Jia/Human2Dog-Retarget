@@ -1,0 +1,47 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p6  345G  226G  102G  70% /
+101M	outputs/_drive_upload
+500K	outputs/R001_b01
+500K	outputs/R002_b01_mj311
+144K	outputs/R002_omomo_new_format
+340K	outputs/R002_xmorph_smoke
+19M	outputs/R003_profile
+17M	outputs/R004b_force_profile
+15M	outputs/R004_force_profile
+5.5M	outputs/R005_push_candidates
+8.8M	outputs/R007_candidates
+908K	outputs/R007_d0
+3.0M	outputs/R007_tasks
+4.0M	outputs/R008_d0
+684K	outputs/R008_reach
+4.9M	outputs/R010_candidates
+1.8M	outputs/R010_d0
+908K	outputs/R010_reach
+1.8M	outputs/R010_tasks
+40K	outputs/R010_workspace
+11M	outputs/R012_candidates
+5.4M	outputs/R012_d0
+20K	outputs/R012_reach
+3.7M	outputs/R012_tasks
+11M	outputs/R013_candidates
+3.4M	outputs/R013_d0
+732K	outputs/R013_reach
+3.7M	outputs/R013_tasks
+5.0M	outputs/R014_candidates
+1.6M	outputs/R014_d0
+5.5M	outputs/R014_reach
+3.0M	outputs/R014_tasks
+9.1M	outputs/R015_candidates
+2.7M	outputs/R015_d0
+8.0M	outputs/R015_reach
+4.4M	outputs/R015_tasks
+10M	outputs/R016_reach
+12M	outputs/R017_reach
+13M	outputs/R018_videos
+2.7M	outputs/R020_d0
+16M	outputs/R020_reach
+8.0K	outputs/R021_cleanup
+1.6G	external
+6.9G	/home/kevin/.cache/pip
+# runner addition: conda is not on PATH, so $(conda info --base) was empty; h2d env lives in holosoma's miniconda:
+2.8G	/home/kevin/.holosoma_deps/miniconda3/pkgs
