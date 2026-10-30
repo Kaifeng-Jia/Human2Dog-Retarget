@@ -6,7 +6,9 @@ never pip-installed or modified.
 
 Two facts handled here (both verified on the released B2-Z1 mixed checkpoint):
 * The output root trajectory starts at xy = 0 (X-Morph integrates velocities), so the source
-  start pose is stored in a sidecar for start-anchored registration (spec O1).
+  start pose is stored in a sidecar for start-anchored registration (spec O1). GMR scales the G1's scene about the
+  world origin (human_to_g1.py), so the source start is taken back to the human's scene (xy / world_scale; until
+  v0.2.0 it was the G1's own, 0.2-0.6 m off).
 * The strided-conv encoder can return a few extra frames (281 -> 284); we keep the first n_in
   frames and record the raw length.
 """
@@ -33,13 +35,14 @@ class Motion:
     root_pos: np.ndarray       # (T, 3)
     root_rot_xyzw: np.ndarray  # (T, 4)
     dof_pos: np.ndarray        # (T, n)
+    world_scale: float = 1.0   # G1 from GMR: its scene is the human's scaled by this about the world origin
 
     @property
     def n(self) -> int:
         return int(self.root_pos.shape[0])
 
     def head(self, n: int) -> "Motion":
-        return Motion(self.fps, self.root_pos[:n], self.root_rot_xyzw[:n], self.dof_pos[:n])
+        return Motion(self.fps, self.root_pos[:n], self.root_rot_xyzw[:n], self.dof_pos[:n], self.world_scale)
 
 
 def load_motion(pkl: str | Path) -> Motion:
@@ -50,6 +53,7 @@ def load_motion(pkl: str | Path) -> Motion:
         root_pos=np.asarray(d["root_pos"], dtype=np.float64),
         root_rot_xyzw=np.asarray(d["root_rot"], dtype=np.float64),
         dof_pos=np.asarray(d["dof_pos"], dtype=np.float64),
+        world_scale=float(d.get("world_scale", 1.0)),
     )
 
 
@@ -123,7 +127,8 @@ def run_xmorph(src_pkl: str | Path, out_pkl: str | Path, device: str = "cuda:0",
         "src_pkl": str(src_pkl),
         "src_n_frames": src.n,
         "src_fps": src.fps,
-        "src_root_pos0": src.root_pos[0].tolist(),
+        "src_root_pos0": np.r_[src.root_pos[0, :2] / src.world_scale, src.root_pos[0, 2]].tolist(),
+        "src_world_scale": src.world_scale,
         "src_yaw0": float(yaw_from_xyzw(src.root_rot_xyzw[0])),
         "out_pkl": str(out_pkl),
         "out_fps": out.fps,

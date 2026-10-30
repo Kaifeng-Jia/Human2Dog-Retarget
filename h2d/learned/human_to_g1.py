@@ -2,6 +2,17 @@
 
 GMR's own loaders are used unchanged (load_smplx_file / get_smplx_data_offline_fast / retarget with
 offset_to_ground=True), so the G1 files match what X-Morph's training data was built from.
+
+Two facts about where the G1 ends up (Kevin, R018 videos: the G1 sank into the object by a near-constant amount):
+
+* SMPL-X adds its rest pelvis joint to ``trans`` unrotated, so ``trans`` is the recorded pelvis minus that joint
+  (until v0.2.0 it was the recorded pelvis: the human reached GMR 0.35 m off along world -y);
+* GMR scales the whole scene about the world origin by its pelvis scale (0.83 for the mean shape), which keeps the
+  feet planted but leaves the G1 at 0.83 x the human's position next to an unscaled object. The scale is saved as
+  ``world_scale``: the G1 shares a scene with the object scaled by it.
+
+X-Morph sees neither: it reads joint angles, the root velocity in the heading frame and the turn rate, and
+integrates its output from the origin (prior.py); the dog's placement comes from the human and the object.
 """
 
 from __future__ import annotations
@@ -24,16 +35,24 @@ def write_smplx_npz(params: dict, path: Path) -> Path:
     return path
 
 
-def retarget_to_g1(clip: Clip, params: dict, smplx_root: Path, out_pkl: Path) -> dict:
-    """Run GMR SMPL-X -> unitree_g1 and save {fps, root_pos, root_rot (xyzw), dof_pos}.
+def pelvis_rest(smplx_root: Path, gender: str) -> np.ndarray:
+    """SMPL-X pelvis joint at zero pose, zero translation and mean shape."""
+    import smplx
 
-    Returns info incl. a convention self-check: pelvis-relative wrist positions of the mean-shape
-    SMPL-X reconstruction vs the recorded skeleton. Shape alone gives a few cm; a wrong body-frame
-    convention gives tens of cm.
+    return smplx.create(str(smplx_root), "smplx", gender=gender, use_pca=False)().joints[0, 0].detach().numpy()
+
+
+def retarget_to_g1(clip: Clip, params: dict, smplx_root: Path, out_pkl: Path) -> dict:
+    """Run GMR SMPL-X -> unitree_g1 and save {fps, root_pos, root_rot (xyzw), dof_pos, world_scale}.
+
+    Returns info incl. two self-checks against the recorded skeleton: the SMPL-X pelvis (absolute) and the
+    pelvis-relative wrist positions of the mean-shape reconstruction. Shape alone gives a few cm at the wrists; a
+    wrong body-frame convention gives tens of cm.
     """
     from general_motion_retargeting import GeneralMotionRetargeting as GMR
     from general_motion_retargeting.utils.smpl import get_smplx_data_offline_fast, load_smplx_file
 
+    params = {**params, "trans": (params["trans"] - pelvis_rest(smplx_root, str(params["gender"]))).astype(np.float32)}
     npz = write_smplx_npz(params, out_pkl.with_name(out_pkl.stem + "_smplx.npz"))
     smplx_data, body_model, smplx_output, height = load_smplx_file(str(npz), str(smplx_root))
     frames, fps = get_smplx_data_offline_fast(smplx_data, body_model, smplx_output, tgt_fps=30)
@@ -48,6 +67,7 @@ def retarget_to_g1(clip: Clip, params: dict, smplx_root: Path, out_pkl: Path) ->
         "root_pos": qs[:, :3],
         "root_rot": qs[:, 3:7][:, [1, 2, 3, 0]],   # wxyz -> xyzw (as GMR's own saver)
         "dof_pos": qs[:, 7:],
+        "world_scale": float(gmr.human_scale_table[gmr.human_root_name]),
         "local_body_pos": None,
         "link_body_list": None,
     }
@@ -73,6 +93,7 @@ def retarget_to_g1(clip: Clip, params: dict, smplx_root: Path, out_pkl: Path) ->
         "frames_g1": int(len(qs)),
         "fps": float(fps),
         "human_height_used_m": float(height),
+        "world_scale": motion["world_scale"],
         "gmr_runtime_s": runtime,
         "convention_check_pelvis_relative_wrist_error": err,
         "pelvis_offset_smplx_minus_recorded_median_m": np.median(pelvis_offset, axis=0).tolist(),

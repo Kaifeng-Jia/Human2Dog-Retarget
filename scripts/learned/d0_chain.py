@@ -43,6 +43,7 @@ from h2d.paths import data_path  # noqa: E402
 # Mean shape vs the recorded skeleton gives a few cm (up to 8.3 cm for a large subject, R012 sub3_largetable_028;
 # 9.7 and 10.7 cm for sub3 in R015); a wrong body-frame convention gives tens of cm. 0.12 m keeps that separation.
 WRIST_TOL_M = 0.12
+PELVIS_TOL_M = 0.01      # SMPL-X pelvis vs the recorded one (until v0.2.0: 0.35 m, the rest joint was not removed)
 
 
 def hand_center(clip, side: str) -> np.ndarray:
@@ -104,6 +105,7 @@ def run_clip(name: str, root: Path, smplx_root: Path, out: Path, device: str, ro
         "frames_consistent": g1_info["frames_g1"] == clip.n and side["out_n_frames"] == g1_info["frames_g1"],
         "pelvis_z_sane": 0.6 <= stats["pelvis_stand_z_m"] <= 1.2,
         "convention_wrist_median_ok": max(w["median_m"] for w in wrist.values()) <= WRIST_TOL_M,
+        "pelvis_matches_recorded": float(np.abs(g1_info["pelvis_offset_smplx_minus_recorded_median_m"]).max()) <= PELVIS_TOL_M,
     }
     rec["checks"] = checks
     rec["pass"] = bool(all(checks.values()))

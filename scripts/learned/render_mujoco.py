@@ -4,7 +4,9 @@
 A 2 x 3 grid rendered by MuJoCo in one scene (B2-Z1, G1, the object as a mocap mesh) from one fixed camera:
 
 * top row, the pipeline: the human (capsule skeleton), the G1 that GMR retargets the human to, and the B2-Z1 as
-  X-Morph outputs it (body on the prior placement ``reach_fit``, arm as predicted);
+  X-Morph outputs it (body on the prior placement ``reach_fit``, arm as predicted). GMR scales the human's scene
+  about the world origin (``world_scale`` in the G1 file, h2d/learned/human_to_g1.py), so the G1 is shown with the
+  object scaled the same way (Kevin, R018: next to the full-size object it sank in);
 * bottom row, the comparison: the B2-Z1 with its body placed by each layout (default: prior ``reach_fit``, script
   ``reach_track``, interaction mesh ``mesh``) and the arm at the IK solution of one problem (default ``pos_dir``).
 
@@ -48,21 +50,22 @@ NAMES = {"reach_fit": "prior placement + arm IK", "reach_track": "script: body f
 RED = np.array([0.85, 0.2, 0.15, 1.0])
 
 
-def build_model(obj, width: int, height: int) -> mujoco.MjModel:
-    """The B2-Z1 scene (its qpos first, as in ``B2Z1Robot``) plus the G1 (prefix ``g1_``) and the object as a
-    visual-only mocap mesh."""
+def build_model(obj, width: int, height: int, g1_scale: float) -> mujoco.MjModel:
+    """The B2-Z1 scene (its qpos first, as in ``B2Z1Robot``) plus the G1 (prefix ``g1_``) and the object as
+    visual-only mocap meshes: full size, and scaled for the G1."""
     cfg = load_config("b2z1.yaml")["xmorph"]
     spec = mujoco.MjSpec.from_file(str(xmorph_path(cfg["model_xml"])))
     g1 = mujoco.MjSpec.from_file(str(xmorph_path(cfg["g1_model_xml"])))
     spec.worldbody.add_frame().attach_body(g1.worldbody.first_body(), "g1_", "")
     spec.visual.global_.offwidth, spec.visual.global_.offheight = width, height
-    mesh = spec.add_mesh()
-    mesh.name, mesh.uservert, mesh.userface = "hoi_object", obj.verts.ravel().tolist(), obj.faces.ravel().tolist()
-    body = spec.worldbody.add_body()
-    body.name, body.mocap = "hoi_object", True
-    g = body.add_geom()
-    g.type, g.meshname, g.contype, g.conaffinity, g.density = mujoco.mjtGeom.mjGEOM_MESH, "hoi_object", 0, 0, 0
-    g.rgba = [0.82, 0.62, 0.38, 1.0]
+    for name, scale in (("hoi_object", 1.0), ("hoi_object_g1", g1_scale)):
+        mesh = spec.add_mesh()
+        mesh.name, mesh.uservert, mesh.userface = name, (scale * obj.verts).ravel().tolist(), obj.faces.ravel().tolist()
+        body = spec.worldbody.add_body()
+        body.name, body.mocap = name, True
+        g = body.add_geom()
+        g.type, g.meshname, g.contype, g.conaffinity, g.density = mujoco.mjtGeom.mjGEOM_MESH, name, 0, 0, 0
+        g.rgba = [0.82, 0.62, 0.38, 1.0]
     return spec.compile()
 
 
@@ -103,9 +106,10 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
     c = task["in_contact"].astype(bool)
     fr, ci = task["frames"], np.flatnonzero(c)
     obj = load_object(task["object"])
-    model = build_model(obj, args.width, args.height)
+    gs = g1.world_scale if g1 is not None else 1.0
+    model = build_model(obj, args.width, args.height, gs)
     data = mujoco.MjData(model)
-    mocap = model.body_mocapid[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "hoi_object")]
+    mocap = [model.body_mocapid[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, n)] for n in ("hoi_object", "hoi_object_g1")]
     g1q = int(model.jnt_qposadr[[j for j in range(model.njnt) if model.jnt_type[j] == mujoco.mjtJoint.mjJNT_FREE][1]])
     arm_geoms = [g for g in range(model.ngeom)
                  if mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, model.geom_bodyid[g]) in MOVING_ARM]
@@ -136,9 +140,11 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
         return q
 
     def tile(i, j, kind, lay=None):
-        cam.lookat[:] = look[j]
-        data.mocap_pos[mocap] = task["obj_pos"][i]
-        data.mocap_quat[mocap] = R.from_quat(task["obj_rot_xyzw"][i]).as_quat(scalar_first=True)
+        k, sc = (1, gs) if kind == "g1" else (0, 1.0)            # the G1 tile: GMR's scaled scene
+        cam.lookat[:] = np.r_[sc * look[j, :2], look[j, 2]]
+        data.mocap_pos[:] = (0.0, 0.0, -50.0)
+        data.mocap_pos[mocap[k]] = sc * task["obj_pos"][i]
+        data.mocap_quat[mocap[k]] = R.from_quat(task["obj_rot_xyzw"][i]).as_quat(scalar_first=True)
         q = model.qpos0.copy()
         q[2] = q[g1q + 2] = -50.0                                # both robots out of sight
         ok = True
@@ -163,12 +169,14 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
             for k, par in enumerate(BODY_PARENTS):
                 if par >= 0:
                     add_capsule(scn, sk[par], sk[k], 0.025, (0.16, 0.47, 0.84, 1.0))
-        add_sphere(scn, task["target_world"][i], 0.025, (0.1, 0.1, 0.1, 1.0))
+        if kind != "g1":
+            add_sphere(scn, task["target_world"][i], 0.025, (0.1, 0.1, 0.1, 1.0))
         img = renderer.render()
         if kind == "human":
             return label(img, ["human (OMOMO)", f"t = {(fr[i] - fr[ci[0]]) / task['fps']:.1f} s"])
         if kind == "g1":
-            return label(img, ["G1 (GMR retarget of the human)" if g1 is not None else "G1: no motion file"])
+            return label(img, ["G1 (GMR retarget of the human)", f"GMR scales the scene x{gs:.2f}"] if g1 is not None
+                         else ["G1: no motion file"])
         if kind == "xmorph":
             return label(img, ["B2-Z1 straight out of X-Morph", f"arm as predicted: gripper {gap:.0f} cm from the target"])
         r = rel[lay]
