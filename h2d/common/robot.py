@@ -61,6 +61,7 @@ class B2Z1Robot:
         self.contact_body = self._bid(tc["contact_body"])
         self.r_c = np.asarray(tc["contact_site_local"], dtype=np.float64)
         self.approach_local = np.asarray(tc["approach_axis_local"], dtype=np.float64)
+        self.jaw_local = np.asarray(tc["jaw_axis_local"], dtype=np.float64)
 
         jr = np.array([m.jnt_range[self._jid(n)] for n in self.joint_order])
         self.joint_lower, self.joint_upper = jr[:, 0], jr[:, 1]
@@ -117,9 +118,12 @@ class B2Z1Robot:
         R, p = self.tool_pose()
         return p + R @ self.r_c
 
-    def approach_axis(self) -> np.ndarray:
+    def tool_axis(self, local) -> np.ndarray:
         R, _ = self.tool_pose()
-        return R @ self.approach_local
+        return R @ np.asarray(local, dtype=np.float64)
+
+    def approach_axis(self) -> np.ndarray:
+        return self.tool_axis(self.approach_local)
 
     def contact_site_jacobian(self) -> np.ndarray:
         """(3, 6) translational Jacobian of the contact site w.r.t. the arm joints."""
@@ -127,13 +131,14 @@ class B2Z1Robot:
         mujoco.mj_jac(self.model, self.data, jacp, None, self.contact_site(), self.tool_body)
         return jacp[:, self.arm_dofadr]
 
-    def approach_axis_jacobian(self) -> np.ndarray:
-        """(3, 6) Jacobian of the world approach axis w.r.t. the arm joints."""
+    def tool_axis_jacobian(self, local) -> np.ndarray:
+        """(3, 6) Jacobian of a world tool axis R a_local w.r.t. the arm joints: d(R a)/dq_k = omega_k x (R a)."""
         jacr = np.zeros((3, self.model.nv))
         mujoco.mj_jacBody(self.model, self.data, None, jacr, self.tool_body)
-        a = self.approach_axis()
-        # d(R a_local)/dq_k = omega_k x (R a_local)
-        return np.cross(jacr[:, self.arm_dofadr].T, a).T
+        return np.cross(jacr[:, self.arm_dofadr].T, self.tool_axis(local)).T
+
+    def approach_axis_jacobian(self) -> np.ndarray:
+        return self.tool_axis_jacobian(self.approach_local)
 
     # ------------------------------------------------------------- geometry
     def geoms(self, bodies: list[str] | None = None) -> list[GeomInfo]:

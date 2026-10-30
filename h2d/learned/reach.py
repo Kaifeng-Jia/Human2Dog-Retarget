@@ -5,7 +5,9 @@ Per frame the base and legs stay at the (registered) prior; only the 6 arm joint
 
 * position: contact site p_c(q) -> target y (3 residuals);
 * position + direction (two-point version, spec §5.2): p_c -> y and p_c + l x_tool -> y - l n (6 residuals),
-  l = 0.05 m, n the outward normal; passes when the tool axis is within ``max_angle_deg`` of -n.
+  l = 0.05 m, n the outward normal; passes when the tool axis is within ``max_angle_deg`` of -n;
+* roll (spec v0.8 §5.4, soft): with a reference jaw axis z_ref (from the human palm), w_roll (z(q) - z_ref) is added
+  to the direction problems; it shapes the solution but does not decide feasibility.
 
 Solver: projected Levenberg-Marquardt from several starts (previous frame's solution, the prior, then seeded
 random configurations until one is feasible). A failure of this local search is only "no feasible solution found
@@ -35,6 +37,7 @@ class IKResult:
     feasible: bool
     start: str
     iters: int
+    roll_deg: float = float("nan")
 
 
 @dataclass
@@ -55,8 +58,9 @@ class ArmIK:
 
     def __init__(self, robot: B2Z1Robot, coll: RobotCollision, pos_tol_m: float = 0.01, max_angle_deg: float = 15.0,
                  n_random: int = 16, seed: int = 0, max_iter: int = 60, margin_m: float = 0.01,
-                 w_avoid: float = 1.0, n_random_light: int = 3, w_prev: float = 0.01):
+                 w_avoid: float = 1.0, n_random_light: int = 3, w_prev: float = 0.01, w_roll: float = 0.02):
         self.r, self.coll = robot, coll
+        self.w_roll, self.z_ref = w_roll, None
         self.pos_tol, self.max_angle = pos_tol_m, max_angle_deg
         self.n_random, self.n_light, self.max_iter = n_random, n_random_light, max_iter
         self.margin, self.w, self.w_prev = margin_m, w_avoid, w_prev
@@ -111,6 +115,9 @@ class ArmIK:
         if use_dir:
             a, Ja = self.r.approach_axis(), self.r.approach_axis_jacobian()
             e, J = np.r_[p - y, (p + LEVER_M * a) - (y - LEVER_M * n)], np.vstack([Jp, Jp + LEVER_M * Ja])
+            if self.z_ref is not None:
+                z, Jz = self.r.tool_axis(self.r.jaw_local), self.r.tool_axis_jacobian(self.r.jaw_local)
+                e, J = np.r_[e, self.w_roll * (z - self.z_ref)], np.vstack([J, self.w_roll * Jz])
         else:
             e, J = p - y, Jp
         ea, Jav = self._avoid(obj)
@@ -150,13 +157,17 @@ class ArmIK:
         ang = float(np.degrees(np.arccos(np.clip(self.r.approach_axis() @ (-n), -1, 1))))
         col = self.coll.check(obj.hull if obj else None, obj.to_local if obj else None)
         ok = err <= self.pos_tol and col["collision_free"] and (not use_dir or ang <= self.max_angle)
-        return err, ang, col, ok
+        roll = float("nan") if self.z_ref is None else \
+            float(np.degrees(np.arccos(np.clip(self.r.tool_axis(self.r.jaw_local) @ self.z_ref, -1, 1))))
+        return err, ang, col, ok, roll
 
     # ------------------------------------------------------------------ multi-start
     def solve(self, y, n, q_prior, q_prev=None, use_dir=False, budget_rad: float | None = None,
-              obj: ObjectPose | None = None, full: bool = True) -> IKResult:
+              obj: ObjectPose | None = None, full: bool = True, z_ref=None) -> IKResult:
         """``full``: all ``n_random`` random starts (else ``n_random_light``); the caller uses the full search on the
-        first frame, every few frames and wherever the warm start fails after a feasible frame."""
+        first frame, every few frames and wherever the warm start fails after a feasible frame. ``z_ref``: reference
+        jaw axis (world, unit) for the soft roll term of the direction problems."""
+        self.z_ref = np.asarray(z_ref, float) if use_dir and z_ref is not None and np.all(np.isfinite(z_ref)) else None
         lo, hi = self.r.arm_lower.copy(), self.r.arm_upper.copy()
         if budget_rad is not None:
             lo, hi = np.maximum(lo, q_prior - budget_rad), np.minimum(hi, q_prior + budget_rad)
@@ -165,8 +176,8 @@ class ArmIK:
         best = None
         for name, q0 in starts:
             q, it = self._local(q0, lo, hi, y, n, use_dir, obj, q_prev)
-            err, ang, col, ok = self._evaluate(q, y, n, use_dir, obj)
-            res = IKResult(q, err, ang, col, ok, name, it)
+            err, ang, col, ok, roll = self._evaluate(q, y, n, use_dir, obj)
+            res = IKResult(q, err, ang, col, ok, name, it, roll)
             key = (not ok, err if not ok else 0.0, float(np.sum((q - q_prior) ** 2)))
             if best is None or key < best[0]:
                 best = (key, res)

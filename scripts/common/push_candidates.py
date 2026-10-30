@@ -72,7 +72,8 @@ def main() -> int:
                     help="selection config (e.g. configs/candidate_selection.yaml): yaw limit and contact-height band")
     args = ap.parse_args()
     sel = yaml.safe_load(Path(args.selection).read_text()) if args.selection else {}
-    crit = cd.criteria(sel.get("max_yaw_deg", 20.0), sel.get("reach_band"), tuple(sel.get("interactions", ["push"])))
+    crit = cd.criteria(sel.get("max_yaw_deg", 20.0), sel.get("reach_band"), tuple(sel.get("interactions", ["push"])),
+                       tuple(sel.get("grips", ())))
     needs = tuple(sorted({n for d in args.datasets for n in SOURCES[d].needs}))
     try:
         prov = start_run(args.run_id, needs=needs, configs=("data.yaml", "external.yaml"),

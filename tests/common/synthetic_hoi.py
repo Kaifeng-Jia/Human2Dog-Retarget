@@ -65,10 +65,24 @@ def hand_offsets(side: str) -> np.ndarray:
     return base[idx] - base[om.BODY_INDEX[f"{side}_Wrist"]]
 
 
+def flat_hand(side: str, palm, fingers) -> np.ndarray:
+    """Offsets from the wrist (HAND_BODIES order) of a flat hand whose palm faces ``palm``: knuckles 8.5 cm along
+    ``fingers``, spread across the palm, the thumb on the index side."""
+    n, f = np.asarray(palm, float), np.asarray(fingers, float)
+    t = np.cross(f, n) if side == "R" else np.cross(n, f)          # towards the thumb
+    spread = {"Index": 0.02, "Middle": 0.0, "Ring": -0.02, "Pinky": -0.04}          # middle finger on the axis
+    out = [np.zeros(3)]
+    for b in om.FINGERS:
+        g, k = b[:-1], int(b[-1])
+        out.append(0.04 * f + (0.05 + 0.025 * k) * t if g == "Thumb" else (0.06 + 0.025 * k) * f + spread[g] * t)
+    return np.array(out)
+
+
 def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bool = True,
                push_face: str = "side", push_hands: str = "R") -> np.ndarray:
-    """``push_face``: "side" = palm on the -x face, in and out along x; "top" = palm on the top face 10 cm from
-    its -x edge (pushing by friction, as many OMOMO_new low-box pushes do), in and out along z.
+    """``push_face``: "side" = palm on the -x face, fingers up, in and out along x; "top" = palm on the top face
+    10 cm from its -x edge, fingers along +x (pushing by friction, as many OMOMO_new low-box pushes do), in and out
+    along z. The pushing hands are flat with the palm on the face (``flat_hand``).
     ``push_hands``: "R" = right hand; "B" = both hands on that face, 8 cm left and right of the middle;
     "squeeze" = left hand on the +y face, right hand on the -y face (opposite faces), each in and out along its
     normal."""
@@ -103,18 +117,25 @@ def make_array(T: int = 240, obj: str = "largebox", push: bool = True, carry: bo
         def on_face(i, dd=dd, sh=sh):
             return box[i] + q.apply(face_point(q.inv().apply(dd), obj)) + sh + 0.012 * dd
 
-        def hand(p, side=side):
-            return p + hand_offsets(side) * np.array([1, 1, -1]) * 0.8
+        top = push_face == "top" and dd[2]
+        fa = np.array([1.0, 0, -1.0]) / np.sqrt(2) if top else -dd   # forearm: forward-down onto a top, else into
+
+        def place(i, p, side=side, dd=dd, idx=idx, fa=fa, top=top):  # flat hand 12 mm off the face; the contact
+            f = np.array([1.0, 0, 0] if top else [0, 0, 1.0])        # proxy (wrist + index, the flagged bodies)
+            h = flat_hand(side, -dd, f)        # sits where the earlier synthetic hand's did (wavy faces: 1-6 deg)
+            sh = (hand_offsets(side)[:4] * [0.8, 0.8, -0.8]).mean(0) - h[:4].mean(0)
+            body[i, idx] = p + h + sh - (sh @ dd) * dd
+            body[i, om.BODY_INDEX[f"{side}_Elbow"]] = body[i, idx[0]] - 0.25 * fa
 
         for i in np.flatnonzero(rpush):          # palm on the chosen face
-            body[i, idx] = hand(on_face(i))
+            place(i, on_face(i))
             flags[i, idx[:4]] = 1
         if push:                                 # straight in along the inward normal, straight out after
             i0, i1 = int(np.flatnonzero(rpush)[0]), int(np.flatnonzero(rpush)[-1])
             for i in np.flatnonzero((t >= 0.5) & (t < 1.0)):
-                body[i, idx] = hand(on_face(i0) + dd * 0.25 * (i0 - i) / 15)
+                place(i, on_face(i0) + dd * 0.25 * (i0 - i) / 15)
             for i in np.flatnonzero((t >= 3.0) & (t < 4.0)):
-                body[i, idx] = hand(on_face(i1) + dd * 0.25 * min(1.0, (i - i1) / 15))
+                place(i, on_face(i1) + dd * 0.25 * min(1.0, (i - i1) / 15))
     for i in np.flatnonzero(lift):
         for side, y in (("L", 1), ("R", -1)):
             idx = om.HAND_BODIES[side]

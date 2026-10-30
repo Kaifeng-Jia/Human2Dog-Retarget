@@ -26,7 +26,9 @@
 
 ## 3. 提交信息
 
-以线作前缀，例如 `[common] add scene registration`、`[learned] B1 arm refinement`、`[env] torch cu128 note`、`[docs] spec v0.6`。
+提交信息和 PR 说明用英文（Kevin，2026-10-30），以线作前缀，例如 `[common] add scene registration`、`[learned] B1 arm refinement`、`[env] torch cu128 note`、`[docs] spec v0.6`。代码里的标识符、注释和文档字符串也用英文。
+
+项目完成后，另建一个整理过的英文仓库作为最终结果（只放最终方法、复现说明和结果），本仓库保留为开发记录。
 
 ## 4. 版本号和标签
 
@@ -35,9 +37,7 @@
 
 | 标签 | 内容 | 计划日期 |
 |---|---|---|
-| `m1-reachability` | 冻结身体可达性诊断 | 10/31 |
-| `m2-baselines` | B1 / B2 | 11/07 |
-| `m3-mesh` | M 与分层比较 | 11/14 |
+| `learned-course` | 学习式线课程版：可达性诊断与三种身体布局对比（R017，`docs/results/learned_course_zh.md`）；取代原计划的 m1 / m2 / m3 | 10/30 |
 | `spotlight` | spotlight 所用结果 | 12 月初 |
 | `final-report` | 期末报告所用结果 | 12/13 |
 

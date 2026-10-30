@@ -2,7 +2,46 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [0.1.5] — unreleased
+## [0.2.0] — 2026-10-30 (learned line, course version; results: `docs/results/learned_course_zh.md`)
+
+### Added (method: spec learned v0.8 §5.4–5.6, Kevin)
+- Tool pose from the human forearm and hand (§5.4): approach = forearm (elbow -> wrist, the direction the human
+  pushes along) within a 45 deg cone about the inward normal of the robot's contact; roll = the hand's roll (the
+  mover's hinge follows the line across the knuckles), one rule for press and grasp (`describe.hand_frame`,
+  `tasks.gripper_axes`, `tasks.clamp_cone`). Finger curl is not used (OMOMO_new keeps one hand shape per clip).
+  No roll target when the palm faces away (e.g. a flipped hand). Task files v2.
+- Arm IK: the approach target is the task's tool x; soft roll term on the jaw axis (`roll_weight_m` 0.02, does not
+  decide feasibility); `roll_median_deg` in the reachability report. Jaw axis in `configs/b2z1.yaml`.
+- A push on a top face is done from the robot's side (§5.6, R013: pressing down on a low top was infeasible for all
+  three tasks): the vertical face facing the robot when it reaches the side band, else the edge between that face
+  and the top (`tasks.from_behind`; `contact_moved` in the task and the reports).
+- Candidate selection: `grips: [press]` (side pulls need a grasp, out of scope for 11/1).
+- Found in R014: the palm side is the side that touches (`palm_flipped`: the hand's points gave the palm facing
+  away, 149-173 deg, on all two-hand pushes); mesh smoothness counts the trunk's actual step (the placement turns
+  about the world origin, so parameter differences under-weighted turns: extra foot slide 0.4-0.7 m/s).
+- Found in R015: the mesh's foot slide stayed at 0.4-0.65 m/s (the human's gait sway reached the dog), and a far
+  reach (0.67-0.76 m, the human reaching across the box) lost the direction on a third of the frames: human points
+  smoothed over 1 s, reach preference 5 -> 20 and r_max 0.80 -> 0.75 m. D0 wrist check 0.10 -> 0.12 m (sub3 mean
+  shape: 9.7 and 10.7 cm).
+- Found in R016 (mesh 9/10 fully reached, = script; relations still closer to the human): the stronger reach
+  preference outweighed the clearance (c04: body 2.8 cm into the box, foot slide up to 1.56 m/s). Clearance weight
+  10 -> 40 (twice the reach preference; light contact tolerated), body samples per geom 8 -> 16, smoothness 30 -> 60.
+- Gripper open / close schedule in the spec (open when approaching or leaving within 0.15 m, closed in contact).
+- Videos: `scripts/learned/render_layouts.py` (silhouettes, no OpenGL) and `scripts/learned/render_mujoco.py` (Kevin:
+  MuJoCo, X-Morph-demo style 2 x 3 grid: human, G1, B2-Z1 straight out of X-Morph; the three body layouts with the
+  arm IK; camera across the human-object line, panning with the object). `reach_diag.py` saves the body placement
+  of every layout in the solution files.
+- Results of the course version: `docs/results/learned_course_zh.md` (R017: mesh 9/10 fully reached like the
+  script, relations closer to the human, about twice the extra foot slide).
+- Test clip: the pushing hands are flat, palm on the face (the contact proxy stays where it was).
+- Interaction-mesh body placement (spec v0.8 §5.5, `h2d/learned/imesh.py`, `configs/learned/mesh.yaml`): per-frame
+  SE(2) of the prior's body from the human's body-object mesh (pelvis -> trunk, chest -> Z1 base, hand -> contact
+  target; edge directions and heading from the human, the distance from the dog's arm), solved over the window by
+  sparse least squares. `reach_diag.py`: layout `mesh` next to the script baseline (`reach_track`) and the prior
+  (`reach_fit`), `--layouts`, relation metrics for every layout (edge / heading error, extra foot slide). Task
+  files carry the human pelvis, chest and shoulders. Course scope for 11/1: OMOMO pushes and top-face drags.
+
+## [0.1.5] — 2026-10-30 (released together with 0.2.0)
 
 ### Changed (method: spec learned v0.6)
 - Virtual hand restored (Kevin; it was in the first method draft and narrowed to "right hand only" in v0.5):

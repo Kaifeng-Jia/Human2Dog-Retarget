@@ -20,3 +20,7 @@ reach_band:
 # Kevin (2026-10-26): pulls too. push: object moves away from the hand; pull: towards it (|cos| >= 0.7). A grasp
 # (thumb and fingers on opposite sides of a part) is exempt from the one-flat-face criteria.
 interactions: [push, pull]
+
+# Course version to 11/1 (spec v0.8, R013): only what the closed gripper can press (pushes, drags on a top face);
+# side pulls need a grasp with the jaw site, out of scope for now (13 of the 16 R013 candidates were such pulls).
+grips: [press]

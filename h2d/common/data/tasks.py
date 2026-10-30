@@ -24,11 +24,12 @@ import numpy as np
 from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation as R
 
-from h2d.common.data.describe import contact_point, palm_point
-from h2d.common.data.omomo_new import Clip
+from h2d.common.data.describe import contact_point, hand_frame, palm_point
+from h2d.common.data.omomo_new import BODY_INDEX, Clip
 from h2d.common.objectmesh import ObjectMesh
 
-TASK_VERSION = 1
+TASK_VERSION = 2                     # 2: tool pose from the forearm and the hand (spec v0.8 §5.4), body points
+BODY_POINTS = ("Pelvis", "Chest", "L_Shoulder", "R_Shoulder")
 
 
 def _smooth(x: np.ndarray, k: int) -> np.ndarray:
@@ -40,6 +41,10 @@ def _smooth(x: np.ndarray, k: int) -> np.ndarray:
     xp = np.pad(x, ((pad, pad), (0, 0)), mode="edge")
     c = np.cumsum(np.vstack([np.zeros((1, x.shape[1])), xp]), axis=0)
     return (c[k:] - c[:-k]) / k
+
+
+def _unit(v: np.ndarray) -> np.ndarray:
+    return v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-12)
 
 
 def adapt_height(obj: ObjectMesh, c_bar: np.ndarray, n_bar: np.ndarray, pos0, rot0, z_human: float, band: dict,
@@ -79,9 +84,58 @@ def adapt_height(obj: ObjectMesh, c_bar: np.ndarray, n_bar: np.ndarray, pos0, ro
     return moved, rec
 
 
+def gripper_axes(x: np.ndarray, across: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Tool x (approach, given) and tool z (jaw closing) from the hand's roll (spec v0.8 §5.4, Kevin): the Z1 mover
+    turns about tool y, which follows the line across the knuckles; z = x cross y. One rule for press and grasp: a
+    flat palm pushing along the forearm gets z along the fingers, a hand wrapping a rim gets z across the palm."""
+    y = _unit(across - np.sum(across * x, -1, keepdims=True) * x)
+    return x, np.cross(x, y)
+
+
+def clamp_cone(v: np.ndarray, axis: np.ndarray, max_deg: float) -> np.ndarray:
+    """Rotate unit vectors v (n, 3) towards the unit axis until they are within max_deg of it."""
+    c = v @ axis
+    t = _unit(v - c[:, None] * axis)
+    lim = np.radians(max_deg)
+    return np.where((c < np.cos(lim))[:, None], np.cos(lim) * axis + np.sin(lim) * t, v)
+
+
+def from_behind(obj: ObjectMesh, c_bar: np.ndarray, pos: np.ndarray, rot: np.ndarray, band: dict | None,
+                below_m: float = 0.08) -> tuple[np.ndarray, np.ndarray, dict]:
+    """A push on a top face is done from the robot's side (spec v0.8 §5.6, Kevin, R013: pressing down on a low top
+    is out of the arm's reach and pushes only by friction). Same push direction, same position across the object:
+    the contact moves onto the vertical face that faces the robot when that face reaches the arm's side band
+    (``adapt_height``), else onto the edge between that face and the top, pushed 45 deg down and forward. Returns
+    the contact targets (object frame, contact frames), the outward approach normal and a record."""
+    Rm = R.from_quat(rot[0]).as_matrix()
+    up = Rm.T @ np.array([0.0, 0.0, 1.0])
+    v = Rm.T @ (pos[-1] - pos[0])
+    u = -_unit(v - (v @ up) * up)                                   # towards the robot, against the push
+    rim = obj.hull_verts[np.abs(obj.hull_verts @ up - np.median(c_bar @ up)) < 0.03]
+    rim = rim if len(rim) else obj.hull_verts
+    edge = obj.closest_face(c_bar + np.outer((rim @ u).max() - c_bar @ u, u))[1]
+    z = lambda pts: float(np.median((pts @ Rm.T + pos[0])[:, 2]))  # noqa: E731
+    q, dist, n, _ = obj.patch_normals(edge + 0.03 * u - below_m * up, 0.03)
+    if band and np.median(dist) < 0.06 and np.median(n @ u) > np.cos(np.radians(30)):   # a face below the edge
+        n_f = _unit(n.mean(0))
+        moved, rec = adapt_height(obj, q, n_f, pos[0], rot[0], z(q), band)
+        if rec["in_band"]:
+            return moved, n_f, dict(rec, contact_moved="rear_face")
+    return edge, _unit(u + up), {"face": "edge", "robot_contact_z_m": z(edge), "contact_moved": "rear_edge",
+                                 "in_band": True}
+
+
 def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre_s: float = 1.0,
-               post_s: float = 1.0, smooth: int = 5, patch_m: float = 0.03, band: dict | None = None) -> dict:
-    """``band`` ({face: [z_lo, z_hi]}): adapt the contact height to the arm (``adapt_height``)."""
+               post_s: float = 1.0, smooth: int = 5, patch_m: float = 0.03, band: dict | None = None,
+               grip: str = "press", interaction: str = "push", tool_max_deg: float = 45.0,
+               palm_max_deg: float = 60.0) -> dict:
+    """``band`` ({face: [z_lo, z_hi]}): adapt the contact height to the arm (``adapt_height``). A push on a top face
+    is moved to the robot's side (``from_behind``). Tool pose (spec v0.8 §5.4): the approach is the human forearm
+    (elbow -> wrist, the direction the human pushes along), turned into a ``tool_max_deg`` cone about the inward
+    normal of the robot's contact (the inward normal itself if the forearm points away from the object); the roll
+    follows the hand (``gripper_axes``) when the palm faces the human's contact within ``palm_max_deg`` (else, e.g.
+    a flipped hand, no roll target). The palm side is the side that touches: a hand whose points give the palm
+    facing away (> 90 deg) is mirrored first (``palm_flipped``)."""
     s, e = int(seg[0]), int(seg[1])
     fps = clip.fps
     w0, w1 = max(0, s - round(pre_s * fps)), min(clip.n, e + round(post_s * fps))
@@ -100,32 +154,57 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
                                for i in range(len(c_bar))]))
     height = {"face": "", "human_contact_z_m": z_human, "robot_contact_z_m": z_human, "height_shift_m": 0.0,
               "height_adapted": False, "in_band": True}
-    if band:
-        c_bar, height = adapt_height(obj, c_bar, n_bar, pos[contact][0], rot[contact][0], z_human, band)
-    fp = obj.face_points(np.median(c_bar, 0), n_bar)
-    on_face = float(cKDTree(fp).query(c_bar)[0].max()) if len(fp) else float("nan")
+    n_robot = n_bar
+    top = abs(R.from_quat(rot[contact][0]).apply(n_bar)[2]) > np.sin(np.radians(60))
+    if interaction == "push" and grip == "press" and top:
+        c_bar, n_robot, rec = from_behind(obj, c_bar, pos[contact], rot[contact], band)
+        height.update({k: v for k, v in rec.items() if k != "human_contact_z_m"},
+                      height_shift_m=rec["robot_contact_z_m"] - z_human)
+        on_face = float(obj.surface_distance(c_bar).max())
+    else:
+        if band:
+            c_bar, height = adapt_height(obj, c_bar, n_bar, pos[contact][0], rot[contact][0], z_human, band)
+        fp = obj.face_points(np.median(c_bar, 0), n_bar)
+        on_face = float(cKDTree(fp).query(c_bar)[0].max()) if len(fp) else float("nan")
 
     palm = palm_point(clip, mode, fr)
     palm_loc = obj.to_local(palm[:, None], pos, rot)[:, 0]
     ref = np.where(fr[:, None] < s, c_bar[0], c_bar[-1])
     ref[contact] = c_bar
-    d_raw = np.sum((palm_loc - ref) * n_bar, 1)
+    d_raw = np.sum((palm_loc - ref) * n_robot, 1)
     offset = float(np.median(d_raw[contact]))
     d = np.clip(d_raw - offset, 0.0, None)
     d[contact] = 0.0
-    target_local = ref + d[:, None] * n_bar
+    target_local = ref + d[:, None] * n_robot
     target_world = np.stack([obj.world_points(pos[i], rot[i], target_local[i][None])[0] for i in range(len(fr))])
     c_bar_w = np.full((len(fr), 3), np.nan)
     c_bar_w[contact] = c_bar
+
+    to_obj = R.from_quat(rot).inv()
+    palm_n, across, fore = (_unit(_smooth(to_obj.apply(v), smooth)) for v in hand_frame(clip, mode, fr))
+    deg = lambda a, b: float(np.degrees(np.arccos(np.clip(np.median(a @ b), -1, 1))))  # noqa: E731
+    palm_face, fore_face = deg(palm_n[contact], -n_bar), deg(fore[contact], -n_robot)
+    palm_flipped = palm_face > 90.0         # the palm is the side that touches (R014: 149-173 deg on all two-hand
+    if palm_flipped:                        # pushes, a mirrored hand convention in the data or flipped hands)
+        palm_n, across, palm_face = -palm_n, -across, 180.0 - palm_face
+    palm_used, fore_used = palm_face <= palm_max_deg, fore_face <= 90.0
+    tool_x = clamp_cone(fore, -n_robot, tool_max_deg) if fore_used else np.tile(-n_robot, (len(fr), 1))
+    tool_z = gripper_axes(tool_x, across)[1] if palm_used else np.full((len(fr), 3), np.nan)
     return {
         "task_version": TASK_VERSION, "clip": clip.name, "object": clip.obj, "mode": mode, "fps": float(fps),
         "segment": [s, e], "window": [int(w0), int(w1)],
         "frames": fr, "in_contact": contact, "obj_pos": pos, "obj_rot_xyzw": rot,
-        "c_bar_local": c_bar_w, "n_bar_local": n_bar, "d": d, "palm_offset_m": offset,
+        "c_bar_local": c_bar_w, "n_bar_local": n_robot, "n_bar_human_local": n_bar, "d": d, "palm_offset_m": offset,
         "target_local": target_local, "target_world": target_world, "palm_world": palm,
         "proxy_surface_dist_m": dist, "patch_coherence": coh,
         "normal_spread_deg": np.degrees(np.arccos(np.clip(n @ n_bar, -1, 1))),
         "c_bar_human_local": c_human, "height": height, "target_on_face_m": on_face,
+        "grip": grip, "palm_normal_local": palm_n, "palm_face_deg": palm_face, "palm_used": bool(palm_used),
+        "palm_flipped": bool(palm_flipped),
+        "forearm_local": fore, "forearm_face_deg": fore_face, "forearm_used": bool(fore_used),
+        "tool_x_local": tool_x, "tool_z_local": tool_z,
+        "body_world": clip.body_pos[fr][:, [BODY_INDEX[b] for b in BODY_POINTS]],     # interaction mesh (spec §5.5)
+        "skeleton_world": clip.body_pos[fr],                                             # for the videos
     }
 
 
@@ -147,6 +226,12 @@ def task_checks(task: dict) -> dict:
         "height_shift_m": task.get("height", {}).get("height_shift_m", 0.0),
         "robot_contact_z_m": task.get("height", {}).get("robot_contact_z_m", float("nan")),
         "in_band": task.get("height", {}).get("in_band", True),
+        "contact_moved": task.get("height", {}).get("contact_moved", ""),
+        "palm_face_deg": task.get("palm_face_deg", float("nan")),
+        "palm_used": task.get("palm_used", False),
+        "palm_flipped": task.get("palm_flipped", False),
+        "forearm_face_deg": task.get("forearm_face_deg", float("nan")),
+        "forearm_used": task.get("forearm_used", False),
     }
 
 

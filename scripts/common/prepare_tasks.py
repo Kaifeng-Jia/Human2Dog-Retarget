@@ -103,7 +103,8 @@ def main() -> int:
             src = srcs[t["dataset"]]
             f = next(p for p in src.files if p.stem == t["clip"])
             clip, mesh, _ = src.load(f)
-            task = build_task(clip, mesh, (t["start"], t["end"]), t["mode"], args.pre_s, args.post_s, band=band)
+            task = build_task(clip, mesh, (t["start"], t["end"]), t["mode"], args.pre_s, args.post_s, band=band,
+                              grip=t["grip"], interaction=t["interaction"])
             ck = task_checks(task)
             ok, bad = task_ok(ck)
             task.update({"dataset": t["dataset"], "id": t["id"], "confirmed": t["confirmed"]})
@@ -147,14 +148,16 @@ def main() -> int:
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(rows)}/{len(todo)} segments · {len(errors)} errors · **{'PASS' if passed else 'FAIL'}**", "",
              "| id | confirmed | hand | dataset / clip | frames | contact z human → robot [m] | face tilt [°] | proxy–surface [m] | "
-             "coherence | spread p90 [°] | approach / retreat [°] | d max [m] | pass |",
-             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+             "coherence | spread p90 [°] | approach / retreat [°] | d max [m] | grip | forearm / palm vs face [°] (~ palm mirrored, ! not used) | pass |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         lines.append(f"| {r['id']} | {r['confirmed']} | {r['mode']} | {r['dataset']} / {r['clip']} | {r['start']}–{r['end']} | "
-                     f"{f2(r['contact_z_m'] - r['height_shift_m'])} → {f2(r['robot_contact_z_m'])}{'' if r['in_band'] else ' (out of band)'} | {f2(r['normal_tilt_deg'], 0)} | {f2(r['proxy_surface_dist_median_m'], 3)} | "
+                     f"{f2(r['contact_z_m'] - r['height_shift_m'])} → {f2(r['robot_contact_z_m'])}{'' if r['in_band'] else ' (out of band)'}"
+                     f"{' (' + r['contact_moved'].replace('_', ' ') + ')' if r['contact_moved'] else ''} | {f2(r['normal_tilt_deg'], 0)} | {f2(r['proxy_surface_dist_median_m'], 3)} | "
                      f"{f2(r['patch_coherence_median'])} | {f2(r['normal_spread_p90_deg'], 1)} | "
                      f"{f2(r['approach_angle_deg'], 0)} / {f2(r['retreat_angle_deg'], 0)} | {f2(r['d_max_m'])} | "
-                     f"{r['pass']} |")
+                     f"{r['grip']} | {f2(r['forearm_face_deg'], 0)}{'' if r['forearm_used'] else '!'} / "
+                     f"{f2(r['palm_face_deg'], 0)}{'~' if r['palm_flipped'] else ''}{'' if r['palm_used'] else '!'} | {r['pass']} |")
     (out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"pass={passed}  tasks={len(rows)}  -> {out}")
     return 0 if passed else 1

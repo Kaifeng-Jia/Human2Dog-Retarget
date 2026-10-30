@@ -6,6 +6,7 @@ xmorph:
   # The pinned X-Morph commit lives in configs/external.yaml.
   model_xml: assets/robots/b2_z1/b2_with_z1.xml   # full model: kinematics + collision geoms
   fk_xml: assets/fk/b2_z1_fk.xml                  # X-Morph's stripped FK model (no geoms); only used for a consistency check
+  g1_model_xml: assets/robots/unitree_g1/g1_mocap_29dof.xml   # the G1 that GMR retargets to (videos only)
 
 robot:
   # X-Morph dof_pos order == MuJoCo qpos[7:26] order of the full model (checked in B01).
@@ -23,6 +24,7 @@ tool:
   contact_site_local: [0.149, 0.0, 0.0]   # r_c in tool frame [m]
   contact_body: gripperMover               # at gripper_lock, r_c lies on the mover front face
   approach_axis_local: [1.0, 0.0, 0.0]     # tool x axis
+  jaw_axis_local: [0.0, 0.0, 1.0]          # jaws close along tool z (jointGripper turns about tool y)
   front_face_x: 0.149                      # front-face plane in tool frame [m]
   front_face_tol: 1.0e-4                   # vertex tolerance when collecting front-face triangles [m]
 

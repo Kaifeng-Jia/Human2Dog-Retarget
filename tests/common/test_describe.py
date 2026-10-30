@@ -148,7 +148,7 @@ def test_task_targets(tmp_path, face, hands):
 
     c = make_clip(push_face=face, push_hands=hands)
     s, e = segments(c)[0]
-    t = build_task(c, BOX, (s, e), hands)
+    t = build_task(c, BOX, (s, e), hands, interaction="pull" if face == "top" else "push")   # a top push moves
     ck = task_checks(t)
     assert ck["contact_frames"] == e - s and ck["target_equals_c_bar_in_contact_m"] < 1e-9
     assert ck["patch_coherence_median"] > 0.9 and ck["normal_spread_p90_deg"] < 5
@@ -166,6 +166,77 @@ def test_task_targets(tmp_path, face, hands):
     save_task(t, tmp_path / "t.npz")
     back = load_task(tmp_path / "t.npz")
     assert back["clip"] == c.name and np.allclose(back["target_world"], t["target_world"])
+
+
+FA_TOP = [0.7071, 0, -0.7071]                           # synthetic forearm onto a top: forward and down
+
+
+@needs_mesh
+@pytest.mark.parametrize("face,hands,palm,across,forearm,jaw", [
+    ("side", "R", [1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]),     # flat palm on a side face: jaws along the fingers
+    ("side", "B", [1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]),
+    ("top", "R", [0, 0, -1], [0, 1, 0], FA_TOP, [0.7071, 0, 0.7071])])
+def test_hand_frame_gives_the_tool_pose(face, hands, palm, across, forearm, jaw):
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.describe import hand_frame
+    from h2d.common.data.tasks import build_task
+
+    c = make_clip(push_face=face, push_hands=hands)
+    s, e = segments(c)[0]
+    n, a, f = hand_frame(c, hands, np.arange(s, e))
+    assert np.all(n @ palm > 0.999) and np.all(a @ across > 0.999) and np.all(f @ forearm > 0.999)
+    t = build_task(c, BOX, (s, e), hands, interaction="pull" if face == "top" else "push")    # a top push moves
+    assert t["palm_used"] and t["forearm_used"] and t["palm_face_deg"] < 10     # the largebox faces are wavy
+    k = np.flatnonzero(t["in_contact"])[0]
+    rot = R.from_quat(t["obj_rot_xyzw"][k])
+    x, z = rot.apply(t["tool_x_local"][k]), rot.apply(t["tool_z_local"][k])
+    assert x @ forearm > np.cos(np.radians(10)) and z @ jaw > np.cos(np.radians(10)) and abs(x @ z) < 1e-6
+    inward = -rot.apply(t["n_bar_local"])
+    assert np.degrees(np.arccos(x @ inward)) <= 45 + 1e-6               # never more than 45 deg off the inward normal
+
+
+@needs_mesh
+def test_top_push_moves_to_the_robots_side():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.tasks import build_task, task_checks
+
+    c = make_clip(push_face="top")                      # both palms flat on the top, the box slides along +x
+    s, e = segments(c)[0]
+    k = s - (s - round(1.0 * c.fps))                    # first contact frame in the window
+    up = np.array([0, 0, 1.0])
+    # the box (0.4 m) is below the side band: the edge facing the robot, pushed 45 deg down and forward
+    t = build_task(c, BOX, (s, e), "R", band={"side": [0.5, 1.2], "top": [0.3, 0.8]})
+    rot = R.from_quat(t["obj_rot_xyzw"][k])
+    assert t["height"]["contact_moved"] == "rear_edge" and task_checks(t)["target_on_face_m"] < 0.01
+    x = rot.apply(t["tool_x_local"][k])
+    assert x @ np.array([1, 0, -1]) / np.sqrt(2) > 0.99 and abs(rot.apply(t["tool_z_local"][k]) @ x) < 1e-6
+    edge_x = (rot.apply(BOX.hull_verts) + t["obj_pos"][k])[:, 0].min()
+    assert abs(t["target_world"][k, 0] - edge_x) < 0.03 and t["target_world"][k, 2] > 0.3
+    # with a lower side band the vertical face facing the robot is used, pushed straight forward
+    t = build_task(c, BOX, (s, e), "R", band={"side": [0.1, 1.2], "top": [0.3, 0.8]})
+    x = rot.apply(t["tool_x_local"][k])                 # the forearm, within 45 deg of the face's inward normal
+    assert t["height"]["contact_moved"] == "rear_face" and x[0] > np.cos(np.radians(46)) and x @ up < 0
+    assert 0.1 <= t["height"]["robot_contact_z_m"] <= 0.36
+
+
+@needs_mesh
+def test_mirrored_hand_takes_the_palm_side_from_the_contact():
+    from synthetic_hoi import make_clip
+
+    from h2d.common.data.omomo_new import BODY_INDEX
+    from h2d.common.data.tasks import build_task
+
+    c = make_clip()
+    s, e = segments(c)[0]
+    i, k = BODY_INDEX["R_Index1"], BODY_INDEX["R_Pinky1"]
+    c.body_pos[:, [i, k]] = c.body_pos[:, [k, i]]                     # mirrored palm: faces away from the box
+    t = build_task(c, BOX, (s, e), "R")
+    assert t["palm_flipped"] and t["palm_used"] and t["palm_face_deg"] < 30 and t["forearm_used"]
+    k = np.flatnonzero(t["in_contact"])[0]
+    rot = R.from_quat(t["obj_rot_xyzw"][k])
+    assert rot.apply(t["tool_z_local"][k]) @ [0, 0, 1] > 0.98                # the same roll as the unmirrored hand
 
 
 @needs_mesh

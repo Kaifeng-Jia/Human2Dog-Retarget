@@ -40,9 +40,9 @@ from h2d.learned.human_to_g1 import retarget_to_g1  # noqa: E402
 from h2d.learned.prior import load_motion, run_xmorph, yaw_from_xyzw  # noqa: E402
 from h2d.paths import data_path  # noqa: E402
 
-# Mean shape vs the recorded skeleton gives a few cm (up to 8.3 cm for a large subject, R012 sub3_largetable_028); a
-# wrong body-frame convention gives tens of cm. 0.10 m keeps that separation.
-WRIST_TOL_M = 0.10
+# Mean shape vs the recorded skeleton gives a few cm (up to 8.3 cm for a large subject, R012 sub3_largetable_028;
+# 9.7 and 10.7 cm for sub3 in R015); a wrong body-frame convention gives tens of cm. 0.12 m keeps that separation.
+WRIST_TOL_M = 0.12
 
 
 def hand_center(clip, side: str) -> np.ndarray:
