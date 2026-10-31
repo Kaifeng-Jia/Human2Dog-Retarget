@@ -1,0 +1,20 @@
+# Gait of the full-optimization line (fullopt spec §6). Development values, checked on data in M0.
+
+human:                       # spec §6.1, h2d/fullopt/signals.py
+  smooth_s: 0.1              # foot points
+  floor_percentile: 5        # a foot point's own floor height in the clip
+  height_m: 0.03             # in contact when at most this far above its floor ...
+  speed_mps: 0.25            # ... and at most this fast horizontally
+  min_run_s: 0.1             # shorter contact / lift runs are merged into their neighbours
+  speed_smooth_s: 0.5        # pelvis speed
+  move_speed_mps: 0.15       # moving: pelvis faster than this ...
+  event_window_s: 0.5        # ... or a touchdown within this window
+  walk_min_steps: 3          # walk: >= 3 touchdowns; shuffle: 1-2
+
+dog:                         # spec §6.2-6.4, h2d/fullopt/gait.py
+  walk: {order: [RL, FL, RR, FR], phase: [0.0, 0.25, 0.5, 0.75], duty: 0.7}   # lateral-sequence walk (default)
+  trot: {pairs: [[RL, FR], [RR, FL]], phase: [0.0, 0.5], duty: 0.5}          # only in fast segments
+  trot_froude: 0.35          # segment median Fr above this -> trot
+  stride_hz_clamp: [0.6, 2.0]
+  sync_sigma_s: 0.05         # kappa width
+  deltas: [0.05, 0.10, 0.15, 0.20]   # sweep (Kevin: compare, then choose)

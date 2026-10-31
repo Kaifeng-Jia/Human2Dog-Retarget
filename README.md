@@ -7,11 +7,12 @@ CS 6758 (Cornell, Fall 2026) course project.
 The repository holds two lines that share `h2d/common` (data adapters, task extraction, robot geometry, collision,
 registration):
 
-| | Learned line (done, `v0.2.x`) | Full-optimization line (next) |
+| | Learned line (done, `v0.3.0`) | Full-optimization line (in progress) |
 |---|---|---|
 | Body motion | frozen X-Morph prior (human → GMR → G1 → X-Morph → B2-Z1) | optimized |
 | What we solve | where the body stands, frame by frame; the Z1 arm | the whole robot |
 | Code | `h2d/learned/`, `scripts/learned/` | `h2d/fullopt/`, `scripts/fullopt/` |
+| Spec | [`docs/spec/learned/v0.8_zh.md`](docs/spec/learned/v0.8_zh.md) | [`docs/spec/fullopt/v0.1_zh.md`](docs/spec/fullopt/v0.1_zh.md) (draft) |
 
 ## Learned line
 

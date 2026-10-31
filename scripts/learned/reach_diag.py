@@ -47,7 +47,7 @@ from scipy.spatial.transform import Rotation as R  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.collision import ObjectHull, RobotCollision  # noqa: E402
 from h2d.common.data.omomo_objects import load_object  # noqa: E402
-from h2d.common.data.tasks import load_task  # noqa: E402
+from h2d.common.data.tasks import load_task, solvable_task_ids  # noqa: E402
 from h2d.common.data.candidates import face_of  # noqa: E402
 from h2d.common.registration import SE2Track, contact_fit, reach_points, start_anchored, track  # noqa: E402
 from h2d.common.robot import B2Z1Robot  # noqa: E402
@@ -279,13 +279,7 @@ def main() -> int:
     reg_all = load_config("registration.yaml")
     cfg, reg_cfg, mesh_cfg = load_config("learned/reach.yaml"), reg_all["contact_fit"], load_config("learned/mesh.yaml")
     if args.tasks_csv:
-        import csv
-
-        with open(args.tasks_csv, newline="", encoding="utf-8") as fh:
-            rows = [r for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"  # candidates
-                    and r["dataset"] == "omomo_new"                    # the prior chain covers OMOMO_new only
-                    and r["grip"] != "grasp"]                          # grasping needs the jaw site (not modelled)
-        ids = [r["id"] for r in rows][: args.max_tasks]
+        ids = solvable_task_ids(args.tasks_csv, args.max_tasks)
     else:
         ids = args.ids or [s["id"] for s in
                            yaml.safe_load((REPO_ROOT / "configs" / "push_candidates.yaml").read_text())["segments"]]

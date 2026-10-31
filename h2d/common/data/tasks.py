@@ -248,3 +248,16 @@ def load_task(path) -> dict:
         raise ValueError(f"{path}: task version {out.get('task_version')}, expected {TASK_VERSION} (rerun prepare_tasks.py)")
     out.update({k: z[k] for k in z.files if k != "meta"})
     return out
+
+
+def solvable_task_ids(tasks_csv, max_tasks: int | None = None) -> list[str]:
+    """Ids of the tasks both lines solve, in tasks.csv order: passing OMOMO_new candidates that press.
+
+    OMOMO_new only (the learned prior chain covers it); grasping needs the jaw site, which is not modelled.
+    """
+    import csv
+
+    with open(tasks_csv, newline="", encoding="utf-8") as fh:
+        ids = [r["id"] for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"
+               and r["dataset"] == "omomo_new" and r["grip"] != "grasp"]
+    return ids[:max_tasks]
