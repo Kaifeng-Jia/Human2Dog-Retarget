@@ -2,6 +2,16 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.2.2] — 2026-10-31 (videos)
+
+### Changed (Kevin)
+- `render_mujoco.py --pipeline`: choose the pipeline tiles before the layouts (default human, G1, X-Morph);
+  `--pipeline human g1 --layouts mesh` gives a 1 x 3 video (human, G1, dog).
+- The G1 tile says the G1 is object-unaware and its hands are loosely tracked: GMR weights hand positions 0 / 10 against
+  100 for the pelvis and feet, its arms are scaled 0.74 against 0.83 for the body, so the hands stay 11-18 cm above the
+  scaled contact (R020 G1, all 10 tasks; horizontally 1-13 cm). Object-aware human -> G1 retargeting (OmniRetarget) is
+  planned for the full-optimization line.
+
 ## [0.2.1] — 2026-10-30 (G1 placement; results of the course version unchanged)
 
 ### Fixed (Kevin, R018 videos: the G1 sank into the object by a near-constant amount)
