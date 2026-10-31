@@ -2,7 +2,7 @@
 
 One MuJoCo model (X-Morph's full ``b2_with_z1.xml``) is the single source of
 kinematics *and* collision geometry, so the optimizer and the evaluator use the
-same geometry convention (spec v0.5 section 2, Codex B01).
+same geometry convention (spec §2).
 
 Conventions
 -----------

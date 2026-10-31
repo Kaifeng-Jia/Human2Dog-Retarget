@@ -7,8 +7,7 @@ never pip-installed or modified.
 Two facts handled here (both verified on the released B2-Z1 mixed checkpoint):
 * The output root trajectory starts at xy = 0 (X-Morph integrates velocities), so the source
   start pose is stored in a sidecar for start-anchored registration (spec O1). GMR scales the G1's scene about the
-  world origin (human_to_g1.py), so the source start is taken back to the human's scene (xy / world_scale; until
-  v0.2.0 it was the G1's own, 0.2-0.6 m off).
+  world origin (human_to_g1.py), so the source start is taken back to the human's scene (xy / world_scale).
 * The strided-conv encoder can return a few extra frames (281 -> 284); we keep the first n_in
   frames and record the raw length.
 """

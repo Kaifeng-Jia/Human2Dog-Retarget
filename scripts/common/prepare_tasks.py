@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Extract the human-side task targets of push segments (spec learned v0.6 §4 step 1; h2d/common/data/tasks.py).
+"""Extract the human-side task targets of push segments (spec §4 step 1; h2d/common/data/tasks.py).
 
 Segments: the confirmed ones in ``configs/push_candidates.yaml`` and, with ``--candidates``, every row of a
 ``push_candidates.py`` candidates.csv (so whichever is confirmed later already has its task). Per segment:
@@ -76,7 +76,7 @@ def main() -> int:
     ap.add_argument("--pre-s", type=float, default=1.0)
     ap.add_argument("--post-s", type=float, default=1.0)
     ap.add_argument("--selection", default=None,
-                    help="selection config with reach_band: adapt contact heights on side faces to the arm (spec v0.7)")
+                    help="selection config with reach_band: adapt contact heights on side faces to the arm (spec)")
     args = ap.parse_args()
     band = yaml.safe_load(Path(args.selection).read_text()).get("reach_band") if args.selection else None
     todo = segments_to_do(Path(args.config), Path(args.candidates) if args.candidates else None)
@@ -144,7 +144,7 @@ def main() -> int:
                "data_versions": {d: s.versions() for d, s in srcs.items()}, "elapsed_s": time.time() - t0}
     (out / "summary.json").write_text(json.dumps(clean(summary), indent=2), encoding="utf-8")
     f2 = lambda v, nd=2: "–" if v is None or v != v else f"{v:.{nd}f}"  # noqa: E731
-    lines = ["# Task targets (spec learned v0.6 §4 step 1)", "",
+    lines = ["# Task targets (spec §4 step 1)", "",
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(rows)}/{len(todo)} segments · {len(errors)} errors · **{'PASS' if passed else 'FAIL'}**", "",
              "| id | confirmed | hand | dataset / clip | frames | contact z human → robot [m] | face tilt [°] | proxy–surface [m] | "

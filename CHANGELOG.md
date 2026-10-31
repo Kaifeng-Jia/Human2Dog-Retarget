@@ -2,6 +2,24 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.0] — 2026-10-31 (learned line, cleaned for release; results unchanged)
+
+### Removed
+- One-off scripts of the development: `inspect_omomo_new.py` (data format), `profile_hoi.py` (data profile),
+  `b01_check_tool_geometry.py` (tool geometry check; its conventions stay covered by
+  `tests/common/test_tool_geometry.py`), `xmorph_smoke.py` (first X-Morph run), `workspace_map.py` (arm workspace
+  map, now summarised in `configs/candidate_selection.yaml`), `render_layouts.py` (silhouettes, superseded by
+  `render_mujoco.py`), and the helpers only they used.
+- Compatibility with task files v1 (`load_task` now requires the current version) and the old contact fit of the
+  prior's contact site in `reach_diag.py` (it only recorded the fit).
+- Specs v0.5–v0.7 (in the git history; v0.8 is cumulative).
+
+### Changed
+- Comments, docstrings and configs give the reason for each choice without run ids or names; the history is here
+  and in `docs/results/`. "spec §x" refers to `docs/spec/learned/v0.8_zh.md`.
+- README: the learned line, its results and the commands that reproduce them.
+- MIT licence for the code (Kevin); third-party data, models and code keep their own licences.
+
 ## [0.2.2] — 2026-10-31 (videos)
 
 ### Changed (Kevin)

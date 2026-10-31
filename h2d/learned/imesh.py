@@ -1,5 +1,5 @@
-"""Interaction-mesh body placement (spec learned v0.8 §5.5, Kevin: keep the human's role; the dog's absolute
-position is not copied from the human).
+"""Interaction-mesh body placement (spec §5.5): keep the human's role; the dog's absolute position is not
+copied from the human.
 
 The legs and the arm come from the X-Morph prior; this step decides where the body is relative to the object, frame
 by frame, so that the dog keeps the human's body-object relations and not only the contact:
@@ -8,19 +8,19 @@ by frame, so that the dog keeps the human's body-object relations and not only t
   the gripper's contact target (fixed here; the arm IK reaches it afterwards);
 * mesh: per frame, a Delaunay tetrahedralisation of the human side (pelvis, chest, hand, object surface samples);
   the edges from the pelvis or the chest to the hand or an object sample are kept. The human points are smoothed
-  over ``human_smooth_s`` first: the relation is transferred, not the sway of the human gait (R015: the dog's
-  extra foot slide stayed at 0.4-0.65 m/s);
+  over ``human_smooth_s`` first: the relation is transferred, not the sway of the human gait (which would reach the
+  dog as foot slide);
 * placement: a per-frame SE(2) of the raw prior, world = R(psi_t) p + b_t (z unchanged), solved over the window at
   once (least squares, sparse finite differences) for
   - edge directions: each edge's horizontal unit direction matches the human's (lengths free: another body size);
   - heading: the trunk's forward axis matches the human's facing (from the shoulders);
   - reach: Z1 base to the contact target near the arm's comfortable distance and within [r_min, r_max] (hinge).
     Directions come from the human, the distance from the dog's arm: the edge directions alone would pull the
-    body to human-like distances (object samples span the box), too far for the arm (dry run on the test push);
+    body to human-like distances (object samples span the box), too far for the arm;
   - clearance: trunk and legs outside the object hull by a margin (hinge);
   - smoothness: how far a placement change moves the trunk (and 0.5 m x the turn) between frames; the placement
-    turns about the world origin, so the parameters' own differences under-weight a turn far from it (R014:
-    extra foot slide 0.4-0.7 m/s); and a weak pull to the constant registration.
+    turns about the world origin, so the parameters' own differences under-weight a turn far from it; and a
+    weak pull to the constant registration.
 """
 
 from __future__ import annotations

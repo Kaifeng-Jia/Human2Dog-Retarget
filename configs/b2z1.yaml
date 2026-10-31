@@ -1,5 +1,5 @@
 # B2-Z1 robot, tool and collision conventions shared by every method (B0/B1/B2/M)
-# and by both project lines. Spec: learned-line method v0.5, section 2 (Codex B01).
+# and by both project lines (spec §2).
 
 xmorph:
   # All model paths below are relative to $XMORPH_ROOT (the X-Morph checkout).

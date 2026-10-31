@@ -209,7 +209,7 @@ MODES = ("none", "left", "right", "both", "body", "unknown")
 
 
 def contact_modes(clip: Clip, min_sec: float = 0.2) -> np.ndarray:
-    """Per-frame mode from the contact flags (spec v0.5 §5.1).
+    """Per-frame mode from the contact flags (spec §5.1).
 
     unknown: all flags -1. body: a non-hand body touches the object (whatever the hands do; such
     frames are outside the course scope). Otherwise none / left / right / both from the hand flags,
@@ -239,7 +239,7 @@ def smplx_params(clip: Clip) -> dict:
         pose_body[:, 3 * i:3 * i + 3] = clip.dof_pos[:, 3 * k:3 * k + 3][:, [1, 2, 0]]
     return {
         "gender": np.array("neutral"),
-        "betas": np.zeros(16, dtype=np.float32),            # mean shape; smplx builds SMPL-X with 16 betas (R007)
+        "betas": np.zeros(16, dtype=np.float32),            # mean shape; smplx builds SMPL-X with 16 betas
         "mocap_frame_rate": np.array(clip.fps, dtype=np.float32),
         "trans": clip.root_pos.astype(np.float32),
         "root_orient": root_orient.astype(np.float32),

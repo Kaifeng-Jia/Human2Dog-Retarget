@@ -3,9 +3,8 @@
 Meshes: the 13 InterMimic re-exports of the OMOMO objects that HOI-Retarget ships under MIT
 (leggedrobotics/hoi-retarget, ``assets/objects/objects/<name>/<name>.obj``, see its LICENSE-OBJECTS).
 They are in the object frame that OMOMO_new's ``obj_pos`` / ``obj_rot`` refer to: HOI-Retarget applies
-the recorded pose to them directly, and the data profile (R003) checked it on our copy: recorded contact
-bodies lie 2-7 mm from the transformed surface. Known issue: the suitcase mesh bottom sits ~3 cm above
-the recorded floor contact (R003, issue #6).
+the recorded pose to them directly; recorded contact bodies lie 2-7 mm from the transformed surface. Known
+issue: the suitcase mesh bottom sits ~3 cm above the recorded floor contact.
 """
 
 from __future__ import annotations
