@@ -1,31 +1,29 @@
 #!/usr/bin/env python
-"""Frozen-body reachability diagnostic (spec learned v0.6 §7.1, go / no-go): can the Z1 arm alone reach the human
-contact targets while the base and legs follow the X-Morph prior?
+"""Evaluate body layouts for the learned line (spec §7): the legs follow the X-Morph prior, the body is placed by a
+layout, and the Z1 arm is solved to reach the human's contact targets.
 
 Inputs: task files from ``scripts/common/prepare_tasks.py`` and the prior from ``scripts/learned/d0_chain.py``
-(``<clip>_b2z1.pkl`` + sidecar). Per task (default: the confirmed ids in ``configs/push_candidates.yaml``):
+(``<clip>_b2z1.pkl`` + sidecar). Per task:
 
-1. registration (``h2d/common/registration.py``): start-anchored; reach-point fit (constant SE(2) placing a nominal
-   reach point of the base on the contact targets); reach-point tracking (the same plus a smoothed per-frame
-   translation: the body follows the object, reported as extra base motion: the script baseline); interaction
-   mesh (``h2d/learned/imesh.py``, spec v0.8 §5.5: per-frame SE(2) placement keeping the human's body-object
-   relations; needs task files with body points). Object trajectory fixed. The old contact fit of the prior's
-   contact site (R008 / R010: puts the body too close) is recorded only. Every layout also gets the relation
-   metrics of the mesh (edge direction and heading errors, extra foot slide) on the contact frames;
+1. body layouts (``h2d/common/registration.py``, ``h2d/learned/imesh.py``): ``reach_fit`` (the prior: one constant
+   SE(2) placing a nominal reach point of the base on the contact targets); ``reach_track`` (the script baseline:
+   the same plus a smoothed per-frame translation, the body follows the object); ``mesh`` (ours, spec §5.5:
+   per-frame SE(2) keeping the human's body-object relations); ``start_anchored`` (the prior started where the
+   human started). The object trajectory is fixed. Every layout gets the relation metrics of the mesh (edge
+   direction and heading errors, extra foot slide) on the contact frames;
 2. for each layout and each contact frame, three problems with the multi-start, collision-aware arm IK
    (``h2d/learned/reach.py``): position (joint limits only), position + direction (joint limits only),
    position + direction within +-budget around the prior. The direction is the task's tool approach target (the
-   human forearm within a cone about the inward normal, spec v0.8 §5.4; the inward normal for older tasks), with
-   the hand's roll as a soft roll target;
+   human forearm within a cone about the inward normal, spec §5.4), with the hand's roll as a soft roll target;
 3. per problem: frames feasible (error <= pos_tol, angle <= max_angle, no self / floor / arm-object
    collision), failure labels, joint speed over consecutive feasible frames against the Z1 limit, arm change
    (per-joint max and RMS, deg), jump to the prior at the segment ends; the frozen body's penetration of the
    object (scene infeasible).
 
-Failure labels (spec §7.1 step 5): "proven_unreachable" (target farther from the joint1 anchor than the sum of
-the arm's segment lengths), "no_feasible_solution_within_budget" (all other failures of the local search),
+Failure labels (spec §7.1): "proven_unreachable" (target farther from the joint1 anchor than the sum of the arm's
+segment lengths), "no_feasible_solution_within_budget" (all other failures of the local search),
 "coordinate_or_tool_offset_error" (frame mismatch, target below the floor). A large registration residual is the
-prior's path drift (spec O2) and is reported in ``notes``, not as a label. "Task not expressible" comes only from the task definition and is not produced here.
+prior's path drift and is reported in ``notes``, not as a label.
 
 Writes outputs/<run-id>/{summary.json, report.md, tasks/<id>.png, solutions/<id>.npz}.
 """
@@ -61,7 +59,7 @@ from h2d.learned.reach import ArmIK, ObjectPose, reach_bound, shoulder  # noqa: 
 from h2d.paths import REPO_ROOT, load_config  # noqa: E402
 
 PROBLEMS = (("pos", False, False), ("pos_dir", True, False), ("pos_dir_budget", True, True))
-LAYOUTS = ("mesh", "reach_track", "reach_fit", "start_anchored")   # ours, script baseline, prior, default anchor
+LAYOUTS = ("mesh", "reach_track", "reach_fit", "start_anchored")   # ours, script baseline, prior, start anchor
 
 
 def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll: RobotCollision, cfg: dict,
@@ -77,12 +75,12 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
     if y_all[:, 2].min() < -0.02:
         out["flags"].append(f"target below the floor ({y_all[:, 2].min():.3f} m)")
     obj = load_object(task["object"])
-    if "forearm_used" in task and not task["forearm_used"]:
+    if not task["forearm_used"]:
         out["notes"].append(f"forearm points away ({float(task['forearm_face_deg']):.0f}° from the inward normal): "
                             "approach = inward normal")
-    if "palm_used" in task and not task["palm_used"]:
+    if not task["palm_used"]:
         out["notes"].append(f"palm {float(task['palm_face_deg']):.0f}° off the contact: no roll target")
-    if task.get("palm_flipped"):
+    if task["palm_flipped"]:
         out["notes"].append("palm side taken from the contact (the hand's points gave it mirrored)")
     hull = ObjectHull.from_vertices(obj.hull_verts)
     arm_idx = slice(12, 18)
@@ -111,33 +109,28 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
                       reg_cfg["psi_grid_deg"])
     fit.kind = "reach_fit"
     trk = track(p_reach, y_all, fit, float(task["fps"]), reach_cfg["track"]["smooth_s"])
-    prior_fit = contact_fit(p_raw, y_all, None, anchor.psi, reg_cfg["lambda_psi"], reg_cfg["min_target_spread_m"],
-                            reg_cfg["psi_grid_deg"])
     anchor_res = np.linalg.norm(anchor.apply_points(p_raw)[:, :2] - y_all[:, :2], axis=1)
     anchor.info = {"residual_xy_rms_m": float(np.sqrt(np.mean(anchor_res ** 2))), "residual_xy_max_m": float(anchor_res.max())}
     out["registration"] = {"reach_fit": fit.to_dict(), "reach_track": trk.to_dict(), "start_anchored": anchor.to_dict(),
-                           "contact_fit_prior_site": prior_fit.to_dict(), "face": face, "reach_ahead_m": ahead}
+                           "face": face, "reach_ahead_m": ahead}
     if fit.info["residual_xy_rms_m"] > cfg["registration_residual_suspect_m"]:
-        # the prior's own root path drifts from the source (spec O2: speed mapping, half turn rate), which one SE(2)
-        # cannot remove; reported, not a coordinate error (R008 mislabelled it as one)
+        # the prior's own root path drifts from the source (speed mapping, half turn rate), which one SE(2) cannot
+        # remove; reported, not a coordinate error
         out["notes"].append(f"contact-fit residual {fit.info['residual_xy_rms_m']:.2f} m (prior path drift)")
-    placed, rel = {"reach_fit": fit, "reach_track": trk, "start_anchored": anchor}, {}
-    if "body_world" in task:
-        n_w, ci = len(fr), np.flatnonzero(c)
-        im = InteractionMesh(task, prior_points(robot, coll, motion, fr),
-                             object_samples(obj.hull_verts, mesh_cfg["object_samples"]), hull, mesh_cfg)
-        psi_w, b_w, info = im.place(fit.psi, np.asarray(fit.b))
-        placed["mesh"] = SE2Track(psi_w[c], b_w[c], kind="mesh", info=info)
-        out["registration"]["mesh"] = placed["mesh"].to_dict()
+    placed = {"reach_fit": fit, "reach_track": trk, "start_anchored": anchor}
+    n_w, ci = len(fr), np.flatnonzero(c)
+    im = InteractionMesh(task, prior_points(robot, coll, motion, fr),
+                         object_samples(obj.hull_verts, mesh_cfg["object_samples"]), hull, mesh_cfg)
+    psi_w, b_w, info = im.place(fit.psi, np.asarray(fit.b))
+    placed["mesh"] = SE2Track(psi_w[c], b_w[c], kind="mesh", info=info)
+    out["registration"]["mesh"] = placed["mesh"].to_dict()
 
-        def window(T):          # a layout over the whole window (a track is held outside the contact frames)
-            if isinstance(T, SE2Track):
-                return (np.interp(np.arange(n_w), ci, np.broadcast_to(T.psi, len(T.b))),
-                        np.stack([np.interp(np.arange(n_w), ci, T.b[:, k]) for k in (0, 1)], 1))
-            return np.full(n_w, T.psi), np.tile(np.asarray(T.b), (n_w, 1))
-        rel = {k: im.metrics(*((psi_w, b_w) if k == "mesh" else window(T)), sel=ci) for k, T in placed.items()}
-    else:
-        out["notes"].append("task file without body points (task v1): no mesh layout")
+    def window(T):              # a layout over the whole window (a track is held outside the contact frames)
+        if isinstance(T, SE2Track):
+            return (np.interp(np.arange(n_w), ci, np.broadcast_to(T.psi, len(T.b))),
+                    np.stack([np.interp(np.arange(n_w), ci, T.b[:, k]) for k in (0, 1)], 1))
+        return np.full(n_w, T.psi), np.tile(np.asarray(T.b), (n_w, 1))
+    rel = {k: im.metrics(*((psi_w, b_w) if k == "mesh" else window(T)), sel=ci) for k, T in placed.items()}
 
     ik = ArmIK(robot, coll, cfg["pos_tol_m"], cfg["max_angle_deg"], cfg["n_random_starts"],
                margin_m=cfg["avoid_margin_m"], w_prev=cfg.get("prev_weight_m_per_rad", 0.0),
@@ -162,8 +155,8 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
             base_q = robot.data.qpos.copy()
             k = int(np.flatnonzero(fr == t)[0])
             op = ObjectPose(hull, task["obj_pos"][k], R.from_quat(task["obj_rot_xyzw"][k]).as_matrix())
-            n_w = -(op.rot @ task["tool_x_local"][k]) if "tool_x_local" in task else op.rot @ task["n_bar_local"]
-            z_ref = op.rot @ task["tool_z_local"][k] if "tool_z_local" in task else None
+            n_dir = -(op.rot @ task["tool_x_local"][k])
+            z_ref = op.rot @ task["tool_z_local"][k]
             y = task["target_world"][k]
             prior_site[i] = robot.contact_site()
             dist_sh[i] = float(np.linalg.norm(y - shoulder(robot)))
@@ -171,7 +164,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
             for p, use_dir, use_budget in PROBLEMS:
                 robot.set_qpos(base_q)
                 full = i % cfg["full_search_every"] == 0 or prev[p] is not None
-                r = ik.solve(y, n_w, prior_q[i], prev[p], use_dir, budget if use_budget else None, op, full, z_ref)
+                r = ik.solve(y, n_dir, prior_q[i], prev[p], use_dir, budget if use_budget else None, op, full, z_ref)
                 d = res[p]
                 d["q"][i], d["err"][i], d["ang"][i], d["ok"][i] = r.q, r.pos_err_m, r.angle_deg, r.feasible
                 d["roll"][i] = r.roll_deg
@@ -179,7 +172,7 @@ def solve_task(task: dict, motion: Motion, sidecar: dict, robot: B2Z1Robot, coll
                 d["armobj"][i], d["toolobj"][i] = r.collision["arm_obj_depth_m"], r.collision["tool_obj_depth_m"]
                 d["start"].append(r.start)
                 prev[p] = r.q if r.feasible else None
-        lay_out = {"relations": rel.get(lay), "scene_body_depth_max_m": float(scene.max()),
+        lay_out = {"relations": rel[lay], "scene_body_depth_max_m": float(scene.max()),
                    "scene_infeasible": bool(scene.max() > cfg["scene_body_depth_m"]),
                    "target_to_shoulder_m": [float(dist_sh.min()), float(dist_sh.max())], "reach_bound_m": bound,
                    "prior_site_error_m": [float(np.linalg.norm(prior_site - y_all, axis=1).min()),
@@ -270,7 +263,7 @@ def main() -> int:
     add_run_args(ap)
     ap.add_argument("--tasks-dir", required=True)
     ap.add_argument("--d0-dir", required=True)
-    ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: confirmed ids in configs/push_candidates.yaml)")
+    ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: the pilot segments in configs/push_candidates.yaml)")
     ap.add_argument("--tasks-csv", default=None, help="tasks.csv of prepare_tasks.py: take its passing candidates in order")
     ap.add_argument("--max-tasks", type=int, default=8, help="with --tasks-csv: at most this many")
     ap.add_argument("--layouts", nargs="*", default=["mesh", "reach_track", "reach_fit"], choices=LAYOUTS)
@@ -289,9 +282,9 @@ def main() -> int:
         import csv
 
         with open(args.tasks_csv, newline="", encoding="utf-8") as fh:
-            rows = [r for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"
+            rows = [r for r in csv.DictReader(fh) if r["pass"] == "True" and r["confirmed"] == "False"  # candidates
                     and r["dataset"] == "omomo_new"                    # the prior chain covers OMOMO_new only
-                    and r.get("grip", "press") != "grasp"]             # grasping needs the jaw site (not yet)
+                    and r["grip"] != "grasp"]                          # grasping needs the jaw site (not modelled)
         ids = [r["id"] for r in rows][: args.max_tasks]
     else:
         ids = args.ids or [s["id"] for s in
@@ -326,10 +319,9 @@ def main() -> int:
             r.pop("_y", None)
             r["runtime_s"] = time.time() - t1
             results[tid] = {"clip": task["clip"], "object": task["object"], "mode": task["mode"],
-                            "grip": task.get("grip", "press"), "palm_used": task.get("palm_used"),
-                            "palm_face_deg": task.get("palm_face_deg"), "forearm_used": task.get("forearm_used"),
-                            "forearm_face_deg": task.get("forearm_face_deg"),
-                            "contact_moved": task.get("height", {}).get("contact_moved", ""), **r}
+                            "grip": task["grip"], "palm_used": task["palm_used"], "palm_face_deg": task["palm_face_deg"],
+                            "forearm_used": task["forearm_used"], "forearm_face_deg": task["forearm_face_deg"],
+                            "contact_moved": task["height"]["contact_moved"], **r}
             print(f"  {tid}: {r['labels']}  ({r['runtime_s']:.0f} s)", flush=True)
         except Exception as e:  # noqa: BLE001 - report and continue
             import traceback
@@ -343,7 +335,7 @@ def main() -> int:
                "elapsed_s": time.time() - t0}
     (out_dir / "summary.json").write_text(json.dumps(clean(summary), indent=2, default=str), encoding="utf-8")
     f = lambda v, nd=2: "–" if v is None else f"{v:.{nd}f}"  # noqa: E731
-    lines = ["# Frozen-body reachability (spec learned v0.6 §7.1)", "",
+    lines = ["# Body layouts and arm reachability (spec §7)", "",
              f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
              f"{len(results)}/{len(ids)} tasks · reach bound {bound:.3f} m (sampled max {sampled:.3f} m) · "
              f"{summary['elapsed_s'] / 60:.1f} min", "",

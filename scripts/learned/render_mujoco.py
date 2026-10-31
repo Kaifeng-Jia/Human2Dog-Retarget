@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""MuJoCo video of a reachability run in the style of the X-Morph demos (spec learned v0.8 §7.2, Kevin).
+"""MuJoCo video of a layout evaluation in the style of the X-Morph demos (spec §7.2).
 
 A 2 x 3 grid rendered by MuJoCo in one scene (B2-Z1, G1, the object as a mocap mesh) from one fixed camera:
 
 * top row, the pipeline: the human (capsule skeleton), the G1 that GMR retargets the human to, and the B2-Z1 as
   X-Morph outputs it (body on the prior placement ``reach_fit``, arm as predicted). GMR scales the human's scene
   about the world origin (``world_scale`` in the G1 file, h2d/learned/human_to_g1.py), so the G1 is shown with the
-  object scaled the same way (Kevin, R018: next to the full-size object it sank in). GMR does not see the object and
+  object scaled the same way (next to the full-size object it would sink in). GMR does not see the object and
   weights hand positions lightly (wrists 0 / 10 vs pelvis and feet 100), so the G1's hands stay above the contact;
 * bottom row, the comparison: the B2-Z1 with its body placed by each layout (default: prior ``reach_fit``, script
   ``reach_track``, interaction mesh ``mesh``) and the arm at the IK solution of one problem (default ``pos_dir``).
@@ -15,8 +15,9 @@ The contact target is a small sphere; the arm turns red on frames where it does 
 diagnostic solves those). G1 motion: ``<clip>_g1.pkl`` next to the prior in ``--d0-dir`` (column left empty if
 missing).
 
-Offscreen rendering needs OpenGL: ``MUJOCO_GL=egl`` on a GPU machine, ``MUJOCO_GL=osmesa`` without one. Inputs as for
-``render_layouts.py``. Writes <out>/<id>.mp4 and <out>/<id>.png (middle frame).
+Offscreen rendering needs OpenGL: ``MUJOCO_GL=egl`` on a GPU machine, ``MUJOCO_GL=osmesa`` without one. Inputs: the
+output folder of ``reach_diag.py`` (summary.json, solutions/), the task files and the prior. Writes <out>/<id>.mp4 and
+<out>/<id>.png (middle frame).
 """
 
 from __future__ import annotations
@@ -119,7 +120,7 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
     nb = robot.model.nq                                          # the B2-Z1's qpos come first
 
     # camera: across the line from the object to the human (both side by side), panning with the object (1 s
-    # moving average) so that nothing leaves the frame (R017: the push carried the dog out of a fixed view)
+    # moving average) so that nothing leaves the frame (a long push carries the dog out of a fixed view)
     pelvis = task["skeleton_world"][ci][:, BODY_INDEX["Pelvis"]]
     side = np.median(pelvis[:, :2] - task["obj_pos"][ci][:, :2], axis=0)
     side = side / max(np.linalg.norm(side), 1e-9)
@@ -218,7 +219,7 @@ def main() -> int:
     ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: every solution file)")
     ap.add_argument("--layouts", nargs="*", default=["reach_fit", "reach_track", "mesh"])
     ap.add_argument("--pipeline", nargs="*", default=["human", "g1", "xmorph"], choices=["human", "g1", "xmorph"],
-                    help="pipeline tiles before the layouts (Kevin, 1 x 3: --pipeline human g1 --layouts mesh)")
+                    help="pipeline tiles before the layouts (1 x 3: --pipeline human g1 --layouts mesh)")
     ap.add_argument("--problem", default="pos_dir", choices=["pos", "pos_dir", "pos_dir_budget"])
     ap.add_argument("--stride", type=int, default=2, help="every n-th contact frame (2: 15 fps, real time)")
     ap.add_argument("--width", type=int, default=640)

@@ -14,7 +14,7 @@ Checked in the cloud on 2026-10-25 (repository files only; numbers below are fro
 | world | y-up (pelvis height ~0.95 m on y); the adapter rotates +90° about x into z-up |
 | object meshes | `assets/*.ply` scans, 500-8000 vertices; the pose applies to the scan centred at its bounding-box centre (authors' `visualize_force_dataset.py`) |
 | body shape | one `assets/betas.pkl` (10 betas, male), used for every sequence |
-| root convention | the pelvis joint is at `smpl_trans` (the authors' `SMPL_Layer('male', hands=True)` passes `'male'` as `normalise`, i.e. root-relative body + trans; standard SMPL would put the body ~0.22 m too low, found in R004) |
+| root convention | the pelvis joint is at `smpl_trans` (the authors' `SMPL_Layer('male', hands=True)` passes `'male'` as `normalise`, i.e. root-relative body + trans; standard SMPL would put the body ~0.22 m too low) |
 | per sequence | `objs`, `hands` (L / R / B), `dirs` (L / R / F / B / empty), `weights` (added kg: 0-30), `success` (1 / 2 / 3, undocumented) |
 | frame rate | not documented. 60 fps assumed: 467,378 frames / 60 fps = 130 min, the paper's 141.5 min scaled to 398 of 450 sequences is 125 min |
 | contact labels | not released; derived here from the skinned SMPL-H mesh (a body touches the object when one of its vertices is within 2 cm of the surface) |
@@ -26,7 +26,7 @@ plasticcontainer 57 B; laundrybasket 37 B. On-floor motion (object height range 
 Adapter: `h2d/common/data/force.py` (z-up `Clip` with the 52 bodies in InterMimic order, derived per-body contact,
 floor from the soles). SMPL-H model: `h2d/common/body/smplh.py` (no chumpy).
 
-## Profile (R004b, `5c1e1a6`, real SMPL-H male)
+## Profile (real SMPL-H male)
 
 All checks pass: floor at z = 0 for the pushed objects (box_huge −0.012 m, chair −0.017 m lowest point over the
 clip), derived contact found in 99 % of box/chair sequences, single-hand annotation agreement 0.88.

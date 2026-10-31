@@ -6,7 +6,7 @@ omomo_raw:
   default: ~/CS6758Project/data/omomo_raw       # original OMOMO release files (*.p, captured_objects/)
 omomo_new:
   env_var: OMOMO_NEW_ROOT
-  default: ~/CS6758Project/data/omomo_new       # processed OMOMO_new (*.pt), format checked in R002
+  default: ~/CS6758Project/data/omomo_new       # processed OMOMO_new (*.pt), docs/data/omomo_new_format.md
 smplx_models:
   env_var: SMPLX_MODEL_ROOT
   default: ~/CS6758Project/data/smplx_models    # SMPL-X model files (licensed download)

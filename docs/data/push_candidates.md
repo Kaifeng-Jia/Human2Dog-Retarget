@@ -1,9 +1,9 @@
-# Push candidates for the first reachability diagnostic
+# Push candidates
 
-Spec learned v0.6 §7.1 step 1: hand-confirmed segments, one virtual-hand mode (§5.1: one hand, or both hands on
-the same face), same-face push, small change of object orientation, with every candidate and its exclusion reasons
-recorded. Approach direction only ranks (v0.6 §5.2; v0.5 also required a near-normal approach and the right hand). The same record is
-an input shared by both lines (spec §0.1), so the code lives in `common`.
+Spec §7.1 step 1: segments with one virtual-hand mode (§5.1: one hand, or both hands on the same face), a
+same-face push and a small change of object orientation, with every candidate and its exclusion reasons recorded.
+Approach direction only ranks (§5.2). The same record is an input shared by both lines (spec §0.1), so the code
+lives in `common`.
 
 Script: `scripts/common/push_candidates.py` (both datasets by default). Criteria and ranking:
 `h2d/common/data/candidates.py`. Descriptors: `push_descriptors` in `h2d/common/data/describe.py`.
@@ -30,17 +30,19 @@ against its faces, so "local −x" is not a face normal.
 ## Criteria (in order) and ranking
 
 Segment criteria: slid; on the floor (lifted in ≤ 10 % of frames); one mode (left, right or both in ≥ 60 % of
-contact frames; R005 used right only); ≥ 1 s; tilt < 10°; |yaw| < 20°; other body parts in < 5 % of frames.
+contact frames); ≥ 1 s; tilt < 10°; |yaw| < 20° (45° with `configs/candidate_selection.yaml`); other body parts in
+< 5 % of frames. The selection config also sets the arm's reach band per face class, the interactions (push, pull)
+and the grips (press only).
 Push criteria (computed only after the segment criteria pass): both hands on the same face (≤ 30°); proxy ≤ 8 cm
 from the surface; push alignment ≥ 0.7; normal spread p90 ≤ 20°; patch coherence ≥ 0.8.
 
 Ranking: tier A (approach and retreat observed, both ≤ 30° from the normal) before B (what is observed is
 ≤ 30°, the rest not observable; OMOMO_new clips usually start in contact) before C (sideways entry or exit, spec
 §5.2 "not covered by the current path template"); then a vertical face (tilt ≤ 30°); then duration ×
-displacement. At most 2 per (dataset, object), one per clip, 16 in total (R005: 12).
+displacement. At most 2 per (dataset, object), one per clip, 16 in total.
 
-These are development initial values for proposing candidates, not evaluation thresholds (the tool-axis
-threshold of the diagnostic is 15°, spec §5.2 / §7.1).
+These values propose candidates; they are not evaluation thresholds (the evaluation's tool-axis threshold is 15°,
+spec §5.2 / §7.1).
 
 ## Outputs
 
@@ -50,17 +52,17 @@ and palm; the contact on the object seen from the hand and from the side with th
 timeline of contacts, speeds and push alignment; the numbers), `summary.json` (criteria, funnel per dataset,
 candidates with frame ranges and source-file hashes).
 
-## R005 result and the confirmed segments
+## Pilot segments
 
-R005 (`01985ab`): 11 segments pass all criteria (OMOMO_new 10, FORCE 1), 8 proposed after the caps, none in tier A.
-People bring the hand down onto the face from above (30-75 deg from the normal), and single right-hand pushes of
-low boxes are mostly on the top face; FORCE box / chair pushes are mostly two-handed or turn the object.
-Kevin confirmed three OMOMO_new segments (one side-face, two top-face pushes; contact at 0.14, 0.17, 0.36 m),
-recorded in `configs/push_candidates.yaml` with the deviation note; later runs read them from there.
+No candidate reaches tier A: people bring the hand down onto the face from above (30–75° from the normal), single
+right-hand pushes of low boxes are mostly on the top face, and FORCE box / chair pushes are mostly two-handed or
+turn the object. Three OMOMO_new segments (one side-face, two top-face pushes; contact at 0.14, 0.17, 0.36 m) were
+confirmed by hand for the first diagnostic and are kept in `configs/push_candidates.yaml`; the reported results
+use the other candidates.
 
 ## Task targets
 
-`scripts/common/prepare_tasks.py` turns each confirmed segment (and, with `--candidates`, every candidate) into
+`scripts/common/prepare_tasks.py` turns each pilot segment (and, with `--candidates`, every candidate) into
 `tasks/<id>.npz` (`h2d/common/data/tasks.py`, load with `load_task`): window of 1 s before and after the contact,
 object pose per frame (unchanged), `in_contact`, `c_bar_local` (contact target on the surface, object frame),
 `n_bar_local` (one normal, towards the hand), `d` (palm distance to the contact plane, zeroed by its median in

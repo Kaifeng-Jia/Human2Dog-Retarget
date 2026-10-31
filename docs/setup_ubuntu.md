@@ -45,7 +45,7 @@ export XMORPH_ROOT=/home/kevin/CS6758Project/morph
 
 **GMR** is cloned into `external/GMR` and installed editable (it pulls `mink`, `smplx`, `qpsolvers`,
 `opencv-python`). Always pass `-c constraints.txt`: without it pip installs opencv-python 5.x, which
-upgrades numpy to 2.x and breaks this project (found in R002).
+upgrades numpy to 2.x and breaks this project.
 
 ```bash
 git clone https://github.com/YanjieZe/GMR external/GMR
@@ -100,7 +100,6 @@ dirty tree or an unpinned X-Morph (see `docs/versioning.md`).
 ```bash
 git status                      # must be clean
 pytest -q
-python scripts/common/b01_check_tool_geometry.py --run-id <id>
 ```
 
 Then copy the small files to the `reports` branch (`<run-id>/`), push, and comment on the ticket

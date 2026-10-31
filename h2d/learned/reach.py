@@ -1,4 +1,4 @@
-"""Frozen-body reachability of the contact targets with the Z1 arm only (spec learned v0.6 §7.1).
+"""Frozen-body reachability of the contact targets with the Z1 arm only (spec §7.1).
 
 Per frame the base and legs stay at the (registered) prior; only the 6 arm joints move, within the joint limits
 (no budget) or within the prior +- a per-joint budget. Two problems:
@@ -6,7 +6,7 @@ Per frame the base and legs stay at the (registered) prior; only the 6 arm joint
 * position: contact site p_c(q) -> target y (3 residuals);
 * position + direction (two-point version, spec §5.2): p_c -> y and p_c + l x_tool -> y - l n (6 residuals),
   l = 0.05 m, n the outward normal; passes when the tool axis is within ``max_angle_deg`` of -n;
-* roll (spec v0.8 §5.4, soft): with a reference jaw axis z_ref (from the human palm), w_roll (z(q) - z_ref) is added
+* roll (spec §5.4, soft): with a reference jaw axis z_ref (from the human palm), w_roll (z(q) - z_ref) is added
   to the direction problems; it shapes the solution but does not decide feasibility.
 
 Solver: projected Levenberg-Marquardt from several starts (previous frame's solution, the prior, then seeded
