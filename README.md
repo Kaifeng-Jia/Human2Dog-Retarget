@@ -52,3 +52,7 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R020_d0 | #28 | `c0e785b` | Ubuntu RTX 5070 (cuda:0) | pass=true: 13/13 clips (incl. new pelvis_matches_recorded); G1 shift (-0.003, +0.292) m vs R015, world_scale 0.830; B2-Z1 dof diff ≤ 0.076 rad |
 | R020_reach | #28 | `c0e785b` | Ubuntu, CPU (render: RTX 5070, MUJOCO_GL=egl) | pass=true (10/10 tasks, 0 errors; 4 layouts); feasible pos / pos_dir / pos_dir_budget: mesh 9/9/0, reach_track 9/9/0, reach_fit 6/3/0 (all labels = R017), start_anchored 3/1/0; MuJoCo videos (mp4 on Drive) |
 | R021_cleanup | #29 | `d2758cb` | Ubuntu | tag v0.2.1 → d2758cb pushed; Drive staging verified (734 files, 103,815,492 bytes); deleted outputs/_drive_upload + 27 archived run dirs (1768 files, 232.2 MB); kept R015_candidates, R015_tasks, R020_d0, R020_reach, R001–R005 |
+| R022_candidates | #32 | `22536df` | Ubuntu, CPU | pass=true, 12 candidates (from scratch per README); columns 1–9 = R015 |
+| R022_tasks | #32 | `22536df` | Ubuntu, CPU | pass=true, 14 tasks; tasks.csv columns 1–10 = R015, task npz max diff 0, meta same |
+| R022_d0 | #32 | `22536df` | Ubuntu RTX 5070 (cuda:0) | pass=true, 13/13 clips; G1 and B2-Z1 identical to R020 (diff 0) |
+| R022_reach | #32 | `22536df` | Ubuntu, CPU (render: RTX 5070, MUJOCO_GL=egl) | pass=true (10/10 tasks, 4 layouts); report rows identical to R020 (0 lines differ), solutions npz identical; videos 2 x 3 and 1 x 3 (mp4 on Drive) |
