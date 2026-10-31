@@ -18,6 +18,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - Comments, docstrings and configs give the reason for each choice without run ids or names; the history is here
   and in `docs/results/`. "spec §x" refers to `docs/spec/learned/v0.8_zh.md`.
 - README: the learned line, its results and the commands that reproduce them.
+- MIT licence for the code (Kevin); third-party data, models and code keep their own licences.
 
 ## [0.2.2] — 2026-10-31 (videos)
 

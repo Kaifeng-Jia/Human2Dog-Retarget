@@ -95,3 +95,9 @@ checkpoints and third-party repositories are not included (licences); see the se
 
 Branches, run tickets, the `reports` branch for small result files and the milestone tags are described in
 [`docs/versioning.md`](docs/versioning.md); changes per version in [`CHANGELOG.md`](CHANGELOG.md).
+
+## License
+
+The code in this repository is released under the [MIT License](LICENSE). The datasets (OMOMO, FORCE), body models
+(SMPL-X, SMPL-H), X-Morph and its checkpoints, GMR and the HOI-Retarget object meshes are not part of it and keep
+their own licences.
