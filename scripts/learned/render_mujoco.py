@@ -6,7 +6,8 @@ A 2 x 3 grid rendered by MuJoCo in one scene (B2-Z1, G1, the object as a mocap m
 * top row, the pipeline: the human (capsule skeleton), the G1 that GMR retargets the human to, and the B2-Z1 as
   X-Morph outputs it (body on the prior placement ``reach_fit``, arm as predicted). GMR scales the human's scene
   about the world origin (``world_scale`` in the G1 file, h2d/learned/human_to_g1.py), so the G1 is shown with the
-  object scaled the same way (Kevin, R018: next to the full-size object it sank in);
+  object scaled the same way (Kevin, R018: next to the full-size object it sank in). GMR does not see the object and
+  weights hand positions lightly (wrists 0 / 10 vs pelvis and feet 100), so the G1's hands stay above the contact;
 * bottom row, the comparison: the B2-Z1 with its body placed by each layout (default: prior ``reach_fit``, script
   ``reach_track``, interaction mesh ``mesh``) and the arm at the IK solution of one problem (default ``pos_dir``).
 
@@ -175,8 +176,8 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
         if kind == "human":
             return label(img, ["human (OMOMO)", f"t = {(fr[i] - fr[ci[0]]) / task['fps']:.1f} s"])
         if kind == "g1":
-            return label(img, ["G1 (GMR retarget of the human)", f"GMR scales the scene x{gs:.2f}"] if g1 is not None
-                         else ["G1: no motion file"])
+            return label(img, ["G1 (GMR retarget of the human)", f"GMR scales the scene x{gs:.2f}",
+                               "object-unaware, hands loosely tracked"] if g1 is not None else ["G1: no motion file"])
         if kind == "xmorph":
             return label(img, ["B2-Z1 straight out of X-Morph", f"arm as predicted: gripper {gap:.0f} cm from the target"])
         r = rel[lay]
@@ -186,7 +187,7 @@ def render(tid, task, sol, summary, motion, g1, robot, layouts, problem, out: Pa
                            f"heading {r.get('heading_err_deg', float('nan')):.0f}°",
                            f"{'reached' if ok else 'NOT reached'}: {err:.1f} cm, tool axis {ang:.0f}°"], bad=not ok)
 
-    cells = [("human", None), ("g1", None), ("xmorph", None)] + [("layout", lay) for lay in layouts]
+    cells = [(k, None) for k in args.pipeline] + [("layout", lay) for lay in layouts]
     cols = 3
     rows = (len(cells) + cols - 1) // cols
     js = np.arange(0, len(ci), args.stride)
@@ -216,6 +217,8 @@ def main() -> int:
     ap.add_argument("--d0-dir", required=True)
     ap.add_argument("--ids", nargs="*", default=None, help="task ids (default: every solution file)")
     ap.add_argument("--layouts", nargs="*", default=["reach_fit", "reach_track", "mesh"])
+    ap.add_argument("--pipeline", nargs="*", default=["human", "g1", "xmorph"], choices=["human", "g1", "xmorph"],
+                    help="pipeline tiles before the layouts (Kevin, 1 x 3: --pipeline human g1 --layouts mesh)")
     ap.add_argument("--problem", default="pos_dir", choices=["pos", "pos_dir", "pos_dir_budget"])
     ap.add_argument("--stride", type=int, default=2, help="every n-th contact frame (2: 15 fps, real time)")
     ap.add_argument("--width", type=int, default=640)
