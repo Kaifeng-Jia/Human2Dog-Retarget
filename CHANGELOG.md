@@ -14,10 +14,9 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - M0 (`scripts/fullopt/m0_gait_stats.py`, `h2d/fullopt/{signals,gait}.py`, `configs/fullopt/gait.yaml`): human foot
   contacts, touchdowns and segments on the solvable tasks, leg length, step frequency against Alexander's relation,
   the B2 hip height from the model, and the dog's natural footfalls per human step with the share lockable per delta.
-
-### Changed
-- The task selection both lines use (passing OMOMO_new candidates that press) moved to
-  `h2d.common.data.tasks.solvable_task_ids`; `reach_diag.py` calls it (same tasks, same order).
+- The full-optimization line is kept apart from the learned line (Kevin): its code is only in `*/fullopt/`, it
+  does not change learned code, and it selects the same tasks with its own copy of the rule
+  (`h2d/fullopt/tasks.py`).
 
 ## [0.3.0] — 2026-10-31 (learned line, cleaned for release; results unchanged)
 

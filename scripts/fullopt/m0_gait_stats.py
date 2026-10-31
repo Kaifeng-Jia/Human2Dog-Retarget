@@ -24,11 +24,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data.omomo_new import intervals, load_clip  # noqa: E402
-from h2d.common.data.tasks import load_task, solvable_task_ids  # noqa: E402
+from h2d.common.data.tasks import load_task  # noqa: E402
 from h2d.common.robot import B2Z1Robot  # noqa: E402
 from h2d.common.runinfo import ProvenanceError, add_run_args, start_run  # noqa: E402
 from h2d.common.tables import clean, write_csv  # noqa: E402
 from h2d.fullopt import gait, signals  # noqa: E402
+from h2d.fullopt.tasks import solvable_task_ids  # noqa: E402
 from h2d.paths import data_path, load_config  # noqa: E402
 
 LIMITS = {"step_hz": (0.8, 2.6), "alternation_min": 0.8, "leg_m": (0.70, 1.05)}

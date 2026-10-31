@@ -2,4 +2,5 @@
 
 signals  human-side gait signals: foot contacts, touchdowns, stand / shuffle / walk segments (spec §6.1)
 gait     the dog's natural rhythm from dynamic similarity, B2 leg geometry (spec §6.2-6.3)
+tasks    the tasks it solves (the same as the learned line's)
 """
