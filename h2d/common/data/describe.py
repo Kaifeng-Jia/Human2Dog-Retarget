@@ -34,7 +34,6 @@ DEFAULTS = {
     "lift_m": 0.05, "lift_frac": 0.3, "tilt_deg": 15.0, "slide_m": 0.10, "yaw_deg": 20.0, "walk_m": 0.5,
 }
 OBJECT_STATES = ("lifted", "tilted", "slid", "turned", "still")
-HAND_LABELS = ("left", "right", "both", "mixed")
 WRIST = {"L": BODY_INDEX["L_Wrist"], "R": BODY_INDEX["R_Wrist"]}
 
 
@@ -223,7 +222,7 @@ def describe_clip(clip: Clip, obj: ObjectMesh, p: dict = DEFAULTS, mesh_check_fr
 
 # ------------------------------------------------------------------------------ push descriptors
 PALM = ("Wrist", "Index1", "Middle1", "Pinky1", "Ring1")
-# Virtual hand (spec v0.6 §5.1): "L" / "R" = that hand; "B" = both hands on the same face, midpoint of the two.
+# Virtual hand (spec §5.1): "L" / "R" = that hand; "B" = both hands on the same face, midpoint of the two.
 MODE_OF_HANDS = {"left": "L", "right": "R", "both": "B"}
 
 
@@ -242,7 +241,7 @@ def hand_frame(clip: Clip, side: str, frames) -> tuple[np.ndarray, np.ndarray, n
     """Palm normal (out of the palm), across the knuckles (index - pinky for the right hand, mirrored for the left so
     that both hands map alike) and forearm direction (elbow -> wrist), (n, 3) each, world frame; "B": both hands
     averaged. OMOMO_new keeps one hand shape per clip, but where the hand and the forearm are and which way they face
-    are captured per frame (spec v0.8 §5.4)."""
+    are captured per frame (spec §5.4)."""
     if side == "B":
         return tuple(_unit(a + b) for a, b in zip(hand_frame(clip, "L", frames), hand_frame(clip, "R", frames)))
     e, w, i, k = (clip.body_pos[frames][:, BODY_INDEX[f"{side}_{b}"]] for b in ("Elbow", "Wrist", "Index1", "Pinky1"))
@@ -341,7 +340,7 @@ def push_descriptors(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], side: st
         "contact_surface_dist_median_m": float(np.median(dist)), "contact_surface_dist_max_m": float(dist.max()),
         "approach_available_s": s / fps, "retreat_available_s": (clip.n - e) / fps,
     }
-    # extent of the touched face in the world at first contact (height adaptation, spec v0.7 §5.1)
+    # extent of the touched face in the world at first contact (height adaptation, spec §5.1)
     fp = obj.face_points(np.median(loc, 0), n_mean)
     fz = obj.world_points(clip.obj_pos[s], clip.obj_rot_xyzw[s], fp)[:, 2] if len(fp) else np.zeros(0)
     out["face_z_min_m"] = float(fz.min()) if fz.size else float("nan")

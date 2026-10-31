@@ -1,15 +1,11 @@
 #!/usr/bin/env python
-"""D0: one OMOMO_new clip end to end through the learned-line prior (spec v0.5 §4 steps 1-2).
+"""The learned-line prior for OMOMO_new clips (spec §4 steps 1-2):
 
-OMOMO_new clip -> contact modes and interaction descriptors (recorded skeleton + object)
-               -> SMPL-X params (mean shape) -> GMR -> G1 -> X-Morph -> B2-Z1 (+ sidecar)
-No object mesh, registration or arm refinement yet; this establishes the chain and gives a first look
-at the human hand vs the prior's gripper.
+OMOMO_new clip -> SMPL-X params (mean shape) -> GMR -> G1 -> X-Morph -> B2-Z1 (+ sidecar)
 
-Pass/fail per clip: chain completes; frame counts consistent; pelvis height z-up sane;
-convention self-check (pelvis-relative wrist error, mean shape vs recorded) median <= 0.08 m.
-The figure follows the clip's longest hand-contact segment (h2d/common/data/describe.py).
-Clips are chosen explicitly, after looking at the data profile (scripts/common/profile_hoi.py).
+Pass/fail per clip: chain completes; frame counts consistent; pelvis height z-up sane; convention self-checks of
+the mean-shape SMPL-X against the recorded skeleton (pelvis position, pelvis-relative wrists). The figure follows
+the clip's longest hand-contact segment (h2d/common/data/describe.py): the human hand vs the prior's gripper.
 
 Usage:
   python scripts/learned/d0_chain.py --run-id R00x_d0 --clips sub10_largebox_011 sub3_floorlamp_004
@@ -40,10 +36,10 @@ from h2d.learned.human_to_g1 import retarget_to_g1  # noqa: E402
 from h2d.learned.prior import load_motion, run_xmorph, yaw_from_xyzw  # noqa: E402
 from h2d.paths import data_path  # noqa: E402
 
-# Mean shape vs the recorded skeleton gives a few cm (up to 8.3 cm for a large subject, R012 sub3_largetable_028;
-# 9.7 and 10.7 cm for sub3 in R015); a wrong body-frame convention gives tens of cm. 0.12 m keeps that separation.
+# Mean shape vs the recorded skeleton gives a few cm (up to 10.7 cm for the largest subject, sub3); a wrong
+# body-frame convention gives tens of cm. 0.12 m keeps that separation.
 WRIST_TOL_M = 0.12
-PELVIS_TOL_M = 0.01      # SMPL-X pelvis vs the recorded one (until v0.2.0: 0.35 m, the rest joint was not removed)
+PELVIS_TOL_M = 0.01      # SMPL-X pelvis vs the recorded one (0.35 m if the rest pelvis is not removed)
 
 
 def hand_center(clip, side: str) -> np.ndarray:

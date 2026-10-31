@@ -1,4 +1,4 @@
-"""Scene registration: one constant SE(2) per demonstration (spec learned v0.6 §4 step 3).
+"""Scene registration: one constant SE(2) per demonstration (spec §4 step 3).
 
 The robot root trajectory is mapped by T(psi, b): p -> R_z(psi) p + b (xy; z unchanged), q -> R_z(psi) q. The object
 trajectory is never changed.
@@ -10,7 +10,7 @@ trajectory is never changed.
   lambda_psi wrap(psi - psi_a)^2. For fixed psi the best b is closed form; psi is found on a grid and refined.
   If the targets barely move, psi is not identifiable and is fixed to psi_a.
 * reach point (``reach_points``): the same fit with p_t a nominal reach point fixed in the base frame instead of the
-  prior's contact site (the prior's arm is not informative, R008 / R010);
+  prior's contact site (the prior's arm stays raised and is not informative);
 * tracking (``track``): on top of a constant fit, a smoothed per-frame translation b_t that keeps the reach point on
   the target (the body follows the object); the robot's base path then differs from the prior by b_t - b.
 """

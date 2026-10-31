@@ -1,4 +1,4 @@
-"""Candidate segments for the first reachability diagnostic (spec learned v0.6 §7.1 step 1; shared input of both
+"""Candidate push segments (spec §7.1 step 1; shared input of both
 lines, spec §0.1 "实验输入"): one virtual-hand mode (one hand, or both hands on the same face, §5.1), the object
 pushed along the floor through one face, small change of object orientation; approach direction only ranks. The
 script only proposes; candidates are confirmed by hand.
@@ -67,7 +67,7 @@ EDGE_MARGIN_M = 0.05
 
 
 def adapted_height(row: dict, band: dict, margin: float = EDGE_MARGIN_M) -> float:
-    """Contact height the robot uses (spec v0.7 §5.1, Kevin): on a side or slant face the contact may move up or down
+    """Contact height the robot uses (spec §5.1): on a side or slant face the contact may move up or down
     the same face into the arm's band (same face, same push direction, same position along the face); a top face
     keeps its height. NaN when the band and the face do not overlap."""
     face = "grasp" if row.get("grip") == "grasp" else face_of(row.get("normal_tilt_median_deg"))
@@ -98,8 +98,8 @@ def interaction_of(row: dict, thr: float = 0.7) -> str:
 
 
 def robot_grip(row: dict) -> str:
-    """How the robot must hold the object, from the interaction and the face (R012: OMOMO_new has a fixed hand shape,
-    so thumb / finger contacts cannot tell a grasp from a press): a push, and a pull on a top face (dragging by
+    """How the robot must hold the object, from the interaction and the face (OMOMO_new keeps one hand shape per
+    clip, so thumb / finger contacts cannot tell a grasp from a press): a push, and a pull on a top face (dragging by
     friction), press with the closed gripper; a pull on a side or slant face needs a grasp (or a hook)."""
     if row.get("interaction") == "pull" and face_of(row.get("normal_tilt_median_deg")) in ("side", "slant"):
         return "grasp"

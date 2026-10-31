@@ -1,4 +1,4 @@
-"""Fast regression tests for the B01 tool / collision geometry conventions."""
+"""Fast regression tests for the tool frame, contact site and collision geometry conventions (configs/b2z1.yaml)."""
 
 import os
 from pathlib import Path

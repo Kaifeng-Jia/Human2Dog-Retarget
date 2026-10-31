@@ -1,15 +1,10 @@
-# Push segments for the first reachability diagnostic (spec learned v0.5 §7.1 step 1), shared by both lines.
-# Proposed by run R005_push_candidates (code 01985ab, results on `reports` b92e037); confirmed by Kevin on 2026-10-25.
+# Pilot push segments (spec §7.1 step 1), shared by both lines: the first reachability diagnostic. prepare_tasks.py
+# always builds them (marked confirmed); reach_diag.py --tasks-csv evaluates the other candidates.
 # Frames are [start, end) at the clip's 30 fps after the adapter drops OMOMO_new's all-zero first frame.
 #
-# Deviation from §7.1 step 1: no segment in OMOMO_new or FORCE has a right-hand approach within 30 deg of the face
-# normal (people bring the hand down from above), and single-hand pushes of low boxes are mostly on the top face.
-# The first diagnostic therefore uses the contact frames for IK; approach and retreat are labelled
-# "not covered by the current path template" (spec §5.2). To be reviewed (Codex).
-source_run: R005_push_candidates
-source_commit: 01985ab
-confirmed_by: Kevin
-confirmed_on: 2026-10-25
+# No segment in OMOMO_new or FORCE has a right-hand approach within 30 deg of the face normal (people bring the hand
+# down from above), and single-hand pushes of low boxes are mostly on the top face. The diagnostic therefore uses
+# the contact frames for IK; approach and retreat are "not covered by the current path template" (spec §5.2).
 segments:
   - id: trashcan_side
     dataset: omomo_new
@@ -22,8 +17,7 @@ segments:
     contact_z_m: 0.14
     object_moves_m: 2.23
     approach_retreat_deg: [74.3, 45.3]
-    r005_rank: 2
-    mode: R                    # virtual hand (spec v0.6 §5.1)
+    mode: R                    # virtual hand (spec §5.1)
   - id: smallbox_top
     dataset: omomo_new
     clip: sub7_smallbox_041
@@ -35,8 +29,7 @@ segments:
     contact_z_m: 0.17
     object_moves_m: 1.83
     approach_retreat_deg: [30.8, 24.5]
-    r005_rank: 4
-    mode: R                    # virtual hand (spec v0.6 §5.1)
+    mode: R                    # virtual hand (spec §5.1)
   - id: largebox_top
     dataset: omomo_new
     clip: sub7_largebox_041
@@ -48,5 +41,4 @@ segments:
     contact_z_m: 0.36
     object_moves_m: 1.60
     approach_retreat_deg: [42.3, 31.6]
-    r005_rank: 6
-    mode: R                    # virtual hand (spec v0.6 §5.1)
+    mode: R                    # virtual hand (spec §5.1)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-"""Propose push candidates for the first reachability diagnostic (spec learned v0.6 §7.1 step 1).
+"""Propose push candidates (spec §7.1 step 1).
 
 For every clip of the chosen datasets: hand-contact segments (``describe_clip``), the segment criteria, and for
 the segments that pass them the push descriptors of the segment's virtual hand (one hand, or both hands: the
-midpoint; spec v0.6 §5.1): push vs pull, contact face and its normal, approach and retreat direction
+midpoint; spec §5.1): push vs pull, contact face and its normal, approach and retreat direction
 (``push_descriptors``) and the push criteria (``h2d/common/data/candidates.py``). The
-passing segments are ranked and at most ``--top`` are proposed, then confirmed by hand.
+passing segments are ranked and at most ``--top`` are proposed.
 
 Checks: all files processed; at least 3 candidates; the contact proxy lies on the object surface for the
-segments that reach the push criteria (median <= 8 cm, a convention check like the profile's); FORCE data at
+segments that reach the push criteria (median <= 8 cm, a convention check); FORCE data at
 the pinned commit (when FORCE is used).
 
 Writes outputs/<run-id>/{summary.json, report.md, candidates.csv, pool.csv (every slid segment with the
@@ -209,7 +209,7 @@ def main() -> int:
         return "–" if v is None or math.isnan(v) else f"{v:.{nd}f}"
 
     lines = [
-        "# Push candidates (spec learned v0.6 §7.1 step 1)", "",
+        "# Push candidates (spec §7.1 step 1)", "",
         f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
         + " · ".join(f"{ds} {len(files[ds])} files, {n_segs[ds]} segments" for ds in args.datasets)
         + f" · {len(errors)} errors · {summary['elapsed_s'] / 60:.1f} min", "",

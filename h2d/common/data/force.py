@@ -13,8 +13,8 @@ What the release contains and how it is read (checked against the authors' ``vis
 * Root convention: the pelvis joint is at ``smpl_trans``. The authors' visualizer builds its body layer as
   ``SMPL_Layer('male', hands=True)``, whose first positional argument is ``normalise``: vertices and joints are
   made root-relative before ``trans`` is added. Standard SMPL (pelvis at ``J_rest[0] + trans``) would put the
-  body ~0.22 m too low (the SMPL-H pelvis rest height), which R004 saw as every object floating 0.22 m above
-  the floor found from the feet. (The same call also leaves the visualizer on the neutral model; we use the
+  body ~0.22 m too low (the SMPL-H pelvis rest height), which shows up as every object floating 0.22 m
+  above the floor found from the feet. (The same call also leaves the visualizer on the neutral model; we use the
   male model that ``betas.pkl`` names.)
 * ``annotations_final/*.txt``: per sequence object id, hands (L / R / B), direction, added weight [kg],
   a success code (undocumented).

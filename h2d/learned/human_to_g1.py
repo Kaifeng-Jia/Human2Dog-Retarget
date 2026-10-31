@@ -3,10 +3,10 @@
 GMR's own loaders are used unchanged (load_smplx_file / get_smplx_data_offline_fast / retarget with
 offset_to_ground=True), so the G1 files match what X-Morph's training data was built from.
 
-Two facts about where the G1 ends up (Kevin, R018 videos: the G1 sank into the object by a near-constant amount):
+Two facts about where the G1 ends up:
 
 * SMPL-X adds its rest pelvis joint to ``trans`` unrotated, so ``trans`` is the recorded pelvis minus that joint
-  (until v0.2.0 it was the recorded pelvis: the human reached GMR 0.35 m off along world -y);
+  (otherwise the human reaches GMR 0.35 m off along world -y);
 * GMR scales the whole scene about the world origin by its pelvis scale (0.83 for the mean shape), which keeps the
   feet planted but leaves the G1 at 0.83 x the human's position next to an unscaled object. The scale is saved as
   ``world_scale``: the G1 shares a scene with the object scaled by it.

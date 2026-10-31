@@ -1,5 +1,7 @@
-"""Learned line: frozen X-Morph prior + regularized arm correction (spec v0.5).
+"""Learned line (spec: docs/spec/learned/v0.8_zh.md): frozen X-Morph prior, body placement, arm IK.
 
-Planned modules: prior.py (X-Morph wrapper + source-origin sidecar),
-arm_refine.py (B1/B2/M solvers). Not implemented yet.
+human_to_g1.py  human (SMPL-X) -> G1 with GMR
+prior.py        X-Morph G1 -> B2-Z1 and the source-origin sidecar
+imesh.py        interaction-mesh body placement
+reach.py        multi-start, collision-aware Z1 arm IK
 """

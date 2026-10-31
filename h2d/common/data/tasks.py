@@ -1,4 +1,4 @@
-"""Human-side task targets of one confirmed push segment (spec learned v0.6 §4 step 1, §5.1-5.2), shared by both lines.
+"""Human-side task targets of one push segment (spec §4 step 1, §5.1-5.2), shared by both lines.
 
 For a segment [s, e) and its virtual-hand mode ("R", "L" or "B", ``describe.contact_point``), over a window that adds
 ``pre_s`` before and ``post_s`` after:
@@ -28,7 +28,7 @@ from h2d.common.data.describe import contact_point, hand_frame, palm_point
 from h2d.common.data.omomo_new import BODY_INDEX, Clip
 from h2d.common.objectmesh import ObjectMesh
 
-TASK_VERSION = 2                     # 2: tool pose from the forearm and the hand (spec v0.8 §5.4), body points
+TASK_VERSION = 2                     # 2: tool pose from the forearm and the hand (spec §5.4), body points
 BODY_POINTS = ("Pelvis", "Chest", "L_Shoulder", "R_Shoulder")
 
 
@@ -50,7 +50,7 @@ def _unit(v: np.ndarray) -> np.ndarray:
 def adapt_height(obj: ObjectMesh, c_bar: np.ndarray, n_bar: np.ndarray, pos0, rot0, z_human: float, band: dict,
                  margin: float = 0.05) -> tuple[np.ndarray, dict]:
     """Move the contact targets up or down the same flat face so the robot contacts it inside the arm's height band
-    (spec v0.7 §5.1, Kevin: pushing a tall object at the human's chest height keeps its meaning lower down). Same
+    (spec §5.1: pushing a tall object at the human's chest height keeps its meaning lower down). Same
     face, same normal, same position along the face; a constant in-plane shift in the object frame. Top faces keep
     their height. Returns the shifted targets and a record."""
     from h2d.common.data.candidates import face_of
@@ -85,7 +85,7 @@ def adapt_height(obj: ObjectMesh, c_bar: np.ndarray, n_bar: np.ndarray, pos0, ro
 
 
 def gripper_axes(x: np.ndarray, across: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Tool x (approach, given) and tool z (jaw closing) from the hand's roll (spec v0.8 §5.4, Kevin): the Z1 mover
+    """Tool x (approach, given) and tool z (jaw closing) from the hand's roll (spec §5.4): the Z1 mover
     turns about tool y, which follows the line across the knuckles; z = x cross y. One rule for press and grasp: a
     flat palm pushing along the forearm gets z along the fingers, a hand wrapping a rim gets z across the palm."""
     y = _unit(across - np.sum(across * x, -1, keepdims=True) * x)
@@ -102,8 +102,8 @@ def clamp_cone(v: np.ndarray, axis: np.ndarray, max_deg: float) -> np.ndarray:
 
 def from_behind(obj: ObjectMesh, c_bar: np.ndarray, pos: np.ndarray, rot: np.ndarray, band: dict | None,
                 below_m: float = 0.08) -> tuple[np.ndarray, np.ndarray, dict]:
-    """A push on a top face is done from the robot's side (spec v0.8 §5.6, Kevin, R013: pressing down on a low top
-    is out of the arm's reach and pushes only by friction). Same push direction, same position across the object:
+    """A push on a top face is done from the robot's side (spec §5.6: pressing down on a low top is out of the
+    arm's reach and pushes only by friction). Same push direction, same position across the object:
     the contact moves onto the vertical face that faces the robot when that face reaches the arm's side band
     (``adapt_height``), else onto the edge between that face and the top, pushed 45 deg down and forward. Returns
     the contact targets (object frame, contact frames), the outward approach normal and a record."""
@@ -130,7 +130,7 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
                grip: str = "press", interaction: str = "push", tool_max_deg: float = 45.0,
                palm_max_deg: float = 60.0) -> dict:
     """``band`` ({face: [z_lo, z_hi]}): adapt the contact height to the arm (``adapt_height``). A push on a top face
-    is moved to the robot's side (``from_behind``). Tool pose (spec v0.8 §5.4): the approach is the human forearm
+    is moved to the robot's side (``from_behind``). Tool pose (spec §5.4): the approach is the human forearm
     (elbow -> wrist, the direction the human pushes along), turned into a ``tool_max_deg`` cone about the inward
     normal of the robot's contact (the inward normal itself if the forearm points away from the object); the roll
     follows the hand (``gripper_axes``) when the palm faces the human's contact within ``palm_max_deg`` (else, e.g.
@@ -184,8 +184,8 @@ def build_task(clip: Clip, obj: ObjectMesh, seg: tuple[int, int], mode: str, pre
     palm_n, across, fore = (_unit(_smooth(to_obj.apply(v), smooth)) for v in hand_frame(clip, mode, fr))
     deg = lambda a, b: float(np.degrees(np.arccos(np.clip(np.median(a @ b), -1, 1))))  # noqa: E731
     palm_face, fore_face = deg(palm_n[contact], -n_bar), deg(fore[contact], -n_robot)
-    palm_flipped = palm_face > 90.0         # the palm is the side that touches (R014: 149-173 deg on all two-hand
-    if palm_flipped:                        # pushes, a mirrored hand convention in the data or flipped hands)
+    palm_flipped = palm_face > 90.0         # the palm is the side that touches (some clips give the hand's
+    if palm_flipped:                        # points mirrored: 150-175 deg on two-hand pushes)
         palm_n, across, palm_face = -palm_n, -across, 180.0 - palm_face
     palm_used, fore_used = palm_face <= palm_max_deg, fore_face <= 90.0
     tool_x = clamp_cone(fore, -n_robot, tool_max_deg) if fore_used else np.tile(-n_robot, (len(fr), 1))
@@ -244,5 +244,7 @@ def save_task(task: dict, path) -> None:
 def load_task(path) -> dict:
     z = np.load(path)
     out = json.loads(str(z["meta"]))
+    if out.get("task_version") != TASK_VERSION:
+        raise ValueError(f"{path}: task version {out.get('task_version')}, expected {TASK_VERSION} (rerun prepare_tasks.py)")
     out.update({k: z[k] for k in z.files if k != "meta"})
     return out
