@@ -75,9 +75,15 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   trunk lunge on the approach (tilt at the 15 deg limit) stays until the gait (M3) lets the trunk walk up. So does
   the backpack's front-right sole sliding ~0.3 m out and back within 1-2 frames while the human swings it (before
   the task; the sole stays on the floor, no check covers its speed).
-- After R027c (Ubuntu, all solve checks passed): the synthetic push test no longer requires every frame converged,
-  only that none stops at the iteration cap and >= 90 % converge. Its frame 1 ends on a trust region collapsing
-  near the 1e-6 floor (cloud 1.6e-6, converged; Ubuntu 8.0e-7, not). Solver and outputs unchanged.
+
+### Changed after R027c (Ubuntu: every solve check passed; the synthetic push test's frame 1 stopped on its radius)
+- Looser per-frame stop, after the references: a frame converges on the first of a step below 1e-3 inside the radius
+  (was 1e-4), an accepted step changing the merit by at most 1e-5 of it (OmniRetarget's stop on the cost), or the
+  radius below 1e-5 (scipy trust-constr's xtol) with no row violated beyond 1e-4 (IPOPT's constr_viol_tol). Before,
+  a stop on the radius (floor 1e-6) was unconverged and fell on either side of the floor across machines (cloud
+  1.6e-6, Ubuntu 8.0e-7). Per clip: `solver.stops` counts the frames by reason; `solutions/*.npz` has `stop`.
+- Cloud dry run: dev passes with the same reached frames; every frame converges (9 did not); at most 79 iterations
+  (was 150); 6:30 for 14 clips (was 8:03); soles <= 1.2 mm, trunk ratio <= 1.008.
 
 ### Changed (R026b follow-ups)
 - M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared

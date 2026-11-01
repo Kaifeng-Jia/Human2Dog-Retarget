@@ -325,12 +325,17 @@ class Solver:
     def _frame(self, t, q, q1, q2, task, relation, frame, iters: int) -> dict:
         """Trust-region SQP on one frame from q: a step is accepted when the merit's actual decrease is at least
         ``accept`` of the decrease the QP predicts; the radius shrinks on a rejection and grows when the model agrees
-        and the step reached it. Converged: a step below ``tol`` inside the radius. A step the bounds force (the start
-        outside one, ``box``) is taken without the test. Returns the last accepted iterate and the frame's record."""
+        and the step reached it. A step the bounds force (the start outside one, ``box``) is taken without the test.
+        The frame stops, converged, on the first of: a step below ``tol`` inside the radius; an accepted step that
+        changes the merit by at most ``merit_rtol`` of it (OmniRetarget's stop on the cost); the radius shrunk below
+        ``trust_region_min`` with no row violated beyond ``violation_max`` (scipy trust-constr's xtol stop, IPOPT's
+        constr_viol_tol). Otherwise it stops at the iteration cap, unconverged. Returns the last accepted iterate and
+        the frame's record."""
         sq, fps = self.cfg["sqp"], self.fps
         rad = sq["trust_region"]
         cur = self._linearise(t, q, q1, q2, task, relation, frame)
-        rec = {"iters": 0, "rejected": 0, "corrections": 0, "converged": False, "step": 0.0, "slack": 0.0, "ok": True}
+        rec = {"iters": 0, "rejected": 0, "corrections": 0, "converged": False, "stop": "cap", "step": 0.0,
+               "slack": 0.0, "ok": True}
         for it in range(iters):
             rec["iters"] = it + 1
             lo, hi = self.box(cur["q"], q1, q2, fps, rad)
@@ -342,7 +347,7 @@ class Solver:
             pred = cur["merit"] - self._merit(cur["res"] + cur["jac"] @ dx, cur["h"] + cur["G"] @ dx)
             inside = step < 0.99 * rad
             if ok and inside and step < sq["tol"]:
-                rec.update(converged=True, step=step, slack=slack)
+                rec.update(converged=True, stop="step", step=step, slack=slack)
                 break
             new = self._linearise(t, self.robot.integrate(cur["q"], dx, self.dofs), q1, q2, task, relation, frame) \
                 if ok else None
@@ -353,20 +358,26 @@ class Solver:
             if ok and new is not None and (forced or (pred > 0 and cur["merit"] - new["merit"] >= sq["accept"] * pred)):
                 if cur["merit"] - new["merit"] >= sq["expand_above"] * pred and not inside:
                     rad = min(2.0 * rad, sq["trust_region_max"])
+                flat = not forced and cur["merit"] - new["merit"] <= sq["merit_rtol"] * abs(new["merit"]) + 1e-8
                 cur = new
                 rec.update(step=step, slack=slack)
+                if flat:
+                    rec.update(converged=True, stop="merit")
+                    break
             else:                                           # (the radius from the QP's step, not the correction's)
                 rec["rejected"] += 1
                 rad = 0.25 * (step if ok else rad)
                 if rad < sq["trust_region_min"]:
+                    scale = self._tol / self.cfg["constraints"]["feasibility_tol"]     # (the hard rows' scale)
+                    rec.update(converged=bool(np.all(cur["h"] >= -sq["violation_max"] * scale)), stop="radius")
                     break
         rec["radius"] = rad
         return cur["q"], rec
 
     def solve(self, c: HOIClip, task, relation, log=None) -> dict:
         """Solve every frame of a clip whose floor is at z = 0 (``hoi.leveled``). Returns the configurations and, per
-        frame, the iterations, rejected steps, whether it converged, the last accepted step, the final radius, the
-        largest slack and whether every QP solved."""
+        frame, the iterations, rejected steps, whether it converged and why it stopped (step, merit, radius, cap), the
+        last accepted step, the final radius, the largest slack and whether every QP solved."""
         r, sq = self.robot, self.cfg["sqp"]
         self.fps = c.fps
         ov = np.asarray(c.obj_verts, float)
@@ -374,8 +385,8 @@ class Solver:
         Ro, po = R.from_quat(c.obj_quat).as_matrix(), c.obj_pos
         T = c.n
         out = {"q": np.zeros((T, r.model.nq)), "iters": np.zeros(T, int), "rejected": np.zeros(T, int),
-               "converged": np.zeros(T, bool), "step": np.zeros(T), "radius": np.zeros(T), "slack_max": np.zeros(T),
-               "qp_ok": np.ones(T, bool)}
+               "converged": np.zeros(T, bool), "stop": np.full(T, "", "<U6"), "step": np.zeros(T),
+               "radius": np.zeros(T), "slack_max": np.zeros(T), "qp_ok": np.ones(T, bool)}
         t0 = time.time()
         q1 = q2 = None
         for t in range(T):
@@ -387,8 +398,8 @@ class Solver:
             q, rec = self._frame(t, q, q1, q2, task, relation, (hull, verts, Ro[t], po[t]),
                                  sq["first_frame_iters"] if t == 0 else sq["max_iters"])
             out["q"][t] = q
-            for k, key in (("iters", "iters"), ("rejected", "rejected"), ("converged", "converged"), ("step", "step"),
-                           ("radius", "radius"), ("slack_max", "slack"), ("qp_ok", "ok")):
+            for k, key in (("iters", "iters"), ("rejected", "rejected"), ("converged", "converged"), ("stop", "stop"),
+                           ("step", "step"), ("radius", "radius"), ("slack_max", "slack"), ("qp_ok", "ok")):
                 out[k][t] = rec[key]
             q2, q1 = q1, q
             if log and (t % 50 == 0 or t == T - 1):

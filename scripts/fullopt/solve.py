@@ -67,6 +67,7 @@ def solve_clip(c: HOIClip, robot, coll, solver, corr, cfg, ecfg, band, learned_r
                       "iters_mean": float(sol["iters"].mean()), "iters_max": int(sol["iters"].max()),
                       "unconverged_frames": int(np.sum(~sol["converged"])),
                       "unconverged": [int(t) for t in np.flatnonzero(~sol["converged"])],
+                      "stops": {k: int(np.sum(sol["stop"] == k)) for k in ("step", "merit", "radius", "cap")},
                       "rejected_steps": int(sol["rejected"].sum()), "radius_final_min": float(sol["radius"].min()),
                       "radius_final_median": float(np.median(sol["radius"])),
                       "qp_failures": int(np.sum(~sol["qp_ok"])), "slack_max": float(np.nanmax(sol["slack_max"])),
@@ -75,7 +76,7 @@ def solve_clip(c: HOIClip, robot, coll, solver, corr, cfg, ecfg, band, learned_r
     arrays = {"q": sol["q"], "fps": c.fps, "floor_z": c.floor_z, "gate": task.gate, "target": task.target,
               "tool_x": task.tool_x, "tool_z": task.tool_z, "segment": np.array(task.segment),
               "window": np.array(task.window), "span": np.array(task.span), "relation_targets": relation.targets,
-              "iters": sol["iters"], "rejected": sol["rejected"], "converged": sol["converged"],
+              "iters": sol["iters"], "rejected": sol["rejected"], "converged": sol["converged"], "stop": sol["stop"],
               "radius": sol["radius"], "step": sol["step"], "slack_max": sol["slack_max"], "reached": arr["ok"],
               "err": arr["err"], "angle": arr["ang"], "body_in_object": arr["body_in_object"],
               "object_under_body": arr["object_under_body"]}

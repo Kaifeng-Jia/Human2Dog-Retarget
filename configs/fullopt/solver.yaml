@@ -54,13 +54,19 @@ constraints:                # linearised every iteration, L1 slacks (spec §7.2)
                             # weight decided the steps and collapsed the radius (R027b dry runs)
 
 sqp:                        # trust-region SQP on an L1 merit (solver.Solver._frame)
-  trust_region: 0.1         # initial radius of ||dx|| <= rho on every frame (SOC, as OmniRetarget)
+  trust_region: 0.1         # initial radius of ||dx|| <= rho on every frame (SOC; OmniRetarget: 0.2, fixed)
   trust_region_max: 0.4
-  trust_region_min: 1.0e-6  # a frame whose radius shrinks below this stops, unconverged
-  accept: 0.1               # a step is accepted when the merit drops by at least this share of the predicted drop
-  expand_above: 0.75        # ... and the radius doubles when it drops by this share and the step reached the radius
-  max_iters: 150            # R027b-revision dry runs: 99.9 % of the frames converge within 30 iterations; the trunk's
-                            # lunge on c07 / c08 (large task residuals, the Gauss-Newton model 4-10x optimistic)
-                            # needs up to 91
-  first_frame_iters: 200    # the first frame starts from the human's pelvis and facing (converged within 91)
-  tol: 1.0e-4               # converged: a step below this inside the radius
+  accept: 0.1               # a step is accepted when the merit drops by at least this share of the predicted drop;
+  expand_above: 0.75        # the radius doubles above this share when the step reached it, and shrinks to 1/4 of the
+                            # step on a rejection (Nocedal & Wright, Alg. 4.1: accept in (0, 1/4), 3/4, x2, x1/4)
+  max_iters: 150            # a safety net, rarely reached (R027b revision: 99.9 % of the frames within 30 at the old
+  first_frame_iters: 200    # tol); OmniRetarget stops at 10 (50 on the first frame) on a fixed radius
+  # A frame stops, converged, on the first of (after R027c, looser than before: a stop on the radius was unconverged,
+  # and fell on either side of its floor across machines):
+  tol: 1.0e-3               # a step below this inside the radius [m, rad]: 1 mm / 1 mrad, against the evaluation's
+                            # 2 mm (collisions, soles) and 1 cm (reach)
+  merit_rtol: 1.0e-5        # an accepted step changing the merit by at most this share (OmniRetarget: np.isclose on
+                            # the cost, rtol 1e-5)
+  trust_region_min: 1.0e-5  # the radius shrunk below this (scipy trust-constr's xtol stop) with no row violated
+  violation_max: 1.0e-4     # beyond this [m; sin for the tilt] (IPOPT's constr_viol_tol); with a row violated, the
+                            # frame stops unconverged
