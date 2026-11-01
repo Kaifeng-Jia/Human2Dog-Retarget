@@ -8,4 +8,4 @@ h2d.learned  the learned line: frozen X-Morph prior + regularized arm correction
 h2d.fullopt  the full-optimization line: whole-body optimization, no learned prior (in progress).
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"

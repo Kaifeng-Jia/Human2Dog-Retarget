@@ -12,7 +12,7 @@ registration):
 | Body motion | frozen X-Morph prior (human → GMR → G1 → X-Morph → B2-Z1) | optimized |
 | What we solve | where the body stands, frame by frame; the Z1 arm | the whole robot |
 | Code | `h2d/learned/`, `scripts/learned/` | `h2d/fullopt/`, `scripts/fullopt/` |
-| Spec | [`docs/spec/learned/v0.8_zh.md`](docs/spec/learned/v0.8_zh.md) | [`docs/spec/fullopt/v0.1_zh.md`](docs/spec/fullopt/v0.1_zh.md) (draft) |
+| Spec | [`docs/spec/learned/v0.8_zh.md`](docs/spec/learned/v0.8_zh.md) | [`docs/spec/fullopt/v0.2_zh.md`](docs/spec/fullopt/v0.2_zh.md) |
 
 ## Learned line
 
