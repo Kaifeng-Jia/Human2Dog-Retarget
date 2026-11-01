@@ -8,8 +8,9 @@ deviation (the frequency change a whole-number ratio needs). The B2 hip height h
 
 Checks of the measurement (all must hold): every clip loads; every clip has a walk or shuffle segment; no two
 touchdowns closer than 0.2 s (a double detection; quick real steps around an object are 0.24 s apart and more);
-touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h within 0.70-1.05 m. Step frequencies are data, not
-checked: around objects people take short quick steps far from steady walking.
+touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h within 0.70-1.05 m and, as the bones are fixed per
+person, within 3 cm across one subject's clips (a posture leaking into the estimate shows up here). Step frequencies
+are data, not checked: around objects people take short quick steps far from steady walking.
 
 Writes outputs/<run-id>/{summary.json, report.md, segments.csv, figures/{freq_speed,timelines}.png}.
 """
@@ -34,7 +35,7 @@ from h2d.fullopt import gait, signals  # noqa: E402
 from h2d.fullopt.tasks import solvable_task_ids  # noqa: E402
 from h2d.paths import data_path, load_config  # noqa: E402
 
-LIMITS = {"min_step_gap_s": 0.2, "alternation_min": 0.8, "leg_m": (0.70, 1.05)}
+LIMITS = {"min_step_gap_s": 0.2, "alternation_min": 0.8, "leg_m": (0.70, 1.05), "leg_spread_subject_m": 0.03}
 INK, INK2, GRID, SURF = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 FOOT = {"L": "#2a78d6", "R": "#eb6834"}
 
@@ -64,7 +65,8 @@ def analyse(clip, task: dict, cfg: dict, h_d: float) -> tuple[dict, list[dict]]:
                       "dog_gait": g, "dog_per_step": r,
                       "lock_dev": float(gait.lock_deviation(r, 1 if g == "walk" else 2)),
                       "in_window": bool(s["start"] < w1 and s["end"] > w0)})
-    row = {"task": task["id"], "clip": clip.name, "frames": clip.n, "fps": fps, "window": [w0, w1], "leg_m": h_h,
+    row = {"task": task["id"], "clip": clip.name, "subject": clip.subject, "frames": clip.n, "fps": fps,
+           "window": [w0, w1], "leg_m": h_h,
            "touchdowns": len(ev), "alternation": signals.alternation(ev),
            "min_step_gap_s": float(np.diff([f for f, _ in ev]).min() / fps) if len(ev) > 1 else float("nan"),
            "walk_segments": sum(s["kind"] == "walk" for s in segs),
@@ -182,6 +184,10 @@ def main() -> int:
             print(f"  {tid}: error {errors[-1]['error']}", flush=True)
     rows = [p["row"] for p in per]
     h_h = float(np.median([r["leg_m"] for r in rows])) if rows else float("nan")
+    by_subject = {}
+    for r in rows:
+        by_subject.setdefault(r["subject"], []).append(r["leg_m"])
+    spread = {s: float(np.ptp(v)) for s, v in by_subject.items() if len(v) > 1}
     checks = {
         "all_clips_loaded": {"pass": bool(rows) and not errors, "n": len(rows), "n_errors": len(errors)},
         "steps_found": {"pass": all(r["walk_segments"] + r["shuffle_segments"] > 0 for r in rows),
@@ -195,6 +201,8 @@ def main() -> int:
                                 "range": LIMITS["leg_m"],
                                 "outside": [r["task"] for r in rows
                                             if not LIMITS["leg_m"][0] <= r["leg_m"] <= LIMITS["leg_m"][1]]},
+        "leg_length_same_per_subject": {"pass": all(v <= LIMITS["leg_spread_subject_m"] for v in spread.values()),
+                                        "spread_m": spread},
     }
     passed = all(c["pass"] for c in checks.values())
     deltas = cfg["dog"]["deltas"]

@@ -58,11 +58,13 @@ def test_steps_segments_and_leg_length_on_synthetic_walking():
     assert signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.015)
 
 
-def test_leg_length_does_not_drop_when_squatting():
+def test_leg_length_does_not_change_when_squatting_on_the_toes():
     pose = np.repeat(standing_pose()[None], 90, 0)               # hips 0.30 m lower, knees forward, same bones
     for s in ("L", "R"):
         pose[:, BODY_INDEX[f"{s}_Hip"], 2] -= 0.30
         pose[:, BODY_INDEX[f"{s}_Knee"], [0, 2]] = (0.304, 0.340)
+    leg = [BODY_INDEX[f"{s}_{n}"] for s in "LR" for n in ("Hip", "Knee", "Ankle")]
+    pose[20:, leg, 2] += 0.07                                    # heels up after the first frames (toes stay down)
     con = signals.foot_contacts(pose, FPS, CFG)
     assert con.all() and signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.02)
 

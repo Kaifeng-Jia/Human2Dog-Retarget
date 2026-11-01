@@ -76,14 +76,14 @@ def alternation(events: list[tuple[int, str]]) -> float:
     return float(np.mean([a != b for a, b in zip(sides[:-1], sides[1:])])) if len(sides) > 1 else float("nan")
 
 
-def leg_length(body_pos: np.ndarray, contact: np.ndarray) -> float:
-    """Hip-joint height of the straightened leg: thigh + shank (medians over the clip) + ankle height in stance,
-    averaged over both legs. Independent of posture: a person who squats through most of a clip keeps their
-    standing leg length (the hip height of still frames does not)."""
+def leg_length(body_pos: np.ndarray, contact: np.ndarray, flat_pct: float = 5.0) -> float:
+    """Hip-joint height of the straightened leg, averaged over both legs: thigh + shank (bone lengths, fixed per
+    person) + the ankle's height with the foot flat. A lifted heel (squatting, pushing) only raises the ankle, so the
+    flat-foot height is a low percentile of the ankle height over stance frames. Independent of posture."""
     out = []
     for j, s in enumerate("LR"):
         hip, knee, ankle = (body_pos[:, BODY_INDEX[f"{s}_{n}"]] for n in ("Hip", "Knee", "Ankle"))
         az = ankle[contact[:, j], 2] if contact[:, j].any() else ankle[:, 2]
         out.append(np.median(np.linalg.norm(hip - knee, axis=1)) + np.median(np.linalg.norm(knee - ankle, axis=1))
-                   + np.median(az))
+                   + np.percentile(az, flat_pct))
     return float(np.mean(out))
