@@ -2,6 +2,27 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.2] — 2026-11-01 (full-optimization line: one standard input; dev and held-out splits)
+
+### Added (Kevin: the method must not fit only this dataset)
+- `h2d/fullopt/hoi.py`: the line's only input, like OmniRetarget's: world joint positions under semantic names,
+  the object mesh and its pose trajectory, optional hand contact labels; save / load as `.npz`, `validate` (joints,
+  shapes, units, z up, floor), and the adapter from the common clip layout (OMOMO_new, FORCE).
+- `configs/fullopt/formats.yaml`: joint mappings `common_clip` and `smpl` (SMPL, SMPL-H, SMPL-X names).
+- `scripts/fullopt/export_hoi.py`: tasks of `prepare_tasks.py` runs -> HOI clips, split into dev (the tasks both
+  lines solve) and held-out (every other passing press task, by a rule fixed before any result).
+- Spec v0.2 (`docs/spec/fullopt/v0.2_zh.md`): generalization rules (§0.2), the input format (§2.1), the robot
+  description (§7.4), dev and held-out evaluation (§8.5), milestone M0'.
+
+### Changed
+- `signals.py` and M0 read only HOI clips; M0 checks the inputs and reports the dev and held-out splits apart.
+
+### Fixed (R026)
+- `validate` checks z up and metres on the person's most upright 10 % of frames instead of the whole-clip median,
+  which crouching over a box or bending over a low bin pulls down (head above the ankles 0.70-0.77 m in the median,
+  1.47-1.49 m standing).
+- `export_hoi.py` lists every skipped row with its reason, including segments already exported.
+
 ## [0.3.1] — 2026-10-31 (full-optimization line: spec v0.1 and M0)
 
 ### Added

@@ -6,8 +6,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from h2d.common.data.omomo_new import BODY_INDEX
+from h2d.common.data.omomo_new import BODY_INDEX, BODY_NAMES
 from h2d.fullopt import gait, signals
+from h2d.fullopt.hoi import HOIClip, rename
 from h2d.paths import load_config
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "common"))
@@ -15,6 +16,14 @@ from synthetic_hoi import standing_pose  # noqa: E402
 
 FPS = 30.0
 CFG = load_config("fullopt/gait.yaml")["human"]
+
+
+def hoi(pose: np.ndarray) -> HOIClip:
+    """A synthetic skeleton (common Clip layout) as the method's input, with a still unit box."""
+    joints, names = rename(pose, BODY_NAMES, "common_clip")
+    T = len(pose)
+    return HOIClip(fps=FPS, joints=joints, joint_names=names, obj_verts=np.eye(3), obj_faces=np.array([[0, 1, 2]]),
+                   obj_pos=np.zeros((T, 3)), obj_quat=np.tile([0.0, 0.0, 0.0, 1.0], (T, 1)))
 
 
 def step(pose, side, td, xs, xe, swing_s=0.5):
@@ -33,7 +42,7 @@ def walking(T=300, v=0.8, t0=2.0, t1=8.0, step_s=0.625, lead=0.3):
     t = np.arange(T) / FPS
     pose = np.repeat(standing_pose()[None], T, 0)
     pose[:, :, 0] += v * np.clip(t - t0, 0, t1 - t0)[:, None]
-    for i in [BODY_INDEX[n] for n in signals.FEET["L"] + signals.FEET["R"]]:
+    for i in [BODY_INDEX[n] for n in ("L_Ankle", "L_Toe", "R_Ankle", "R_Toe")]:
         pose[:, i, 0] = standing_pose()[i, 0]
     tds = {"L": np.arange(t0 + 0.5, t1 + 0.2, 2 * step_s), "R": np.arange(t0 + 0.5 + step_s, t1 + 0.2, 2 * step_s)}
     for side, times in tds.items():
@@ -47,15 +56,16 @@ def walking(T=300, v=0.8, t0=2.0, t1=8.0, step_s=0.625, lead=0.3):
 
 def test_steps_segments_and_leg_length_on_synthetic_walking():
     pose, truth = walking()
-    con = signals.foot_contacts(pose, FPS, CFG)
+    c = hoi(pose)
+    con = signals.foot_contacts(c, CFG)
     ev = signals.touchdowns(con)
     assert [s for _, s in ev] == [s for _, s in truth]
     assert np.abs(np.array([f for f, _ in ev]) - [f for f, _ in truth]).max() <= 2
-    segs = signals.segments(pose, FPS, ev, CFG)
+    segs = signals.segments(c, ev, CFG)
     assert [s["kind"] for s in segs] == ["walk"] and segs[0]["steps"] == len(truth)
     assert segs[0]["step_hz"] == pytest.approx(1.6, rel=0.05)
     assert signals.alternation(ev) == 1.0
-    assert signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.015)
+    assert signals.leg_length(c, con) == pytest.approx(0.85, abs=0.015)
 
 
 def test_leg_length_does_not_change_when_squatting_on_the_toes():
@@ -65,15 +75,17 @@ def test_leg_length_does_not_change_when_squatting_on_the_toes():
         pose[:, BODY_INDEX[f"{s}_Knee"], [0, 2]] = (0.304, 0.340)
     leg = [BODY_INDEX[f"{s}_{n}"] for s in "LR" for n in ("Hip", "Knee", "Ankle")]
     pose[20:, leg, 2] += 0.07                                    # heels up after the first frames (toes stay down)
-    con = signals.foot_contacts(pose, FPS, CFG)
-    assert con.all() and signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.02)
+    c = hoi(pose)
+    con = signals.foot_contacts(c, CFG)
+    assert con.all() and signals.leg_length(c, con) == pytest.approx(0.85, abs=0.02)
 
 
 def test_one_step_is_a_shuffle():
     pose = np.repeat(standing_pose()[None], 180, 0)              # standing; the right foot steps 0.2 m forward
     step(pose, "R", 3.0, 0.0, 0.2)
-    ev = signals.touchdowns(signals.foot_contacts(pose, FPS, CFG))
-    segs = signals.segments(pose, FPS, ev, CFG)
+    c = hoi(pose)
+    ev = signals.touchdowns(signals.foot_contacts(c, CFG))
+    segs = signals.segments(c, ev, CFG)
     assert [s for _, s in ev] == ["R"] and [s["kind"] for s in segs] == ["shuffle"]
 
 

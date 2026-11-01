@@ -1,0 +1,54 @@
+# Joint mappings of the full-optimization line's input (fullopt spec v0.2 §2.1, h2d/fullopt/hoi.py):
+# semantic name -> joint name in the source format. To bring a new dataset, add its format here and write its world
+# joint positions (metres, z up) with HOIClip; the method reads only the semantic names. Required: pelvis to the
+# wrists; optional: the finger bases (index, pinky), which give the palm.
+
+common_clip:               # h2d.common.data.omomo_new.BODY_NAMES: OMOMO_new, and FORCE read into the same layout
+  pelvis: Pelvis
+  spine: Spine
+  chest: Chest
+  neck: Neck
+  head: Head
+  l_hip: L_Hip
+  r_hip: R_Hip
+  l_knee: L_Knee
+  r_knee: R_Knee
+  l_ankle: L_Ankle
+  r_ankle: R_Ankle
+  l_toe: L_Toe
+  r_toe: R_Toe
+  l_shoulder: L_Shoulder
+  r_shoulder: R_Shoulder
+  l_elbow: L_Elbow
+  r_elbow: R_Elbow
+  l_wrist: L_Wrist
+  r_wrist: R_Wrist
+  l_index: L_Index1
+  r_index: R_Index1
+  l_pinky: L_Pinky1
+  r_pinky: R_Pinky1
+
+smpl:                      # SMPL, SMPL-H and SMPL-X joint names (as in the smplx package; AMASS, BEHAVE, GRAB, ...)
+  pelvis: pelvis
+  spine: spine2
+  chest: spine3
+  neck: neck
+  head: head
+  l_hip: left_hip
+  r_hip: right_hip
+  l_knee: left_knee
+  r_knee: right_knee
+  l_ankle: left_ankle
+  r_ankle: right_ankle
+  l_toe: left_foot
+  r_toe: right_foot
+  l_shoulder: left_shoulder
+  r_shoulder: right_shoulder
+  l_elbow: left_elbow
+  r_elbow: right_elbow
+  l_wrist: left_wrist
+  r_wrist: right_wrist
+  l_index: left_index1
+  r_index: right_index1
+  l_pinky: left_pinky1
+  r_pinky: right_pinky1
