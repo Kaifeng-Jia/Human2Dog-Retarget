@@ -1,0 +1,241 @@
+{
+  "provenance": {
+    "run_id": "R026_fullopt_hoi",
+    "started_utc": "2026-11-01T05:08:15+00:00",
+    "h2d_version": "0.3.2",
+    "git": {
+      "commit": "8877af231386b4e849b9a5777d45140d8f44873f",
+      "branch": "HEAD",
+      "describe": "v0.3.1-1-g8877af2",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "data.yaml": "5af44ae598ec197f",
+      "external.yaml": "847b4b4bf499bd9e",
+      "fullopt/formats.yaml": "51759a1fe004d668"
+    },
+    "command": "export_hoi.py --run-id R026_fullopt_hoi --dev outputs/R022_tasks --heldout outputs/R022_tasks outputs/R026_tasks_force outputs/R026_tasks_omomo",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "pass": false,
+  "counts": {
+    "dev": 10,
+    "heldout": 4
+  },
+  "clips": [
+    {
+      "id": "sub6_largetable_033_3",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c01_sub6_largetable_033",
+      "object": "largetable",
+      "subject": "sub6",
+      "frames": 186,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub12_largebox_000_0",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c02_sub12_largebox_000",
+      "object": "largebox",
+      "subject": "sub12",
+      "frames": 258,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": [
+        "head above the ankles 0.77 m: not metres, or not a standing person"
+      ]
+    },
+    {
+      "id": "sub5_largetable_030_17",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c03_sub5_largetable_030",
+      "object": "largetable",
+      "subject": "sub5",
+      "frames": 159,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub12_largebox_065_23",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c04_sub12_largebox_065",
+      "object": "largebox",
+      "subject": "sub12",
+      "frames": 192,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub1_suitcase_008_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c06_sub1_suitcase_008",
+      "object": "suitcase",
+      "subject": "sub1",
+      "frames": 129,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub3_largebox_032_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c07_sub3_largebox_032",
+      "object": "largebox",
+      "subject": "sub3",
+      "frames": 181,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub3_largebox_031_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c08_sub3_largebox_031",
+      "object": "largebox",
+      "subject": "sub3",
+      "frames": 178,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub12_largebox_089_16",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c09_sub12_largebox_089",
+      "object": "largebox",
+      "subject": "sub12",
+      "frames": 245,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub1_largetable_074_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c10_sub1_largetable_074",
+      "object": "largetable",
+      "subject": "sub1",
+      "frames": 210,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub1_largetable_073_6",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "c12_sub1_largetable_073",
+      "object": "largetable",
+      "subject": "sub1",
+      "frames": 203,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub6_trashcan_003_24",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "trashcan_side",
+      "object": "trashcan",
+      "subject": "sub6",
+      "frames": 192,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": [
+        "not z-up: head, pelvis and ankles are not above one another",
+        "head above the ankles 0.70 m: not metres, or not a standing person"
+      ]
+    },
+    {
+      "id": "sub7_smallbox_041_41",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "smallbox_top",
+      "object": "smallbox",
+      "subject": "sub7",
+      "frames": 173,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "sub7_largebox_041_35",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "task_run": "R022_tasks",
+      "task_id": "largebox_top",
+      "object": "largebox",
+      "subject": "sub7",
+      "frames": 165,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    },
+    {
+      "id": "0630_61-2_472",
+      "split": "heldout",
+      "dataset": "force",
+      "task_run": "R022_tasks",
+      "task_id": "c11_0630_61-2",
+      "object": "backpack",
+      "subject": "session0630",
+      "frames": 712,
+      "fps": 30.0,
+      "hand_contact": true,
+      "problems": []
+    }
+  ],
+  "skipped": [],
+  "errors": []
+}

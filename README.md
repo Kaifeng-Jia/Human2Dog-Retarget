@@ -63,3 +63,4 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R026_tasks_force | #38 | `8877af2` | Ubuntu, CPU | pass=true, 4 tasks (0630_61-2 + 3 tool tasks) |
 | R026_candidates_omomo | #38 | `8877af2` | Ubuntu, CPU | pass=true, 11 candidates (= R022's 11 OMOMO candidates; only 11 segments pass the funnel, --top 32 not binding) |
 | R026_tasks_omomo | #38 | `8877af2` | Ubuntu, CPU | pass=true, 13 tasks (10 = dev clips + 3 tool tasks) |
+| R026_fullopt_hoi | #38 | `8877af2` | Ubuntu, CPU | **pass=false**: dev 10, held-out 4 (trashcan_side, smallbox_top, largebox_top, 0630_61-2; 27 duplicate rows skipped); input check fails on dev sub12_largebox_000 (head above ankles 0.77 m, squatting) and held-out sub6_trashcan_003 (not z-up / 0.70 m, bent over); steps 6–7 (M0, compare) not run per ticket |
