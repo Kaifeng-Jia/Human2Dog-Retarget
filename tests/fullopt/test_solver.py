@@ -80,7 +80,11 @@ def test_pass_one_reaches_a_reachable_push_and_stays_out_of_the_object():
     coll = Collision(ROBOT)
     sol = Solver(ROBOT, cfg, coll=coll).solve(c, task, relation)
     ev, _ = evaluate(c, task, sol["q"], ROBOT, coll, corr, load_config("fullopt/evaluation.yaml"))
-    assert sol["qp_ok"].all() and sol["converged"].all()
+    # No frame stops at the iteration cap (R027b's failure); a frame may stop on a collapsed trust region, which
+    # is within the step tolerance either way and falls on either side of the floor across machines (frame 1: radius
+    # 1.6e-6 in the cloud, 8.0e-7 on Ubuntu, R027c).
+    capped = ~sol["converged"] & (sol["radius"] >= cfg["sqp"]["trust_region_min"])
+    assert sol["qp_ok"].all() and not capped.any() and sol["converged"].mean() >= 0.9
     assert ev["reach"]["reached"], ev["reach"]
     pe, li = ev["penetration"], ev["limits"]
     assert pe["body_in_object_m"] < 1e-3 and pe["arm_in_object_m"] < 2e-3 and pe["object_under_body_frames"] == 0
