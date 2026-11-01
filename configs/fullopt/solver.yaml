@@ -1,0 +1,45 @@
+# Per-frame SQP of the full-optimization line (fullopt spec v0.2 §7, h2d/fullopt/solver.py). Development values, tuned
+# on the dev split only (spec §8.5). Units: metres, radians; a weight multiplies a squared residual.
+
+task:                       # h2d/fullopt/task.py, the learned line's task semantics (learned spec v0.8 §5)
+  pre_s: 1.0                # window before / after the contact segment (as prepare_tasks.py) when meta has none
+  post_s: 1.0
+  smooth_frames: 5          # contact target and hand frame, centred moving average
+  patch_m: 0.03             # surface patch radius of the face normal
+  tool_max_deg: 45.0        # approach cone about the inward normal
+  palm_max_deg: 60.0        # roll target only when the palm faces the contact within this
+  approach_mps: 0.5         # the target closes in on the face / leaves it at most this fast (the human's palm can jump)
+  dilate_s: 0.5             # gate kappa: the contact frames dilated by this ...
+  smooth_s: 0.5             # ... then averaged over this (1 within 0.25 s of contact, 0 from 0.75 s on)
+
+relation:                   # h2d/fullopt/relation.py
+  kind: a                   # (a) vertex substitution; (b) whole-network mapping in M2
+  object_samples: 24        # farthest-point samples of the object's hull
+  human_smooth_s: 1.0       # spec §6.1: the relation, not the gait sway
+
+weights:
+  relation: 1.0             # Laplacian coordinates, per robot vertex, horizontal [m]
+  task: 1000.0              # contact point and the direction point [m], times the gate: 1 cm costs as much as 30 cm of
+                            # relation (at 100 the relation held the arm off the first contact frames)
+  lever_m: 0.05             # two-point direction: tool point and the point lever_m along the approach axis
+  roll_m: 0.02              # soft roll: roll_m x (jaw axis - target), below the direction lever (does not decide reach)
+  tilt: 10.0                # trunk up axis, horizontal part (roll and pitch -> 0)
+  height: 10.0              # trunk height -> nominal, weak: a low edge needs the trunk ~8 cm lower (as the X-Morph
+                            # prior's 0.46-0.55 m); at 30 the dog went round the box instead (pass 1: legs at home)
+  home: 1.0e-3              # joints -> home (very weak: removes redundancy only)
+  velocity: {base_pos: 10.0, base_rot: 1.0, legs: 0.1, arm: 0.1}        # (q_t - q_t-1)^2 per frame
+  acceleration: {base_pos: 100.0, base_rot: 10.0, legs: 1.0, arm: 1.0}  # (q_t - 2 q_t-1 + q_t-2)^2
+
+constraints:                # linearised every iteration, L1 slacks (spec §7.2)
+  object_margin_m: 0.0      # robot samples (body and arm, not the tool) outside the object's convex hull
+  floor_clearance_m: 0.03   # trunk and arm samples above the floor (pass 1: the legs stand at home)
+  self_margin_m: 0.005      # arm against the trunk, the legs and itself; a few mm absorb the linearisation of round links
+  activation_m: 0.15        # constraints of points closer than this
+  rows: {object: 48, floor: 16, self: 16}   # the most critical ones per iteration (fixed sizes: one compiled QP)
+  slack_weight: 1.0e4       # per metre of violation; far above the objective's gradients, so slack only when infeasible
+
+sqp:
+  trust_region: 0.1         # ||dx|| <= rho (SOC, as OmniRetarget)
+  max_iters: 10
+  first_frame_iters: 50     # the first frame starts from the human's pelvis and facing
+  tol: 1.0e-4               # stop at ||dx|| below this

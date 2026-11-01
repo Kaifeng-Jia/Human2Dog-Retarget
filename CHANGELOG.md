@@ -2,6 +2,47 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.3] — 2026-11-01 (full-optimization line: M1, the solver and pass 1)
+
+### Added (fullopt spec v0.2 §3 steps 1-3, §4, §5.1, §7, §8.1)
+- Robot description `configs/fullopt/robots/b2z1.yaml` (model, trunk, feet, joints, home and nominal height, speed
+  limits, tool, the dog points of the correspondence, collision groups) and the correspondence
+  `configs/fullopt/correspondence.yaml`; `h2d/fullopt/robot.py` reads any robot from its description (FK of named
+  points, point and axis Jacobians in MuJoCo's tangent space, limits, the learned line's collision rules). Only these
+  files name B2-Z1 parts.
+- `h2d/fullopt/task.py`: the learned line's task targets (contact, approach, tool pose, roll, height band, top pushes
+  from the robot's side) from a `HOIClip` alone, and the task gate a c kappa; `task.compare` checks them against the
+  learned line's task files.
+- `h2d/fullopt/relation.py`: the relation interface and representation (a), vertex substitution (horizontal Laplacian
+  coordinates on the robot vertices, the end effector's target is the contact target inside the task window); (b) is
+  M2.
+- `h2d/fullopt/solver.py`, `configs/fullopt/solver.yaml`: per-frame SQP, one QP with a second-order cone per iteration
+  (cvxpy + Clarabel, compiled once with parameters), relation + gated task + nominal + smoothness, joint and trunk
+  speed and height boxes, linearised object / floor / self constraints with L1 slacks, trust region 0.1; pass 1 moves
+  the trunk and the arm, the legs stay at home. 25-35 ms per frame on the cloud dry run.
+- `h2d/fullopt/evaluate.py`, `configs/fullopt/evaluation.yaml`: reach, penetration, limits and the relation metrics
+  (edge direction, heading, same side) with the learned line's definitions.
+- `scripts/fullopt/solve.py` (dev and held-out apart, pass on dev: reach >= 9, body in object <= 1 cm, targets agree
+  with the learned line's) and `scripts/fullopt/render.py` (MuJoCo, human | robot with one camera, mp4 + key-frame
+  strip).
+- Dependencies `cvxpy==1.7.5`, `clarabel==0.11.1` (extra `fullopt`; 1.7.5 is the newest cvxpy for Python 3.10 with
+  numpy 1.x).
+
+### Found on the cloud dry run (synthetic clips and the two real dev windows of R015, not a reported run)
+- The palm's joint centre can lie inside a thin table top, where the patch normal points down: the face normal now
+  points to the human's side (the elbow). The learned line's "flipped palm" on two-hand table pushes (R014) comes from
+  this; the full-optimization line's roll target differs from it by 180 deg there (soft, does not decide reach).
+- With the contact moved to the robot's side, the palm is still 10 cm from the edge the frame before contact: the
+  approach target now closes in at most 0.5 m/s (contact frames unchanged).
+- The trunk jumped where the task gate opens (8 m/s): trunk speed limits 1 m/s and 2 rad/s per axis.
+
+### Changed (R026b follow-ups)
+- M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared
+  across the two splits (reported); "no double touchdowns" means the same foot twice within 0.2 s (alternating feet
+  0.17 s apart are a real quick step); `signals.same_foot_gap_s`.
+- Spec: FORCE's "subject" is a recording session, so a FORCE clip is held out by its object only; the M1 decisions in
+  the revision table.
+
 ## [0.3.2] — 2026-11-01 (full-optimization line: one standard input; dev and held-out splits)
 
 ### Added (Kevin: the method must not fit only this dataset)

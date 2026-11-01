@@ -1,0 +1,19 @@
+# Human -> robot correspondence phi (fullopt spec §4, level L0: given by hand), one table per robot description.
+# Each robot point takes the mean of its human points (many-to-one: the four foot points to the support centre).
+# Human points are the semantic joints of the input (h2d/fullopt/hoi.py) plus two of the task:
+#   hand: the virtual hand (task hand's palm; both palms' midpoint in two-hand mode)
+#   elbow: the task hand's elbow (both elbows' midpoint in two-hand mode)
+# Knees, shoulders, the other hand and the mid spine are not in the network.
+
+b2z1:
+  points:
+    trunk: [pelvis]
+    z1_base: [chest]
+    trunk_front: [head]
+    z1_elbow: [elbow]
+    gripper: [hand]
+    support: [l_ankle, l_toe, r_ankle, r_toe]
+  end_effector: gripper            # the task's contact point
+  # Fixed evaluation network (spec §8.1), the same as the learned line's: these robot points, and the hand, to the
+  # object samples
+  evaluation: {pelvis: trunk, chest: z1_base}

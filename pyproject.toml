@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "h2d"
-version = "0.3.2"
+version = "0.3.3"
 description = "Human2Dog: functional interaction retargeting from human-object demonstrations to a B2-Z1 quadruped manipulator"
 requires-python = ">=3.10,<3.12"
 license = {text = "MIT"}
@@ -28,6 +28,11 @@ xmorph = [
   "wandb>=0.16",
   "tensorboard>=2.14",
   "protobuf>=3.20,<4",
+]
+# The full-optimization line's per-frame SQP (QP + second-order cone, cvxpy with the Clarabel solver).
+fullopt = [
+  "cvxpy==1.7.5",
+  "clarabel==0.11.1",
 ]
 
 [tool.setuptools.packages.find]

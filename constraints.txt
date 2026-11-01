@@ -4,3 +4,5 @@ numpy<2                      # h2d and X-Morph need numpy 1.x
 opencv-python<4.12           # GMR leaves opencv unpinned; opencv-python>=4.12 pulls numpy 2.x
 mujoco==3.11.0               # newest MuJoCo that pytorch-kinematics 0.10.0 (X-Morph FK) can parse
 pytorch-kinematics==0.10.0
+cvxpy==1.7.5                 # newest cvxpy for Python 3.10 and numpy 1.x (1.8 needs Python 3.11 and numpy 2)
+clarabel==0.11.1             # the full-optimization line's QP / SOCP solver
