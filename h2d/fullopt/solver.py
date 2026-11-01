@@ -26,7 +26,12 @@ the trunk closes in on (the object, the under-body box, the tilt, the height ran
 to what the trunk can still stop from (``held``).
 
 Each iteration is one QP with a second-order cone (cvxpy + Clarabel), compiled once with parameters (DPP) and reused
-for every frame and clip.
+for every frame and clip; every solve starts from a fresh solver state, so a frame's result does not depend on what
+was solved before it. The SQP is globalised (``Solver._frame``): an L1 merit (the objective plus the slack weight
+times the rows' violation), a step accepted only when the merit drops by a share of the predicted drop, a second-order
+correction for steps along curved active rows, and a trust region that shrinks on a rejection and grows when the
+model agrees. A frame is converged when the QP's step falls below ``tol`` inside the trust region; the frame's
+output is its last accepted iterate.
 
 Pass 1 (spec §7.3): the trunk (6), the legs (12) and the arm (6) move; the soles stay on the floor and slide (no
 contact schedule: the gait is milestone M3). The first frame starts at home with the trunk over the human's pelvis,
@@ -66,7 +71,10 @@ def held(value: np.ndarray, rate: np.ndarray, a: float) -> np.ndarray:
 
 
 class StepQP:
-    """min |A dx - b|^2 + w sum(s)  s.t.  G dx + h + s >= 0,  s >= 0,  lo <= dx <= hi,  |dx| <= rho."""
+    """min |A dx - b|^2 + w sum(s)  s.t.  G dx + h + s >= 0,  s >= 0,  lo <= dx <= hi,  |dx| <= rho.
+
+    Compiled once (DPP); every solve starts from a fresh Clarabel state (cvxpy's default warm start keeps the solver of
+    the previous call, so a frame's result depended on what was solved before it, R027b)."""
 
     def __init__(self, n: int, m: int, k: int, slack_weight: float):
         self.A, self.b, self.G, self.h = cp.Parameter((m, n)), cp.Parameter(m), cp.Parameter((k, n)), cp.Parameter(k)
@@ -76,17 +84,17 @@ class StepQP:
         self.problem = cp.Problem(cp.Minimize(cost), [self.G @ self.dx + self.h + self.s >= 0, self.dx >= self.lo,
                                                       self.dx <= self.hi, cp.SOC(self.rho, self.dx)])
 
-    def solve(self, A, b, G, h, lo, hi, rho) -> tuple[np.ndarray, float, bool]:
-        """Step, largest slack, solved."""
+    def solve(self, A, b, G, h, lo, hi, rho) -> tuple[np.ndarray, float, bool, float]:
+        """Step, largest slack, solved, the model's value at the step."""
         for p, v in zip((self.A, self.b, self.G, self.h, self.lo, self.hi, self.rho), (A, b, G, h, lo, hi, rho)):
             p.value = v
         try:
-            self.problem.solve(solver=cp.CLARABEL)
+            self.problem.solve(solver=cp.CLARABEL, warm_start=False)
         except cp.SolverError:
-            return np.zeros(self.dx.shape), float("nan"), False
+            return np.zeros(self.dx.shape), float("nan"), False, float("nan")
         if self.dx.value is None:
-            return np.zeros(self.dx.shape), float("nan"), False
-        return np.asarray(self.dx.value), float(np.max(self.s.value, initial=0.0)), True
+            return np.zeros(self.dx.shape), float("nan"), False, float("nan")
+        return np.asarray(self.dx.value), float(np.max(self.s.value, initial=0.0)), True, float(self.problem.value)
 
 
 class Solver:
@@ -152,9 +160,10 @@ class Solver:
             rows.append(((p - h)[:2], J[:2], np.sqrt(w["foothold"])))
         rows.append((r.difference(r.home, q, d), eye, self.sh))
         v = r.difference(q1, q, d) if q1 is not None else np.zeros(self.n)
-        rows.append((v, eye, self.sv * (q1 is not None)))
+        Jv = r.difference_jac(q1, q, d) if q1 is not None else eye   # (rotations: exact, not the identity)
+        rows.append((v, Jv, self.sv * (q1 is not None)))
         a = v - r.difference(q2, q1, d) if q2 is not None else np.zeros(self.n)
-        rows.append((a, eye, self.sa * (q2 is not None)))
+        rows.append((a, Jv, self.sa * (q2 is not None)))
         res = np.concatenate([np.reshape(s, -1) * np.asarray(e) for e, _, s in rows])
         jac = np.vstack([np.reshape(s, (-1, 1)) * J for _, J, s in rows])
         return res, jac
@@ -167,11 +176,12 @@ class Solver:
             return P, B
         return np.vstack([P, r.cage_points()]), np.r_[B, np.full(len(r.cage["samples"]), r.cage["body"])]
 
-    def constraints(self, hull: ObjectHull, verts: np.ndarray, Ro: np.ndarray, po: np.ndarray, q, q1):
+    def constraints(self, hull: ObjectHull, verts: np.ndarray, Ro: np.ndarray, po: np.ndarray, q, q1, sel=None):
         """G dx + h >= 0: the most critical object, under-body, floor and self rows, then every sole and the tilt
         (unused rows: 0 dx + 1 >= 0). ``verts``: the object's hull vertices (local frame). With the previous frame q1,
         the rows on what the trunk carries (body, under-body box) and the tilt are ``held`` at the trunk's
-        accelerations, their rate being the change since q1 with the object held still."""
+        accelerations, their rate being the change since q1 with the object held still. Returns G, h and the rows'
+        selection; given a selection (``sel``), the same rows are evaluated (the second-order correction)."""
         r, d, c = self.robot, self.dofs, self.cfg["constraints"]
         act, k = c["activation_m"], self.rows
         G, h = np.zeros((sum(k.values()), self.n)), np.ones(sum(k.values()))
@@ -195,10 +205,11 @@ class Solver:
         margin = np.where(self._cage, c["cage_margin_m"], c["object_margin_m"])
         s = S[np.arange(len(P)), f] - margin
         if q1 is not None:
-            s1 = np.sum(((P1 - po) @ Ro) * hull.A[f], 1) + hull.b[f] - margin
+            s1 = (((P1 - po) @ Ro) @ hull.A.T + hull.b).max(1) - margin     # (its own face: continuous)
             s = np.where(self._braked, held(s, s - s1, a_lin), s)
-        n = 0
-        for j in self._critical(s, act, k["object"]):
+        out = {}
+        n, out["object"] = 0, self._critical(s, act, k["object"]) if sel is None else sel["object"]
+        for j in out["object"]:
             n = put("object", n, (Ro @ hull.A[f[j]]) @ r.body_point_jac(B[j], P[j], d), s[j])
         if r.cage is not None:                                    # the object's corners outside the under-body box
             V = verts @ Ro.T + po
@@ -206,22 +217,25 @@ class Solver:
             sd = sd - c["cage_margin_m"]
             if q1 is not None:
                 sd = held(sd, sd - (sd1 - c["cage_margin_m"]), a_lin)
-            n = 0
-            for j in self._critical(sd, act, k["cage"]):
+            n, out["cage"] = 0, self._critical(sd, act, k["cage"]) if sel is None else sel["cage"]
+            for j in out["cage"]:
                 n = put("cage", n, -nrm[j] @ r.body_point_jac(r.cage["body"], V[j], d), sd[j])
         P, B = self.coll.world_samples(self.floor_geoms)          # above the floor
         z = P[:, 2] - c["floor_clearance_m"]
-        n = 0
-        for j in self._critical(z, act, k["floor"]):
+        n, out["floor"] = 0, self._critical(z, act, k["floor"]) if sel is None else sel["floor"]
+        for j in out["floor"]:
             n = put("floor", n, r.body_point_jac(B[j], P[j], d)[2], z[j])
-        near = sorted(self.coll.self_distances(act), key=lambda x: x[0])[: k["self"]]
-        n = 0
-        for dist, ft, ba, bg in near:                             # arm against itself and the body
+        near = (sorted(self.coll.self_distances(act), key=lambda x: x[0])[: k["self"]] if sel is None else
+                self.coll.self_distances(act, sel["self"]))
+        n, out["self"], body = 0, [], self.robot.model.geom_bodyid
+        for dist, ft, a, g in near:                               # arm against itself and the body
             v = ft[3:] - ft[:3]
-            if np.linalg.norm(v) < 1e-9:
+            out["self"].append((a, g))
+            if np.linalg.norm(v) < 1e-9:                          # (a held slot: the rows keep their places)
+                n += 1
                 continue
             nn = v / np.linalg.norm(v) * (1.0 if dist >= 0 else -1.0)
-            n = put("self", n, nn @ (r.body_point_jac(bg, ft[3:], d) - r.body_point_jac(ba, ft[:3], d)),
+            n = put("self", n, nn @ (r.body_point_jac(body[g], ft[3:], d) - r.body_point_jac(body[a], ft[:3], d)),
                     dist - c["self_margin_m"])
         band, n, x = c["foot_band_m"], 0, c["hard_rows_scale"]   # soles on the floor
         for f, z in zip(r.feet, r.soles()):
@@ -233,7 +247,9 @@ class Solver:
         for axis, s_, w in zip(np.eye(3)[:2], tilt, rate):
             Ja = x * r.axis_jac(r.base, axis, d)[2]
             n = put("tilt", put("tilt", n, -Ja, x * held(lim - s_, -w, a_ang)), Ja, x * held(lim + s_, w, a_ang))
-        return G, h
+        self._tol = np.full(len(h), c["feasibility_tol"])       # the merit's tolerance per row, in its units
+        self._tol[i0["feet"]:] *= x
+        return G, h, out
 
     @staticmethod
     def _critical(s: np.ndarray, act: float, k: int) -> np.ndarray:
@@ -260,7 +276,10 @@ class Solver:
                 dv, ac = r.difference(q2, q1, d) - v, r.accel[d] / fps**2
                 lo, hi = np.maximum(lo, dv - ac), np.minimum(hi, dv + ac)
         # The start (q1 extrapolated) can lie outside a bound, which the step then has to fix; where two bounds
-        # disagree, the step closest to 0 between them.
+        # disagree, the step closest to 0 between them. Outside by less than feasibility_tol counts as inside: a
+        # rotation's step and its difference agree to first order only, and fixing that would force steps.
+        tol = self.cfg["constraints"]["feasibility_tol"]
+        lo, hi = np.where((lo > 0) & (lo < tol), 0.0, lo), np.where((hi < 0) & (hi > -tol), 0.0, hi)
         lo, hi = np.minimum(lo, rho), np.maximum(hi, -rho)
         bad = lo > hi
         lo[bad] = hi[bad] = np.clip(0.0, hi[bad], lo[bad])
@@ -275,17 +294,88 @@ class Solver:
         sh = smooth(c.joint("l_shoulder") - c.joint("r_shoulder"), c.fps, k)[0]
         return self.robot.placed(pel[:2], float(np.arctan2(-sh[0], sh[1])))
 
+    def _linearise(self, t, q, q1, q2, task, relation, frame) -> dict:
+        """Residuals, constraint rows and the L1 merit (objective + slack weight x violation of the slacked rows, the
+        hard rows' scale included) at q."""
+        self.robot.set(q)
+        res, jac = self.objective(t, q, q1, q2, task, relation)
+        G, h, sel = self.constraints(*frame, q, q1)
+        return {"q": q, "res": res, "jac": jac, "G": G, "h": h, "sel": sel, "merit": self._merit(res, h)}
+
+    def _merit(self, res: np.ndarray, h: np.ndarray) -> float:
+        """|res|^2 + slack weight x the rows' violation beyond ``feasibility_tol``. The QP holds the rows exactly (a
+        row already within the tolerance as it stands), so the iterates keep that margin, and the distances' numerical
+        noise (1e-9 m, times the weight) does not decide a step."""
+        w = self.cfg["constraints"]["slack_weight"]
+        return float(res @ res) + w * float(np.maximum(-(h + self._tol), 0.0).sum())
+
+    def _corrected(self, t, cur, dx, trial, q1, q2, task, relation, frame, lo, hi, rad):
+        """Second-order correction of a rejected step (Fletcher): the QP again, with the rows' offsets moved by what
+        their linearisation missed at the trial point (the same rows), so a step along curved active rows (soles,
+        tilt, self pairs) is not lost to the merit's large weights. Returns the corrected trial (None if its QP
+        failed)."""
+        self.robot.set(trial["q"])
+        h_trial = self.constraints(*frame, trial["q"], q1, sel=cur["sel"])[1]
+        dx2, _, ok, _ = self._step_qp(len(cur["res"])).solve(cur["jac"], -cur["res"], cur["G"],
+                                                             h_trial - cur["G"] @ dx, lo, hi, rad)
+        if not ok:
+            return None
+        return self._linearise(t, self.robot.integrate(cur["q"], dx2, self.dofs), q1, q2, task, relation, frame)
+
+    def _frame(self, t, q, q1, q2, task, relation, frame, iters: int) -> dict:
+        """Trust-region SQP on one frame from q: a step is accepted when the merit's actual decrease is at least
+        ``accept`` of the decrease the QP predicts; the radius shrinks on a rejection and grows when the model agrees
+        and the step reached it. Converged: a step below ``tol`` inside the radius. A step the bounds force (the start
+        outside one, ``box``) is taken without the test. Returns the last accepted iterate and the frame's record."""
+        sq, fps = self.cfg["sqp"], self.fps
+        rad = sq["trust_region"]
+        cur = self._linearise(t, q, q1, q2, task, relation, frame)
+        rec = {"iters": 0, "rejected": 0, "corrections": 0, "converged": False, "step": 0.0, "slack": 0.0, "ok": True}
+        for it in range(iters):
+            rec["iters"] = it + 1
+            lo, hi = self.box(cur["q"], q1, q2, fps, rad)
+            h_qp = np.where((cur["h"] < 0) & (cur["h"] > -self._tol), 0.0, cur["h"])   # met within the tolerance
+            dx, slack, ok, _ = self._step_qp(len(cur["res"])).solve(cur["jac"], -cur["res"], cur["G"], h_qp,
+                                                                   lo, hi, rad)
+            rec["ok"] &= ok
+            step = float(np.linalg.norm(dx))
+            pred = cur["merit"] - self._merit(cur["res"] + cur["jac"] @ dx, cur["h"] + cur["G"] @ dx)
+            inside = step < 0.99 * rad
+            if ok and inside and step < sq["tol"]:
+                rec.update(converged=True, step=step, slack=slack)
+                break
+            new = self._linearise(t, self.robot.integrate(cur["q"], dx, self.dofs), q1, q2, task, relation, frame) \
+                if ok else None
+            forced = bool(np.any(lo > 0) or np.any(hi < 0))
+            if ok and not forced and pred > 0 and cur["merit"] - new["merit"] < sq["accept"] * pred:
+                new = self._corrected(t, cur, dx, new, q1, q2, task, relation, frame, lo, hi, rad)
+                rec["corrections"] += new is not None
+            if ok and new is not None and (forced or (pred > 0 and cur["merit"] - new["merit"] >= sq["accept"] * pred)):
+                if cur["merit"] - new["merit"] >= sq["expand_above"] * pred and not inside:
+                    rad = min(2.0 * rad, sq["trust_region_max"])
+                cur = new
+                rec.update(step=step, slack=slack)
+            else:                                           # (the radius from the QP's step, not the correction's)
+                rec["rejected"] += 1
+                rad = 0.25 * (step if ok else rad)
+                if rad < sq["trust_region_min"]:
+                    break
+        rec["radius"] = rad
+        return cur["q"], rec
+
     def solve(self, c: HOIClip, task, relation, log=None) -> dict:
         """Solve every frame of a clip whose floor is at z = 0 (``hoi.leveled``). Returns the configurations and, per
-        frame, the iterations, the last step, the largest slack and whether every QP solved."""
+        frame, the iterations, rejected steps, whether it converged, the last accepted step, the final radius, the
+        largest slack and whether every QP solved."""
         r, sq = self.robot, self.cfg["sqp"]
         self.fps = c.fps
         ov = np.asarray(c.obj_verts, float)
         hull, verts = ObjectHull.from_vertices(ov), ov[ConvexHull(ov).vertices]
         Ro, po = R.from_quat(c.obj_quat).as_matrix(), c.obj_pos
         T = c.n
-        out = {"q": np.zeros((T, r.model.nq)), "iters": np.zeros(T, int), "step": np.zeros(T),
-               "slack_max": np.zeros(T), "qp_ok": np.ones(T, bool)}
+        out = {"q": np.zeros((T, r.model.nq)), "iters": np.zeros(T, int), "rejected": np.zeros(T, int),
+               "converged": np.zeros(T, bool), "step": np.zeros(T), "radius": np.zeros(T), "slack_max": np.zeros(T),
+               "qp_ok": np.ones(T, bool)}
         t0 = time.time()
         q1 = q2 = None
         for t in range(T):
@@ -294,18 +384,12 @@ class Solver:
             else:
                 v = r.difference(q2, q1, self.dofs) if q2 is not None else np.zeros(self.n)
                 q = r.clip(r.integrate(q1, v, self.dofs))
-            for it in range(sq["first_frame_iters"] if t == 0 else sq["max_iters"]):
-                r.set(q)
-                res, jac = self.objective(t, q, q1, q2, task, relation)
-                G, h = self.constraints(hull, verts, Ro[t], po[t], q, q1)
-                lo, hi = self.box(q, q1, q2, c.fps, sq["trust_region"])
-                dx, slack, ok = self._step_qp(len(res)).solve(jac, -res, G, h, lo, hi, sq["trust_region"])
-                q = r.integrate(q, dx, self.dofs)
-                out["slack_max"][t], out["qp_ok"][t] = slack, out["qp_ok"][t] and ok
-                out["iters"][t], out["step"][t] = it + 1, float(np.linalg.norm(dx))
-                if out["step"][t] < sq["tol"]:
-                    break
+            q, rec = self._frame(t, q, q1, q2, task, relation, (hull, verts, Ro[t], po[t]),
+                                 sq["first_frame_iters"] if t == 0 else sq["max_iters"])
             out["q"][t] = q
+            for k, key in (("iters", "iters"), ("rejected", "rejected"), ("converged", "converged"), ("step", "step"),
+                           ("radius", "radius"), ("slack_max", "slack"), ("qp_ok", "ok")):
+                out[k][t] = rec[key]
             q2, q1 = q1, q
             if log and (t % 50 == 0 or t == T - 1):
                 log(f"    frame {t + 1}/{T}: {out['iters'][t]} iterations, {time.time() - t0:.1f} s")

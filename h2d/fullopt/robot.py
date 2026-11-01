@@ -23,7 +23,8 @@ from h2d.common.collision import _geom_samples
 from h2d.paths import load_config, xmorph_path
 
 GROUPS = ("base", "legs", "arm")
-WITNESS_TOL_M = 1e-3   # a penetration's two witness points lie |distance| apart (mj_geomDistance's fromto)
+WITNESS_TOL_M = 1e-3   # a distance's two witness points lie |distance| apart (mj_geomDistance's fromto)
+JITTER_M = (1e-7, 1e-6, 1e-5)
 
 
 class Robot:
@@ -125,6 +126,20 @@ class Robot:
         v = np.zeros(self.model.nv)
         mujoco.mj_differentiatePos(self.model, v, 1.0, np.asarray(q0, float), np.asarray(q1, float))
         return v[dofs]
+
+    def difference_jac(self, q0: np.ndarray, q1: np.ndarray, dofs: np.ndarray) -> np.ndarray:
+        """d difference(q0, q1 + dx) / d dx at dx = 0: the identity but for the base's rotation, J_r^-1(phi) with phi
+        the rotation from q0 to q1 (local frame, as ``mj_integratePos`` steps it)."""
+        J = np.eye(len(dofs))
+        rot = self.groups["base"][3:]
+        idx = np.flatnonzero(np.isin(dofs, rot))
+        if len(idx) == 3:
+            phi = self.difference(q0, q1, rot)
+            th, K = float(np.linalg.norm(phi)), np.array([[0, -phi[2], phi[1]], [phi[2], 0, -phi[0]],
+                                                          [-phi[1], phi[0], 0]])
+            c = 1.0 / 12.0 if th < 1e-6 else 1.0 / th**2 - (1.0 + np.cos(th)) / (2.0 * th * np.sin(th))
+            J[np.ix_(idx, idx)] = np.eye(3) + 0.5 * K + c * K @ K
+        return J
 
     def clip(self, q: np.ndarray) -> np.ndarray:
         """q with every joint inside its range and the trunk inside its height range."""
@@ -229,11 +244,14 @@ class Collision:
       hull; the tool may touch it, so its depth is reported apart;
     * feet: the leg geoms centred on a foot body (the sole spheres), which stand on the floor.
 
-    MuJoCo 3.11's ``mj_geomDistance`` can return a negative distance for a mesh and a box that do not touch (R027,
-    clip c10 frame 45: the gripper's stator mesh and the trunk's front plate, -24 mm with witness points 41 mm apart,
-    the same in both orders, while no vertex of either lies in the other). ``distance`` keeps a negative distance only
-    when its witness points are |distance| apart, in one order or the other, and else measures the pair by sample
-    points, as the object check does.
+    MuJoCo 3.11's ``mj_geomDistance`` can return a wrong distance for a mesh and a box: negative for two that do not
+    touch (R027, clip c10 frame 45: the gripper's stator mesh and the trunk's front plate, -24 mm with witness points
+    41 mm apart, the same in both orders, while no vertex of either lies in the other), or exactly 0 for two 24 mm
+    apart (R027b dry runs, the gripper's mover and the same plate, witness points 32 mm apart), switching on and off
+    with steps of 1e-5. ``distance`` keeps a distance only when its witness points are |distance| apart, in one order
+    or the other; else it measures again with one geom moved by 0.1, 1 or 10 um (the error the move adds), and only
+    then estimates the pair by sample points, as the object check does (an estimate a few mm off would make the
+    distance jump as the pose moves in and out of the bug).
     """
 
     def __init__(self, robot: Robot, tol_m: float = 0.002):
@@ -264,7 +282,7 @@ class Collision:
         self.samples = {g: _geom_samples(m, g) for g in self.arm + self.body}
         self._planes = {g: ConvexHull(self.samples[g]).equations for g in self.samples
                         if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH}
-        self.fallbacks = 0                                    # negative distances replaced by ``distance``
+        self.retries = self.fallbacks = 0                     # distances ``distance`` re-measured / estimated
 
     def _sdf(self, g: int, P: np.ndarray) -> np.ndarray:
         """Signed distance (< 0 inside) of points in geom g's frame; a mesh by the planes of its convex hull."""
@@ -303,16 +321,26 @@ class Collision:
         return best
 
     def distance(self, a: int, g: int, distmax: float) -> tuple[float, np.ndarray]:
-        """``mj_geomDistance`` (distance and fromto) with its negative values cross-checked (see the class)."""
+        """``mj_geomDistance`` (distance and fromto) cross-checked (see the class): a distance below ``distmax`` is
+        kept only when its witness points are |distance| apart, in one order or the other."""
         m, d = self.robot.model, self.robot.data
+        agree = lambda x, f: x >= distmax or abs(np.linalg.norm(f[3:] - f[:3]) - abs(x)) <= WITNESS_TOL_M  # noqa: E731
         ft = np.zeros(6)
         dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
-        if dist >= 0 or abs(np.linalg.norm(ft[3:] - ft[:3]) - abs(dist)) <= WITNESS_TOL_M:
+        if agree(dist, ft):
             return float(dist), ft
         ft2 = np.zeros(6)
         dist2 = mujoco.mj_geomDistance(m, d, g, a, distmax, ft2)
-        if dist2 < 0 and abs(np.linalg.norm(ft2[3:] - ft2[:3]) - abs(dist2)) <= WITNESS_TOL_M:
+        if agree(dist2, ft2):
             return float(dist2), np.r_[ft2[3:], ft2[:3]]
+        x0 = d.geom_xpos[a].copy()                    # the bug sits on isolated poses: geom a moved by 0.1-10 um
+        for e in np.concatenate([np.vstack([np.eye(3), -np.eye(3)]) * k for k in JITTER_M]):
+            d.geom_xpos[a] = x0 + e
+            dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
+            d.geom_xpos[a] = x0
+            if agree(dist, ft):
+                self.retries += 1
+                return float(dist), np.r_[ft[:3] - e, ft[3:]]
         self.fallbacks += 1
         dist, ft = self._by_samples(a, g)
         return min(dist, distmax), ft
@@ -324,19 +352,21 @@ class Collision:
         b = [np.full(len(self.samples[g]), self.robot.model.geom_bodyid[g]) for g in geoms]
         return (np.concatenate(P), np.concatenate(b)) if geoms else (np.zeros((0, 3)), np.zeros(0, int))
 
-    def self_distances(self, margin: float) -> list[tuple[float, np.ndarray, int, int]]:
-        """(distance, fromto, body a, body g) of the self-collision pairs closer than ``margin`` (bounding spheres
-        first)."""
+    def self_distances(self, margin: float, pairs=None) -> list[tuple[float, np.ndarray, int, int]]:
+        """(distance, fromto, geom a, geom g) of the self-collision pairs closer than ``margin`` (bounding spheres
+        first), or of the given ``pairs`` whatever their distance (capped at ``margin``)."""
         m, d = self.robot.model, self.robot.data
-        P = np.array(self.pairs)
-        gap = (np.linalg.norm(d.geom_xpos[P[:, 0]] - d.geom_xpos[P[:, 1]], axis=1)
-               - m.geom_rbound[P[:, 0]] - m.geom_rbound[P[:, 1]])
+        given = pairs is not None
+        if not given:
+            P = np.array(self.pairs)
+            gap = (np.linalg.norm(d.geom_xpos[P[:, 0]] - d.geom_xpos[P[:, 1]], axis=1)
+                   - m.geom_rbound[P[:, 0]] - m.geom_rbound[P[:, 1]])
+            pairs = P[gap < margin]
         out = []
-        for a, g in P[gap < margin]:
+        for a, g in pairs:
             dist, ft = self.distance(int(a), int(g), margin)
-            if dist < margin:
-                out.append((float(dist), ft, int(m.geom_bodyid[a]), int(m.geom_bodyid[g])))
-        return out
+            out.append((float(dist), ft, int(a), int(g)))
+        return out if given else [x for x in out if x[0] < margin]
 
     def check(self, hull=None, to_local=None, distmax: float = 0.05) -> dict:
         """The learned line's check (``RobotCollision.check``) at the current state: closest self pair, arm to floor,
@@ -359,3 +389,16 @@ class Collision:
         out["collision_free"] = bool(self_min > -self.tol and floor_min > -self.tol
                                      and out.get("arm_obj_depth_m", 0.0) <= self.tol)
         return out
+
+    def floor_distance(self, distmax: float = 0.05) -> tuple[float, str | None]:
+        """Closest geom other than the soles (trunk, legs, arm) to the floor, and its body."""
+        m, d = self.robot.model, self.robot.data
+        ft, best = np.zeros(6), (distmax, None)
+        for a in self.body + self.arm:
+            if a in self.feet:
+                continue
+            for f in self.floor:
+                dist = mujoco.mj_geomDistance(m, d, a, f, distmax, ft)
+                if dist < best[0]:
+                    best = (float(dist), self.body_of[a])
+        return best

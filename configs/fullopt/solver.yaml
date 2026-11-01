@@ -46,11 +46,21 @@ constraints:                # linearised every iteration, L1 slacks (spec §7.2)
   # The most critical rows per iteration (fixed sizes: one compiled QP): robot and under-body samples in the object,
   # object corners in the under-body box, floor, self; then 2 per sole and 4 for the tilt.
   rows: {object: 64, cage: 16, floor: 24, self: 16}
-  slack_weight: 1.0e4       # per metre of violation; far above the objective's gradients, so slack only when infeasible
+  slack_weight: 1.0e+4      # per metre of violation; far above the objective's gradients, so slack only when infeasible
   hard_rows_scale: 100.0    # the soles and the tilt cost this many times more per violation: they give way last
+  feasibility_tol: 1.0e-5   # the merit counts a row's violation beyond this [m; sin for the tilt; rad or m per frame
+                            # for the step bounds]. The QP holds the rows exactly; their linearisation errs by up to
+                            # ~1e-6 m at steps of 1e-5 (MuJoCo's witness points on meshes), which times the merit's
+                            # weight decided the steps and collapsed the radius (R027b dry runs)
 
-sqp:
-  trust_region: 0.1         # ||dx|| <= rho (SOC, as OmniRetarget)
-  max_iters: 10
-  first_frame_iters: 50     # the first frame starts from the human's pelvis and facing
-  tol: 1.0e-4               # stop at ||dx|| below this
+sqp:                        # trust-region SQP on an L1 merit (solver.Solver._frame)
+  trust_region: 0.1         # initial radius of ||dx|| <= rho on every frame (SOC, as OmniRetarget)
+  trust_region_max: 0.4
+  trust_region_min: 1.0e-6  # a frame whose radius shrinks below this stops, unconverged
+  accept: 0.1               # a step is accepted when the merit drops by at least this share of the predicted drop
+  expand_above: 0.75        # ... and the radius doubles when it drops by this share and the step reached the radius
+  max_iters: 150            # R027b-revision dry runs: 99.9 % of the frames converge within 30 iterations; the trunk's
+                            # lunge on c07 / c08 (large task residuals, the Gauss-Newton model 4-10x optimistic)
+                            # needs up to 91
+  first_frame_iters: 200    # the first frame starts from the human's pelvis and facing (converged within 91)
+  tol: 1.0e-4               # converged: a step below this inside the radius

@@ -8,8 +8,9 @@ the relation term; the per-frame SQP (trunk, legs and arm; the soles slide on th
 learned line's definitions. Dev and held-out are reported apart, and the run passes on the dev split only
 (configs/fullopt/evaluation.yaml ``pass``): every clip solved; at least ``dev_reached_min`` tasks reached on every
 contact frame; the body at most ``body_in_object_max_m`` inside the object and the object under the body on no
-frame; every sole on the floor and the trunk within its speed and acceleration limits on every frame; and on every
-task the targets within ``target_agreement`` of the learned line's. ``--learned-reach`` (a ``reach_diag.py``
+frame; no collision (self, or through the floor) on any frame; every sole on the floor and the trunk within its speed
+and acceleration limits on every frame; and on every task the targets within ``target_agreement`` of the learned
+line's. ``--learned-reach`` (a ``reach_diag.py``
 summary) adds the learned line's interaction-mesh numbers next to each task.
 
 Writes outputs/<run-id>/{summary.json, report.md, solutions/<id>.npz, figures/<id>.png}.
@@ -51,7 +52,7 @@ BLUE, ORANGE, GREEN = "#2a78d6", "#eb6834", "#1baf7a"
 
 
 def solve_clip(c: HOIClip, robot, coll, solver, corr, cfg, ecfg, band, learned_root: Path) -> tuple[dict, dict]:
-    task, fb0 = tk.build(c, cfg["task"], band), coll.fallbacks
+    task, fb0, rt0 = tk.build(c, cfg["task"], band), coll.fallbacks, coll.retries
     relation = REPRESENTATIONS[cfg["relation"]["kind"]](c, task, robot, corr, cfg["relation"])
     sol = solver.solve(c, task, relation)
     ev, arr = evaluate(c, task, sol["q"], robot, coll, corr, ecfg)
@@ -64,14 +65,18 @@ def solve_clip(c: HOIClip, robot, coll, solver, corr, cfg, ecfg, band, learned_r
            "span": list(task.span),
            "solver": {"time_s": sol["time_s"], "ms_per_frame": 1e3 * sol["time_s"] / c.n,
                       "iters_mean": float(sol["iters"].mean()), "iters_max": int(sol["iters"].max()),
-                      "unconverged_frames": int(np.sum(sol["step"] >= cfg["sqp"]["tol"])),
+                      "unconverged_frames": int(np.sum(~sol["converged"])),
+                      "unconverged": [int(t) for t in np.flatnonzero(~sol["converged"])],
+                      "rejected_steps": int(sol["rejected"].sum()), "radius_final_min": float(sol["radius"].min()),
+                      "radius_final_median": float(np.median(sol["radius"])),
                       "qp_failures": int(np.sum(~sol["qp_ok"])), "slack_max": float(np.nanmax(sol["slack_max"])),
-                      "distance_fallbacks": coll.fallbacks - fb0},
+                      "distance_retries": coll.retries - rt0, "distance_fallbacks": coll.fallbacks - fb0},
            **ev}
     arrays = {"q": sol["q"], "fps": c.fps, "floor_z": c.floor_z, "gate": task.gate, "target": task.target,
               "tool_x": task.tool_x, "tool_z": task.tool_z, "segment": np.array(task.segment),
               "window": np.array(task.window), "span": np.array(task.span), "relation_targets": relation.targets,
-              "iters": sol["iters"], "step": sol["step"], "slack_max": sol["slack_max"], "reached": arr["ok"],
+              "iters": sol["iters"], "rejected": sol["rejected"], "converged": sol["converged"],
+              "radius": sol["radius"], "step": sol["step"], "slack_max": sol["slack_max"], "reached": arr["ok"],
               "err": arr["err"], "angle": arr["ang"], "body_in_object": arr["body_in_object"],
               "object_under_body": arr["object_under_body"]}
     return row, arrays
@@ -133,7 +138,7 @@ def packages() -> dict:
     return out
 
 
-def checks_of(rows: list[dict], n_errors: int, crit: dict) -> dict:
+def checks_of(rows: list[dict], n_errors: int, crit: dict, split: str = "dev") -> dict:
     ag = crit["target_agreement"]
     reached = [r["id"] for r in rows if r["reach"]["reached"]]
     worst = lambda f: max((f(r) for r in rows), default=float("nan"))  # noqa: E731
@@ -142,6 +147,8 @@ def checks_of(rows: list[dict], n_errors: int, crit: dict) -> dict:
              if r["penetration"]["object_under_body_frames"]}
     sole = worst(lambda r: r["feet"]["sole_height_max_m"])
     trunk = worst(lambda r: max(r["limits"]["trunk_speed_ratio_max"], r["limits"]["trunk_accel_ratio_max"]))
+    hits = {r["id"]: r["penetration"]["collision_frames"] for r in rows if r["penetration"]["collision_frames"]}
+    unconverged = {r["id"]: r["solver"]["unconverged_frames"] for r in rows if r["solver"]["unconverged_frames"]}
 
     def agrees(a: dict | None) -> bool:
         return bool(a) and a["target_m"][0] is not None and a["target_m"][0] <= ag["position_m"] \
@@ -149,25 +156,31 @@ def checks_of(rows: list[dict], n_errors: int, crit: dict) -> dict:
 
     return {"all_clips_solved": {"pass": bool(rows) and not n_errors, "n": len(rows), "n_errors": n_errors,
                                  "qp_failures": sum(r["solver"]["qp_failures"] for r in rows)},
-            "reached": {"pass": len(reached) >= crit["dev_reached_min"], "reached": len(reached), "of": len(rows),
-                        "min": crit["dev_reached_min"],
+            "reached": {"pass": len(reached) >= crit["dev_reached_min"] if split == "dev" else None,
+                        "reached": len(reached), "of": len(rows),
+                        "min": crit["dev_reached_min"] if split == "dev" else None,
                         "not_reached": [r["id"] for r in rows if r["id"] not in reached]},
+            "collision_free_all_frames": {"pass": sum(hits.values()) <= crit["collision_frames_max"], "frames": hits},
             "body_in_object": {"pass": bool(body <= crit["body_in_object_max_m"]), "max_m": body},
             "object_under_body": {"pass": sum(under.values()) <= crit["object_under_body_frames_max"],
                                   "frames": under},
             "feet_on_floor": {"pass": bool(sole <= crit["sole_height_max_m"]), "sole_height_max_m": sole},
             "trunk_within_limits": {"pass": bool(trunk <= crit["trunk_limit_ratio_max"]), "ratio_max": trunk},
+            "converged": {"pass": None, "unconverged_frames": unconverged},
             "targets_agree_with_learned": {"pass": all(agrees(r["agreement"]) for r in rows),
                                            "failing_or_missing": [r["id"] for r in rows if not agrees(r["agreement"])]}}
 
 
 NOTE = ("Reached: contact point within 1 cm, tool axis within 15° and collision free on every contact frame (the "
         "learned line's definition). Body in object: deepest trunk or leg sample inside the object's hull, all "
-        "frames / contact frames. Under body: frames where the object's hull overlaps the box under the trunk "
-        "(thicker than the penetration tolerance) and the thickest overlap. Feet: the largest horizontal path of a "
-        "sole (they slide: no gait before M3); every sole is within 2 mm of the floor. Trunk: largest vertical speed, "
-        "vertical and horizontal acceleration (limits 0.3 m/s, 3 and 5 m/s²) and tilt (15°). Relations: the fixed "
-        "evaluation network on the contact frames.")
+        "frames / contact frames. Collision: frames where a self pair, or any geom but the soles through the floor, "
+        "penetrates beyond 2 mm (all frames), and the closest self pair / geom to the floor. Under body: frames "
+        "where the object's hull overlaps the box under the trunk (thicker than the penetration tolerance) and the "
+        "thickest overlap. Feet: the largest horizontal path of a sole (they slide: no gait before M3); every sole "
+        "is within 2 mm of the floor. Trunk: largest vertical speed, vertical and horizontal acceleration (limits "
+        "0.3 m/s, 3 and 5 m/s²) and tilt (15°). Relations: the fixed evaluation network on the contact frames. "
+        "Unconverged: frames whose SQP ended without a step below the tolerance inside the trust region (reported, "
+        "not a pass criterion).")
 
 
 def report(prov, passed, checks, rows, learned, cfg) -> list[str]:
@@ -178,12 +191,14 @@ def report(prov, passed, checks, rows, learned, cfg) -> list[str]:
          f"Run `{prov['run_id']}` · code `{git['describe']}` (dirty={git['dirty']}) · {len(rows)} clips · relation "
          f"({cfg['relation']['kind']}) · **{'PASS' if passed else 'FAIL'}** (dev only; held-out reported apart)", "",
          "| split | check | pass | detail |", "|---|---|---|---|",
-         *[f"| {s} | {k} | {v['pass']} | {detail(v)} |" for s, cs in checks.items() for k, v in cs.items()], "",
+         *[f"| {s} | {k} | {'–' if v['pass'] is None else v['pass']} | {detail(v)} |" for s, cs in checks.items()
+           for k, v in cs.items()], "",
          NOTE, ""]
     cols = ["split", "task", "object", "hand", "reached (frames)", "err max [cm]", "angle med / max [°]",
-            "body in object all / contact [cm]", "under body: frames, [cm]", "self min [mm]", "foot slide [m]",
+            "body in object all / contact [cm]", "under body: frames, [cm]", "collision: frames, self / floor min [mm]",
+            "foot slide [m]",
             "trunk vz [m/s], az / a [m/s²], tilt [°]", "edge / heading [°], same side",
-            "targets vs learned: pos med [cm], tool x [°]", "ms / frame"]
+            "targets vs learned: pos med [cm], tool x [°]", "unconverged / rejected", "ms / frame"]
     cols += ["learned mesh: reached, edge / heading [°], body [cm]"] if learned else []
     L += ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in sorted(rows, key=lambda r: (r["split"], r["id"])):
@@ -192,11 +207,13 @@ def report(prov, passed, checks, rows, learned, cfg) -> list[str]:
                  f(100 * rc["err_m"]["max"]), f"{f(rc['angle_deg']['median'], 0)} / {f(rc['angle_deg']['max'], 0)}",
                  f"{f(100 * pe['body_in_object_m'])} / {f(100 * r['body_in_object_contact_m'])}",
                  f"{pe['object_under_body_frames']}, {f(100 * pe['object_under_body_m'])}",
-                 f(1000 * pe["self_min_dist_m"]), f(r["feet"]["slide_path_max_m"], 2),
+                 f"{pe['collision_frames']}, {f(1000 * pe['self_worst']['dist_m'])} / "
+                 f"{f(1000 * pe['floor_worst']['dist_m'])}", f(r["feet"]["slide_path_max_m"], 2),
                  f"{f(lm_['trunk_vertical_speed_max_mps'], 2)}, {f(lm_['trunk_vertical_accel_max_mps2'])} / "
                  f"{f(lm_['trunk_accel_max_mps2'])}, {f(lm_['trunk_tilt_max_deg'])}",
                  f"{f(rl['edge_dir_err_deg'])} / {f(rl['heading_err_deg'])}, {f(rl['same_side_frac'], 2)}",
                  f"{f(100 * ag['target_m'][0])}, {f(ag['tool_x_deg'][0])}" if ag else "–",
+                 f"{r['solver']['unconverged_frames']} / {r['solver']['rejected_steps']}",
                  f(r["solver"]["ms_per_frame"], 0)]
         if learned:
             lm = (learned.get(r.get("task_id")) or {}).get("mesh")
@@ -259,8 +276,8 @@ def main() -> int:
             print(f"  {p.stem}: error {type(e).__name__}: {e}", flush=True)
     splits = sorted({r["split"] for r in rows} | {"dev"})
     n_err = {s: sum(e["split"] in (s, "?") for e in errors) for s in splits}     # a clip that did not load counts
-    checks = {s: checks_of([r for r in rows if r["split"] == s], n_err[s], ecfg["pass"]) for s in splits}
-    passed = all(v["pass"] for v in checks["dev"].values())
+    checks = {s: checks_of([r for r in rows if r["split"] == s], n_err[s], ecfg["pass"], s) for s in splits}
+    passed = all(v["pass"] for v in checks["dev"].values() if v["pass"] is not None)
     summary = {"provenance": prov, "robot": robot.name, "config": cfg, "evaluation": ecfg, "checks": checks,
                "pass": passed, "clips": rows, "errors": errors, "elapsed_s": time.time() - t0}
     (out / "summary.json").write_text(json.dumps(clean(summary), indent=2, default=str), encoding="utf-8")

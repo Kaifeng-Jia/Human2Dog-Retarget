@@ -8,6 +8,8 @@ compare (``scripts/learned/reach_diag.py``, ``h2d/learned/imesh.py``; thresholds
 * penetration on every frame: the body (trunk, legs, arm mount), the arm and the tool in the object's hull, the
   closest self pair, the arm's floor distance, and the object under the body: the overlap of the object's hull with
   the under-body box (an LP per frame), whose thickness is the diameter of the largest ball inside both;
+* collision on every frame (reach's collision test covers the contact frames only): a self pair, or any geom but the
+  soles through the floor, beyond the same tolerance;
 * feet: the soles' height above the floor, and how far the feet slide (pass 1 has no contact schedule) and stray
   from their nominal footholds;
 * limits: joint range violations, joint and trunk speeds and trunk accelerations against the description's limits
@@ -89,19 +91,29 @@ def under_body(robot: Robot, hull: ObjectHull, Ro: np.ndarray, po: np.ndarray) -
 
 def penetration(robot: Robot, coll: Collision, Q: np.ndarray, hull: ObjectHull, Ro, po, frames, tol: float) -> dict:
     """Deepest values over ``frames``: body / arm / tool in the object, closest self pair, arm-floor distance, the
-    object under the body; and the per-frame body depth and under-body overlap."""
-    rows = []
+    object under the body; collision on any frame (a self pair, or any geom but the soles, through the floor by more
+    than ``tol``, the tolerance of reach's collision test); and the per-frame body depth and under-body overlap."""
+    rows, pairs, low = [], [], []
     for t in frames:
         robot.set(Q[t])
         col = coll.check(hull, lambda P, t=t: (P - po[t]) @ Ro[t])
         cage = under_body(robot, hull, Ro[t], po[t]) if robot.cage is not None else 0.0
+        floor, body = coll.floor_distance()
         rows.append([col["body_obj_depth_m"], col["arm_obj_depth_m"], col["tool_obj_depth_m"], col["self_min_dist_m"],
-                     col["floor_min_dist_m"], cage])
+                     col["floor_min_dist_m"], cage, floor])
+        pairs.append(col["self_worst_pair"])
+        low.append(body)
     x = np.array(rows)
+    hit = (x[:, 3] < -tol) | (x[:, 6] < -tol)
+    i, j = int(x[:, 3].argmin()), int(x[:, 6].argmin())
+    fr = list(frames)
     return {"body_in_object_m": float(x[:, 0].max()), "arm_in_object_m": float(x[:, 1].max()),
             "tool_in_object_m": float(x[:, 2].max()), "self_min_dist_m": float(x[:, 3].min()),
             "arm_floor_min_dist_m": float(x[:, 4].min()), "body_in_object_frames": int(np.sum(x[:, 0] > 0.0)),
             "object_under_body_m": float(x[:, 5].max()), "object_under_body_frames": int(np.sum(x[:, 5] > tol)),
+            "collision_frames": int(hit.sum()), "collision_frame_list": [fr[k] for k in np.flatnonzero(hit)],
+            "self_worst": {"dist_m": float(x[i, 3]), "frame": fr[i], "pair": pairs[i]},
+            "floor_worst": {"dist_m": float(x[j, 6]), "frame": fr[j], "body": low[j]},
             "per_frame_body_in_object_m": x[:, 0], "per_frame_object_under_body_m": x[:, 5]}
 
 

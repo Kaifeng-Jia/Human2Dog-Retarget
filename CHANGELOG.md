@@ -57,6 +57,20 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - Evaluation pass adds: no object under the body, every sole on the floor, trunk within its speed and acceleration
   limits.
 
+### Changed after R027b (dev 8/10 on Ubuntu, unconverged frames, order dependence; lead decisions A-G)
+- Every QP starts from a fresh solver state (`warm_start=False`); the compiled problem is kept. Solving two clips in
+  either order gives bitwise-identical q (tested).
+- Globalised SQP (`Solver._frame`): L1 merit, step accepted at 0.1 of the predicted decrease, second-order
+  correction, trust region from 0.1 (x1/4 on rejection, x2 on agreement, 1e-6 to 0.4), up to 150 iterations per
+  frame and 200 on the first. The merit counts violations beyond 10 um (the QP still holds the rows exactly);
+  velocity and acceleration rows use the exact rotation Jacobian. Per clip: unconverged frames, rejected steps and
+  the final radius.
+- `Collision.distance` also catches MuJoCo's distance of exactly 0 for a mesh and a box 24 mm apart, and re-measures
+  inconsistent pairs with one geom moved by 0.1-10 um before falling back to sample points.
+- New check, collision free on all frames (self pairs, every geom but the soles against the floor, 2 mm); dev pass
+  needs 0 frames. The held-out `reached` row no longer applies the dev minimum.
+- Tests run with one BLAS / OpenMP thread (`tests/conftest.py`).
+
 ### Changed (R026b follow-ups)
 - M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared
   across the two splits (reported); "no double touchdowns" means the same foot twice within 0.2 s (alternating feet
