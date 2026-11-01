@@ -13,7 +13,6 @@ from h2d.common.data.describe import close_gaps
 from h2d.common.data.omomo_new import BODY_INDEX, intervals, remove_short_runs
 
 FEET = {"L": ("L_Ankle", "L_Toe"), "R": ("R_Ankle", "R_Toe")}
-HIPS = ("L_Hip", "R_Hip")
 
 
 def smooth(x: np.ndarray, fps: float, sec: float) -> np.ndarray:
@@ -77,9 +76,14 @@ def alternation(events: list[tuple[int, str]]) -> float:
     return float(np.mean([a != b for a, b in zip(sides[:-1], sides[1:])])) if len(sides) > 1 else float("nan")
 
 
-def leg_length(body_pos: np.ndarray, contact: np.ndarray, fps: float, still_mps: float = 0.1) -> float:
-    """Hip-joint height above the floor, median over frames with both feet down and the pelvis still."""
-    v = speed_xy(smooth(body_pos[:, BODY_INDEX["Pelvis"]], fps, 0.5), fps)
-    sel = contact.all(1) & (v < still_mps)
-    z = body_pos[:, [BODY_INDEX[h] for h in HIPS], 2].mean(1)
-    return float(np.median(z[sel] if sel.any() else z))
+def leg_length(body_pos: np.ndarray, contact: np.ndarray) -> float:
+    """Hip-joint height of the straightened leg: thigh + shank (medians over the clip) + ankle height in stance,
+    averaged over both legs. Independent of posture: a person who squats through most of a clip keeps their
+    standing leg length (the hip height of still frames does not)."""
+    out = []
+    for j, s in enumerate("LR"):
+        hip, knee, ankle = (body_pos[:, BODY_INDEX[f"{s}_{n}"]] for n in ("Hip", "Knee", "Ankle"))
+        az = ankle[contact[:, j], 2] if contact[:, j].any() else ankle[:, 2]
+        out.append(np.median(np.linalg.norm(hip - knee, axis=1)) + np.median(np.linalg.norm(knee - ankle, axis=1))
+                   + np.median(az))
+    return float(np.mean(out))

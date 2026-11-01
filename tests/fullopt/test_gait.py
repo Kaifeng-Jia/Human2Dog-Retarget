@@ -55,7 +55,16 @@ def test_steps_segments_and_leg_length_on_synthetic_walking():
     assert [s["kind"] for s in segs] == ["walk"] and segs[0]["steps"] == len(truth)
     assert segs[0]["step_hz"] == pytest.approx(1.6, rel=0.05)
     assert signals.alternation(ev) == 1.0
-    assert signals.leg_length(pose, con, FPS) == pytest.approx(0.85, abs=0.01)
+    assert signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.015)
+
+
+def test_leg_length_does_not_drop_when_squatting():
+    pose = np.repeat(standing_pose()[None], 90, 0)               # hips 0.30 m lower, knees forward, same bones
+    for s in ("L", "R"):
+        pose[:, BODY_INDEX[f"{s}_Hip"], 2] -= 0.30
+        pose[:, BODY_INDEX[f"{s}_Knee"], [0, 2]] = (0.304, 0.340)
+    con = signals.foot_contacts(pose, FPS, CFG)
+    assert con.all() and signals.leg_length(pose, con) == pytest.approx(0.85, abs=0.02)
 
 
 def test_one_step_is_a_shuffle():

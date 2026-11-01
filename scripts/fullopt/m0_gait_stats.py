@@ -6,8 +6,10 @@ the task window: how much of it is walk, shuffle or stand. Per walk segment: spe
 Alexander prediction for the human, and the dog's natural footfalls per human step at that speed with the lock
 deviation (the frequency change a whole-number ratio needs). The B2 hip height h_d comes from the model.
 
-Checks (all must hold): every clip loads; every clip has a walk or shuffle segment; walk step frequency within
-0.8-2.6 Hz; touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h within 0.70-1.05 m.
+Checks of the measurement (all must hold): every clip loads; every clip has a walk or shuffle segment; no two
+touchdowns closer than 0.2 s (a double detection; quick real steps around an object are 0.24 s apart and more);
+touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h within 0.70-1.05 m. Step frequencies are data, not
+checked: around objects people take short quick steps far from steady walking.
 
 Writes outputs/<run-id>/{summary.json, report.md, segments.csv, figures/{freq_speed,timelines}.png}.
 """
@@ -32,7 +34,7 @@ from h2d.fullopt import gait, signals  # noqa: E402
 from h2d.fullopt.tasks import solvable_task_ids  # noqa: E402
 from h2d.paths import data_path, load_config  # noqa: E402
 
-LIMITS = {"step_hz": (0.8, 2.6), "alternation_min": 0.8, "leg_m": (0.70, 1.05)}
+LIMITS = {"min_step_gap_s": 0.2, "alternation_min": 0.8, "leg_m": (0.70, 1.05)}
 INK, INK2, GRID, SURF = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 FOOT = {"L": "#2a78d6", "R": "#eb6834"}
 
@@ -42,7 +44,7 @@ def analyse(clip, task: dict, cfg: dict, h_d: float) -> tuple[dict, list[dict]]:
     con = signals.foot_contacts(clip.body_pos, fps, hc)
     ev = signals.touchdowns(con)
     segs = signals.segments(clip.body_pos, fps, ev, hc)
-    h_h = signals.leg_length(clip.body_pos, con, fps)
+    h_h = signals.leg_length(clip.body_pos, con)
     w0, w1 = task["window"]
     kind = np.full(clip.n, "stand", dtype=object)
     for s in segs:
@@ -64,6 +66,7 @@ def analyse(clip, task: dict, cfg: dict, h_d: float) -> tuple[dict, list[dict]]:
                       "in_window": bool(s["start"] < w1 and s["end"] > w0)})
     row = {"task": task["id"], "clip": clip.name, "frames": clip.n, "fps": fps, "window": [w0, w1], "leg_m": h_h,
            "touchdowns": len(ev), "alternation": signals.alternation(ev),
+           "min_step_gap_s": float(np.diff([f for f, _ in ev]).min() / fps) if len(ev) > 1 else float("nan"),
            "walk_segments": sum(s["kind"] == "walk" for s in segs),
            "shuffle_segments": sum(s["kind"] == "shuffle" for s in segs),
            "window_steps": sum(w0 <= f < w1 for f, _ in ev),
@@ -179,18 +182,19 @@ def main() -> int:
             print(f"  {tid}: error {errors[-1]['error']}", flush=True)
     rows = [p["row"] for p in per]
     h_h = float(np.median([r["leg_m"] for r in rows])) if rows else float("nan")
-    lo, hi = LIMITS["step_hz"]
     checks = {
         "all_clips_loaded": {"pass": bool(rows) and not errors, "n": len(rows), "n_errors": len(errors)},
         "steps_found": {"pass": all(r["walk_segments"] + r["shuffle_segments"] > 0 for r in rows),
                         "without": [r["task"] for r in rows if r["walk_segments"] + r["shuffle_segments"] == 0]},
-        "step_hz_in_human_range": {"pass": all(lo <= w["step_hz"] <= hi for w in walks), "range": [lo, hi],
-                                   "outside": [(w["task"], w["start"], round(w["step_hz"], 2)) for w in walks
-                                               if not lo <= w["step_hz"] <= hi]},
+        "no_double_touchdowns": {"pass": all(not r["min_step_gap_s"] < LIMITS["min_step_gap_s"] for r in rows),
+                                 "min_s": min((r["min_step_gap_s"] for r in rows), default=float("nan")),
+                                 "below": [r["task"] for r in rows if r["min_step_gap_s"] < LIMITS["min_step_gap_s"]]},
         "feet_alternate": {"pass": all(r["alternation"] >= LIMITS["alternation_min"] for r in rows),
                            "min": min((r["alternation"] for r in rows), default=float("nan"))},
         "leg_length_in_range": {"pass": all(LIMITS["leg_m"][0] <= r["leg_m"] <= LIMITS["leg_m"][1] for r in rows),
-                                "range": LIMITS["leg_m"]},
+                                "range": LIMITS["leg_m"],
+                                "outside": [r["task"] for r in rows
+                                            if not LIMITS["leg_m"][0] <= r["leg_m"] <= LIMITS["leg_m"][1]]},
     }
     passed = all(c["pass"] for c in checks.values())
     deltas = cfg["dog"]["deltas"]
@@ -222,9 +226,10 @@ def main() -> int:
          "| δ | lockable walk segments | lockable walking time | same, inside task windows |", "|---|---|---|---|",
          *[f"| {d} | {f(v['segments'])} | {f(v['time'])} | "
            f"{f(agg['lockable_in_windows'].get(d, {}).get('time'))} |" for d, v in agg["lockable"].items()], "",
-         "| task | clip | h_h [m] | touchdowns | alternation | walk / shuffle segments | "
-         "window: steps, walk / shuffle / stand |", "|---|---|---|---|---|---|---|",
-         *[f"| {r['task']} | {r['clip']} | {f(r['leg_m'])} | {r['touchdowns']} | {f(r['alternation'])} | "
+         "| task | clip | h_h [m] | touchdowns | shortest gap [s] | alternation | walk / shuffle segments | "
+         "window: steps, walk / shuffle / stand |", "|---|---|---|---|---|---|---|---|",
+         *[f"| {r['task']} | {r['clip']} | {f(r['leg_m'])} | {r['touchdowns']} | {f(r['min_step_gap_s'])} | "
+           f"{f(r['alternation'])} | "
            f"{r['walk_segments']} / {r['shuffle_segments']} | {r['window_steps']}, {f(r['window_walk_frac'])} / "
            f"{f(r['window_shuffle_frac'])} / {f(r['window_stand_frac'])} |" for r in rows], "",
          "| task | frames | steps | speed [m/s] | step Hz (Alexander) | dog gait | dog per step | lock dev |",

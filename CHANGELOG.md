@@ -14,6 +14,9 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - M0 (`scripts/fullopt/m0_gait_stats.py`, `h2d/fullopt/{signals,gait}.py`, `configs/fullopt/gait.yaml`): human foot
   contacts, touchdowns and segments on the solvable tasks, leg length, step frequency against Alexander's relation,
   the B2 hip height from the model, and the dog's natural footfalls per human step with the share lockable per delta.
+  It checks the measurement only (no double touchdowns, alternating feet, a leg length that does not depend on
+  posture); step frequencies are data: R023 found people take short quick steps around objects (median 1.93 Hz
+  at 0.53 m/s), so the dog/human ratio is mostly near 2, not 3.
 - The full-optimization line is kept apart from the learned line (Kevin): its code is only in `*/fullopt/`, it
   does not change learned code, and it selects the same tasks with its own copy of the rule
   (`h2d/fullopt/tasks.py`).
