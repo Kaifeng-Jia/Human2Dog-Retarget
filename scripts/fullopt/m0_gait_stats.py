@@ -19,13 +19,18 @@ Writes outputs/<run-id>/{summary.json, report.md, segments.csv, figures/{freq_sp
 
 from __future__ import annotations
 
-import argparse
-import json
-import sys
-import time
-from pathlib import Path
+import os
 
-import numpy as np
+# One BLAS / OpenMP thread, set before numpy loads (as solve.py): small problems, where threads only contend.
+os.environ.update({k: "1" for k in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
+
+import argparse  # noqa: E402
+import json  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data.omomo_new import intervals  # noqa: E402

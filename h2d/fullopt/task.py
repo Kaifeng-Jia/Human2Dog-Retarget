@@ -13,11 +13,16 @@ helpers are imported where they need no dataset ``Clip`` (``adapt_height``, ``fr
   joints the palm is ``PALM_FROM_WRIST_M`` beyond the wrist along the forearm and the hand has no roll;
 * contact proxy of the virtual hand: the palm (the dataset's finger contact flags are not part of the input);
 * contact frames: ``hand_contact`` when the clip has it, else the palm within ``CONTACT_M`` of the surface;
-* segment, virtual-hand mode and push / pull: from ``meta`` when the exporter wrote them, else from the contacts.
+* segment, virtual-hand mode and push / pull: from ``meta`` when the exporter wrote them, else from the contacts;
+* which face the hand pushes (a top face or not): the patch under the hand's joints that touch the surface (the
+  learned line's flagged hand bodies), not under the palm centre, which a wrist lifted at a table's edge holds over
+  the edge.
 
-The task gate w = a c kappa (learned spec §5.2) weights the task terms of the solver: a = 1 in the task window,
-c = 1 (the input carries no confidence), kappa = the contact frames dilated by ``dilate_s`` and smoothed over
-``smooth_s`` (offline, non-causal), so the arm is already on its way when the contact starts.
+The task gate weights the task terms of the solver. It is this line's own (the learned gate, 1 within 0.25 s of
+contact, left the arm too little time, R027): 0 until ``gate_rise_s`` before the first contact frame, 1 from
+``gate_full_s`` before it (smoothstep), mirrored after the last. The targets cover the gate's span, the frames where
+it is not 0; the task window (the learned line's, from ``meta``) stays what the evaluation and the relation metrics
+use.
 """
 
 from __future__ import annotations
@@ -110,12 +115,26 @@ def detect_segment(contact: np.ndarray, fps: float, p: dict = DEFAULTS) -> tuple
     return (int(s), int(e)), MODE_OF_HANDS.get(lab, "L" if L[s:e].sum() > Rr[s:e].sum() else "R")
 
 
-def contact_proxy(c: HOIClip, mode: str, frames, contact: np.ndarray) -> np.ndarray:
-    """The virtual hand's contact proxy: that hand's palm; "B": both palms' midpoint where both touch, the touching
-    hand's palm where one does (``describe.contact_point`` with the palm as each hand's proxy)."""
+def touching(c: HOIClip, side: str, frames, obj: ObjectMesh) -> np.ndarray:
+    """Mean of the hand's joints (wrist, index and pinky bases) within ``CONTACT_M`` of the surface, else the nearest
+    one, (n, 3): the learned line's "flagged hand bodies" with the joints the input has."""
+    s = side.lower()
+    names = [f"{s}_wrist"] + [f"{s}_{k}" for k in ("index", "pinky") if c.has(f"{s}_{k}")]
+    P = np.stack([c.joint(n)[frames] for n in names], 1)
+    loc = obj.to_local(P, c.obj_pos[frames], c.obj_quat[frames])
+    d = obj.surface_distance(loc.reshape(-1, 3)).reshape(len(P), -1)
+    flag = d <= CONTACT_M
+    flag[np.arange(len(P)), d.argmin(1)] = True
+    return (P * flag[..., None]).sum(1) / flag.sum(1, keepdims=True)
+
+
+def contact_proxy(c: HOIClip, mode: str, frames, contact: np.ndarray, point=None) -> np.ndarray:
+    """The virtual hand's contact proxy: ``point(c, side, frames)`` (default the palm) of that hand; "B": both hands'
+    midpoint where both touch, the touching hand's where one does (``describe.contact_point``)."""
+    point = point or palm
     if mode != "B":
-        return palm(c, mode, frames)
-    pl, pr = palm(c, "L", frames), palm(c, "R", frames)
+        return point(c, mode, frames)
+    pl, pr = point(c, "L", frames), point(c, "R", frames)
     fl, fr = contact[frames, 0], contact[frames, 1]
     out = 0.5 * (pl + pr)
     out[fl & ~fr], out[fr & ~fl] = pl[fl & ~fr], pr[fr & ~fl]
@@ -137,16 +156,18 @@ def is_push(c: HOIClip, obj: ObjectMesh, mode: str, seg, min_speed: float = 0.05
 class Task:
     mode: str                     # virtual hand "L", "R" or "B"
     segment: tuple[int, int]      # contact frames [s, e) of the clip
-    window: tuple[int, int]       # [w0, w1): the segment with the approach and the retreat
-    gate: np.ndarray              # (T,) task weight a c kappa
-    target: np.ndarray            # (T, 3) world contact target (NaN outside the window)
-    tool_x: np.ndarray            # (T, 3) world approach target (NaN outside the window)
-    tool_z: np.ndarray            # (T, 3) world jaw axis target (NaN outside the window or without a roll target)
-    local: dict = field(default_factory=dict)   # object-frame window arrays: target, tool_x, tool_z
+    window: tuple[int, int]       # [w0, w1): the segment with the approach and the retreat (evaluation)
+    span: tuple[int, int]         # [a0, a1): the frames with targets, the window and the gate's support
+    gate: np.ndarray              # (T,) task weight
+    target: np.ndarray            # (T, 3) world contact target (NaN outside the span)
+    tool_x: np.ndarray            # (T, 3) world approach target (NaN outside the span)
+    tool_z: np.ndarray            # (T, 3) world jaw axis target (NaN outside the span or without a roll target)
+    local: dict = field(default_factory=dict)   # object-frame arrays over the span: target, tool_x, tool_z
     record: dict = field(default_factory=dict)
 
     @property
     def frames(self) -> np.ndarray:
+        """The task window's frames."""
         return np.arange(*self.window)
 
     @property
@@ -169,7 +190,9 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
     w0, w1 = (tuple(int(x) for x in c.meta["window"]) if "window" in c.meta and source == "meta" else
               (max(0, s - round(cfg["pre_s"] * c.fps)), min(c.n, e + round(cfg["post_s"] * c.fps))))
     interaction = c.meta.get("interaction") or ("push" if is_push(c, obj, mode, (s, e)) else "pull")
-    fr = np.arange(w0, w1)
+    rise, full = round(cfg["gate_rise_s"] * c.fps), round(cfg["gate_full_s"] * c.fps)
+    a0, a1 = max(0, min(w0, s - rise)), min(c.n, max(w1, e + rise))
+    fr = np.arange(a0, a1)
     con = (fr >= s) & (fr < e)
     pos, rot = c.obj_pos[fr], c.obj_quat[fr]
     k = int(cfg["smooth_frames"])
@@ -186,7 +209,11 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
     height = {"face": "", "human_contact_z_m": z_human, "robot_contact_z_m": z_human, "height_shift_m": 0.0,
               "height_adapted": False, "in_band": True, "contact_moved": ""}
     n_robot = n_bar
-    top = abs(R.from_quat(rot[con][0]).apply(n_bar)[2]) > np.sin(np.radians(60))
+    # Which face the hand pushes (top or not) from the joints that touch it: at a table's edge the palm centre, lifted
+    # by the wrist, lies over the edge and its patch tilts half way (R027 c12: 51 deg against the learned line's 83).
+    near = contact_proxy(c, mode, fr[con], contact, lambda c_, sd, f: touching(c_, sd, f, obj))
+    n_face = obj.patch_normals(obj.to_local(near[:, None], pos[con], rot[con])[:, 0], cfg["patch_m"])[2].mean(0)
+    top = abs(R.from_quat(rot[con][0]).apply(_unit(n_face))[2]) > np.sin(np.radians(60))
     if interaction == "push" and top:              # every task is a press (the closed gripper)
         c_bar, n_robot, rec = from_behind(obj, c_bar, pos[con], rot[con], band)
         height.update({k_: v for k_, v in rec.items() if k_ != "human_contact_z_m"},
@@ -222,17 +249,15 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
 
     Rw = R.from_quat(rot)
 
-    def world(local: np.ndarray, offset=0.0) -> np.ndarray:            # window arrays -> (T, 3) world, NaN outside
+    def world(local: np.ndarray, offset=0.0) -> np.ndarray:            # span arrays -> (T, 3) world, NaN outside
         out = np.full((c.n, 3), np.nan)
         out[fr] = Rw.apply(local) + offset
         return out
 
-    kappa = np.zeros(c.n)
-    kappa[max(0, s - round(cfg["dilate_s"] * c.fps)):e + round(cfg["dilate_s"] * c.fps)] = 1.0
-    kappa = uniform_filter1d(kappa, max(1, round(cfg["smooth_s"] * c.fps)) | 1, mode="nearest")
-    gate = np.zeros(c.n)
-    gate[w0:w1] = kappa[w0:w1]
-    return Task(mode=mode, segment=(s, e), window=(w0, w1), gate=gate, target=world(target_local, pos),
+    t = np.arange(c.n)
+    x = np.clip(np.minimum(t - (s - rise), (e - 1 + rise) - t) / max(rise - full, 1), 0.0, 1.0)
+    gate = x * x * (3.0 - 2.0 * x)
+    return Task(mode=mode, segment=(s, e), window=(w0, w1), span=(a0, a1), gate=gate, target=world(target_local, pos),
                 tool_x=world(tool_x), tool_z=world(tool_z),
                 local={"target": target_local, "tool_x": tool_x, "tool_z": tool_z, "n_robot": n_robot},
                 record={"source": source, "interaction": interaction, "contact_labels": c.hand_contact is not None,
@@ -249,7 +274,7 @@ def compare(task: Task, learned: dict) -> dict:
     fr = np.asarray(learned["frames"])
     lc = fr[np.asarray(learned["in_contact"], bool)]
     both = np.intersect1d(lc, np.arange(*task.segment))
-    mine = both - task.window[0]
+    mine = both - task.span[0]
     theirs = np.searchsorted(fr, both)
     ang = lambda a, b: np.degrees(np.arccos(np.clip(np.sum(a * b, 1), -1, 1)))  # noqa: E731
     dp = np.linalg.norm(task.local["target"][mine] - learned["target_local"][theirs], axis=1)

@@ -68,12 +68,13 @@ class WholeBodyIK:
         for k in np.flatnonzero(P[:, 0] > p[0] - BEHIND_M):
             e.append([10.0 * (P[k, 0] - p[0] + BEHIND_M)])
             J.append(10.0 * (r.body_point_jac(B[k], P[k], D)[0] - Jp[0])[None])
-        for dist, ft, ba, bg in coll.self_distances(0.03):   # self pairs apart by 1 cm
+        gb = r.model.geom_bodyid
+        for dist, ft, ga, gg in coll.self_distances(0.03):   # self pairs apart by 1 cm (geoms -> their bodies)
             v = ft[3:] - ft[:3]
             if dist < CLEAR_M and np.linalg.norm(v) > 1e-9:
                 n = v / np.linalg.norm(v) * (1.0 if dist >= 0 else -1.0)
                 e.append([10.0 * (dist - CLEAR_M)])
-                J.append(10.0 * (n @ (r.body_point_jac(bg, ft[3:], D) - r.body_point_jac(ba, ft[:3], D)))[None])
+                J.append(10.0 * (n @ (r.body_point_jac(gb[gg], ft[3:], D) - r.body_point_jac(gb[ga], ft[:3], D)))[None])
         P, B = coll.world_samples(coll.legs)                 # legs above the floor
         for k in np.flatnonzero(P[:, 2] < 0.005):
             e.append([10.0 * (P[k, 2] - 0.005)])
