@@ -1,0 +1,877 @@
+{
+  "provenance": {
+    "run_id": "R026b_fullopt_m0",
+    "started_utc": "2026-11-01T05:21:43+00:00",
+    "h2d_version": "0.3.2",
+    "git": {
+      "commit": "112f9a8933545c12f385bd78b63f8ec6eafd38df",
+      "branch": "HEAD",
+      "describe": "v0.3.1-2-g112f9a8",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "external.yaml": "847b4b4bf499bd9e",
+      "b2z1.yaml": "eec6bfcde93c5801",
+      "fullopt/gait.yaml": "bfef985f1a80e81d"
+    },
+    "command": "m0_gait_stats.py --run-id R026b_fullopt_m0 --clips outputs/R026b_fullopt_hoi/clips",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "limits": {
+    "min_step_gap_s": 0.2,
+    "alternation_min": 0.8,
+    "leg_m": [
+      0.7,
+      1.05
+    ],
+    "leg_spread_subject_m": 0.03
+  },
+  "checks": {
+    "dev": {
+      "inputs_valid": {
+        "pass": true,
+        "n": 10,
+        "n_errors": 0,
+        "invalid": {}
+      },
+      "steps_found": {
+        "pass": true,
+        "without": []
+      },
+      "no_double_touchdowns": {
+        "pass": true,
+        "below": []
+      },
+      "feet_alternate": {
+        "pass": true,
+        "below": []
+      },
+      "leg_length_in_range": {
+        "pass": true,
+        "outside": []
+      },
+      "leg_length_same_per_subject": {
+        "pass": true,
+        "spread_m": {
+          "sub12": 0.014439891393523308,
+          "sub1": 0.021660050511031814,
+          "sub3": 0.005166257748025038
+        }
+      }
+    },
+    "heldout": {
+      "inputs_valid": {
+        "pass": true,
+        "n": 4,
+        "n_errors": 0,
+        "invalid": {}
+      },
+      "steps_found": {
+        "pass": true,
+        "without": []
+      },
+      "no_double_touchdowns": {
+        "pass": false,
+        "below": [
+          "0630_61-2_472",
+          "sub7_smallbox_041_41"
+        ]
+      },
+      "feet_alternate": {
+        "pass": false,
+        "below": [
+          "0630_61-2_472"
+        ]
+      },
+      "leg_length_in_range": {
+        "pass": true,
+        "outside": []
+      },
+      "leg_length_same_per_subject": {
+        "pass": true,
+        "spread_m": {
+          "sub7": 0.002939761515268202
+        }
+      }
+    }
+  },
+  "pass": false,
+  "dog": {
+    "hip_height_m": 0.543542113821079,
+    "thigh_m": 0.3500000108088802,
+    "calf_m": 0.3500000108093773,
+    "foot_radius_m": 0.032,
+    "home_base_z_m": 0.58,
+    "home_feet_clearance_m": 0.03645788617892101,
+    "max_stride_walk_m": 1.050654568770391
+  },
+  "aggregate": {
+    "dev": {
+      "clips": 10,
+      "leg_m_median": 0.925002794162779,
+      "ratio_constant": 1.45089803300762,
+      "walk_segments": 10,
+      "walking_s": 52.16666666666667,
+      "speed_mps_median": 0.5323805230106158,
+      "step_hz_median": 1.9329736459846443,
+      "dog_per_step_median": 1.884762523416052,
+      "lock_dev_median": 0.030471472335410144,
+      "dog_trot_segments": 0,
+      "lockable": {
+        "0.05": {
+          "segments": 0.2,
+          "time": 0.2523961661341853
+        },
+        "0.10": {
+          "segments": 0.7,
+          "time": 0.7028753993610224
+        },
+        "0.15": {
+          "segments": 0.7,
+          "time": 0.7028753993610224
+        },
+        "0.20": {
+          "segments": 0.8,
+          "time": 0.7910543130990415
+        }
+      },
+      "lockable_in_windows": {
+        "0.05": {
+          "segments": 0.2,
+          "time": 0.2523961661341853
+        },
+        "0.10": {
+          "segments": 0.7,
+          "time": 0.7028753993610224
+        },
+        "0.15": {
+          "segments": 0.7,
+          "time": 0.7028753993610224
+        },
+        "0.20": {
+          "segments": 0.8,
+          "time": 0.7910543130990415
+        }
+      }
+    },
+    "heldout": {
+      "clips": 4,
+      "leg_m_median": 0.8825982720027837,
+      "ratio_constant": 1.4040122973561502,
+      "walk_segments": 6,
+      "walking_s": 34.46666666666667,
+      "speed_mps_median": 0.4310367666072829,
+      "step_hz_median": 1.50813579750904,
+      "dog_per_step_median": 2.607418548722178,
+      "lock_dev_median": -0.017790897233536274,
+      "dog_trot_segments": 0,
+      "lockable": {
+        "0.05": {
+          "segments": 0.3333333333333333,
+          "time": 0.3085106382978723
+        },
+        "0.10": {
+          "segments": 0.6666666666666666,
+          "time": 0.688588007736944
+        },
+        "0.15": {
+          "segments": 1.0,
+          "time": 1.0
+        },
+        "0.20": {
+          "segments": 1.0,
+          "time": 1.0
+        }
+      },
+      "lockable_in_windows": {
+        "0.05": {
+          "segments": 0.2,
+          "time": 0.1598119858989424
+        },
+        "0.10": {
+          "segments": 0.6,
+          "time": 0.6216216216216216
+        },
+        "0.15": {
+          "segments": 1.0,
+          "time": 1.0
+        },
+        "0.20": {
+          "segments": 1.0,
+          "time": 1.0
+        }
+      }
+    }
+  },
+  "clips": [
+    {
+      "task": "sub12_largebox_000_0",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_000",
+      "subject": "sub12",
+      "frames": 258,
+      "fps": 30.0,
+      "window": [
+        0,
+        258
+      ],
+      "leg_m": 0.9435315898999119,
+      "problems": [],
+      "touchdowns": 8,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 8,
+      "window_walk_frac": 0.7325581395348837,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.26744186046511625
+    },
+    {
+      "task": "sub12_largebox_065_23",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_065",
+      "subject": "sub12",
+      "frames": 192,
+      "fps": 30.0,
+      "window": [
+        0,
+        192
+      ],
+      "leg_m": 0.9290916985063886,
+      "problems": [],
+      "touchdowns": 13,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 13,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "sub12_largebox_089_16",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_089",
+      "subject": "sub12",
+      "frames": 245,
+      "fps": 30.0,
+      "window": [
+        0,
+        115
+      ],
+      "leg_m": 0.933368227874075,
+      "problems": [],
+      "touchdowns": 14,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.23333333333333334,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "sub1_largetable_073_6",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_largetable_073",
+      "subject": "sub1",
+      "frames": 203,
+      "fps": 30.0,
+      "window": [
+        0,
+        74
+      ],
+      "leg_m": 0.8190747406745998,
+      "problems": [],
+      "touchdowns": 11,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.23333333333333334,
+      "walk_segments": 1,
+      "shuffle_segments": 1,
+      "window_steps": 1,
+      "window_walk_frac": 0.3918918918918919,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.6081081081081081
+    },
+    {
+      "task": "sub1_largetable_074_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_largetable_074",
+      "subject": "sub1",
+      "frames": 210,
+      "fps": 30.0,
+      "window": [
+        0,
+        81
+      ],
+      "leg_m": 0.8166411737319209,
+      "problems": [],
+      "touchdowns": 9,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 3,
+      "window_walk_frac": 0.8148148148148148,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.18518518518518517
+    },
+    {
+      "task": "sub1_suitcase_008_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_suitcase_008",
+      "subject": "sub1",
+      "frames": 129,
+      "fps": 30.0,
+      "window": [
+        0,
+        119
+      ],
+      "leg_m": 0.797414690163568,
+      "problems": [],
+      "touchdowns": 5,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.26666666666666666,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 0.7310924369747899,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.2689075630252101
+    },
+    {
+      "task": "sub3_largebox_031_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub3_largebox_031",
+      "subject": "sub3",
+      "frames": 178,
+      "fps": 30.0,
+      "window": [
+        50,
+        178
+      ],
+      "leg_m": 0.993453349017836,
+      "problems": [],
+      "touchdowns": 6,
+      "alternation": 0.8,
+      "min_step_gap_s": 0.5333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 6,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "sub3_largebox_032_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub3_largebox_032",
+      "subject": "sub3",
+      "frames": 181,
+      "fps": 30.0,
+      "window": [
+        50,
+        181
+      ],
+      "leg_m": 0.988287091269811,
+      "problems": [],
+      "touchdowns": 5,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.6,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "sub5_largetable_030_17",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub5_largetable_030",
+      "subject": "sub5",
+      "frames": 159,
+      "fps": 30.0,
+      "window": [
+        0,
+        159
+      ],
+      "leg_m": 0.9209138898191693,
+      "problems": [],
+      "touchdowns": 7,
+      "alternation": 0.8333333333333334,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 1,
+      "window_steps": 7,
+      "window_walk_frac": 0.710691823899371,
+      "window_shuffle_frac": 0.16981132075471697,
+      "window_stand_frac": 0.11949685534591195
+    },
+    {
+      "task": "sub6_largetable_033_3",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub6_largetable_033",
+      "subject": "sub6",
+      "frames": 186,
+      "fps": 30.0,
+      "window": [
+        0,
+        180
+      ],
+      "leg_m": 0.885761292457925,
+      "problems": [],
+      "touchdowns": 9,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 9,
+      "window_walk_frac": 0.7666666666666667,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.23333333333333334
+    },
+    {
+      "task": "0630_61-2_472",
+      "split": "heldout",
+      "dataset": "force",
+      "clip": "0630_61-2",
+      "subject": "session0630",
+      "frames": 712,
+      "fps": 30.0,
+      "window": [
+        442,
+        553
+      ],
+      "leg_m": 0.8836220360140941,
+      "problems": [],
+      "touchdowns": 19,
+      "alternation": 0.7777777777777778,
+      "min_step_gap_s": 0.06666666666666667,
+      "walk_segments": 3,
+      "shuffle_segments": 0,
+      "window_steps": 1,
+      "window_walk_frac": 0.42342342342342343,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.5765765765765766
+    },
+    {
+      "task": "sub6_trashcan_003_24",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub6_trashcan_003",
+      "subject": "sub6",
+      "frames": 192,
+      "fps": 30.0,
+      "window": [
+        0,
+        190
+      ],
+      "leg_m": 0.8830911205882574,
+      "problems": [],
+      "touchdowns": 9,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 9,
+      "window_walk_frac": 0.8526315789473684,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.14736842105263157
+    },
+    {
+      "task": "sub7_largebox_041_35",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub7_largebox_041",
+      "subject": "sub7",
+      "frames": 165,
+      "fps": 30.0,
+      "window": [
+        5,
+        150
+      ],
+      "leg_m": 0.88210542341731,
+      "problems": [],
+      "touchdowns": 8,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 8,
+      "window_walk_frac": 0.903448275862069,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.09655172413793103
+    },
+    {
+      "task": "sub7_smallbox_041_41",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub7_smallbox_041",
+      "subject": "sub7",
+      "frames": 173,
+      "fps": 30.0,
+      "window": [
+        11,
+        150
+      ],
+      "leg_m": 0.8791656619020418,
+      "problems": [],
+      "touchdowns": 12,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.16666666666666666,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 11,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    }
+  ],
+  "walk_segments": [
+    {
+      "task": "0630_61-2_472",
+      "split": "heldout",
+      "dataset": "force",
+      "clip": "0630_61-2",
+      "start": 2,
+      "end": 185,
+      "duration_s": 6.1,
+      "steps": 7,
+      "speed_mps": 0.40127675358440457,
+      "step_hz": 1.1842105263157896,
+      "step_hz_alexander": 1.3055511325642066,
+      "froude_human": 0.018576010903602738,
+      "froude_dog": 0.030198529531171914,
+      "dog_gait": "walk",
+      "dog_per_step": 3.098263149468295,
+      "lock_dev": -0.031715559566061424,
+      "in_window": false
+    },
+    {
+      "task": "0630_61-2_472",
+      "split": "heldout",
+      "dataset": "force",
+      "clip": "0630_61-2",
+      "start": 250,
+      "end": 481,
+      "duration_s": 7.7,
+      "steps": 7,
+      "speed_mps": 0.39283820633042577,
+      "step_hz": 0.989010989010989,
+      "step_hz_alexander": 1.2944991604358598,
+      "froude_human": 0.017802946780036393,
+      "froude_dog": 0.02894177963550513,
+      "dog_gait": "walk",
+      "dog_per_step": 3.678357947076395,
+      "lock_dev": 0.08744174915854774,
+      "in_window": true
+    },
+    {
+      "task": "0630_61-2_472",
+      "split": "heldout",
+      "dataset": "force",
+      "clip": "0630_61-2",
+      "start": 545,
+      "end": 706,
+      "duration_s": 5.366666666666666,
+      "steps": 5,
+      "speed_mps": 0.27178403948517527,
+      "step_hz": 0.9230769230769231,
+      "step_hz_alexander": 1.117135531139979,
+      "froude_human": 0.008521427495177933,
+      "froude_dog": 0.01385305925993843,
+      "dog_gait": "walk",
+      "dog_per_step": 3.401114901523466,
+      "lock_dev": -0.11793629828377572,
+      "in_window": true
+    },
+    {
+      "task": "sub12_largebox_000_0",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_000",
+      "start": 39,
+      "end": 228,
+      "duration_s": 6.3,
+      "steps": 8,
+      "speed_mps": 0.16664003394059895,
+      "step_hz": 1.3636363636363635,
+      "step_hz_alexander": 0.8773746626269517,
+      "froude_human": 0.003000082780602092,
+      "froude_dog": 0.005207826226956593,
+      "dog_gait": "walk",
+      "dog_per_step": 1.8931402211221755,
+      "lock_dev": 0.05644578129267286,
+      "in_window": true
+    },
+    {
+      "task": "sub12_largebox_065_23",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_065",
+      "start": 0,
+      "end": 192,
+      "duration_s": 6.4,
+      "steps": 13,
+      "speed_mps": 0.2933149937523044,
+      "step_hz": 1.9672131147540985,
+      "step_hz_alexander": 1.1119763784220564,
+      "froude_human": 0.009439325033387527,
+      "froude_dog": 0.01613490161115789,
+      "dog_gait": "walk",
+      "dog_per_step": 1.6453258186288977,
+      "lock_dev": 0.21556470904143699,
+      "in_window": true
+    },
+    {
+      "task": "sub12_largebox_089_16",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub12_largebox_089",
+      "start": 0,
+      "end": 245,
+      "duration_s": 8.166666666666666,
+      "steps": 14,
+      "speed_mps": 0.3492201478664783,
+      "step_hz": 1.7180616740088106,
+      "step_hz_alexander": 1.1885171950058568,
+      "froude_human": 0.013319151630031894,
+      "froude_dog": 0.022871591064609165,
+      "dog_gait": "walk",
+      "dog_per_step": 2.0200893784508596,
+      "lock_dev": -0.009944796831843905,
+      "in_window": true
+    },
+    {
+      "task": "sub1_largetable_073_6",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_largetable_073",
+      "start": 45,
+      "end": 180,
+      "duration_s": 4.5,
+      "steps": 10,
+      "speed_mps": 0.5259823943316858,
+      "step_hz": 2.783505154639175,
+      "step_hz_alexander": 1.5341395700934939,
+      "froude_human": 0.03443101892198656,
+      "froude_dog": 0.051884807409737645,
+      "dog_gait": "walk",
+      "dog_per_step": 1.4688115245146083,
+      "lock_dev": -0.3191774551670503,
+      "in_window": true
+    },
+    {
+      "task": "sub1_largetable_074_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_largetable_074",
+      "start": 15,
+      "end": 167,
+      "duration_s": 5.066666666666666,
+      "steps": 9,
+      "speed_mps": 0.4915690466263824,
+      "step_hz": 2.142857142857143,
+      "step_hz_alexander": 1.496286585232479,
+      "froude_human": 0.030162600116810653,
+      "froude_dog": 0.04531759460005172,
+      "dog_gait": "walk",
+      "dog_per_step": 1.8569927597100075,
+      "lock_dev": 0.07701012270630758,
+      "in_window": true
+    },
+    {
+      "task": "sub1_suitcase_008_5",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub1_suitcase_008",
+      "start": 13,
+      "end": 100,
+      "duration_s": 2.9,
+      "steps": 5,
+      "speed_mps": 0.6071912309749058,
+      "step_hz": 2.3076923076923075,
+      "step_hz_alexander": 1.6555949604373055,
+      "froude_human": 0.04713003283096263,
+      "froude_dog": 0.0691430885881126,
+      "dog_gait": "walk",
+      "dog_per_step": 1.876384825709929,
+      "lock_dev": 0.06587943613501634,
+      "in_window": true
+    },
+    {
+      "task": "sub3_largebox_031_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub3_largebox_031",
+      "start": 14,
+      "end": 178,
+      "duration_s": 5.466666666666667,
+      "steps": 6,
+      "speed_mps": 0.539534867824511,
+      "step_hz": 1.2605042016806722,
+      "step_hz_alexander": 1.3539649868485035,
+      "froude_human": 0.029869128241778398,
+      "froude_dog": 0.054592983192109756,
+      "dog_gait": "walk",
+      "dog_per_step": 3.276673185773499,
+      "lock_dev": -0.0844372233931493,
+      "in_window": true
+    },
+    {
+      "task": "sub3_largebox_032_80",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub3_largebox_032",
+      "start": 31,
+      "end": 181,
+      "duration_s": 5.0,
+      "steps": 5,
+      "speed_mps": 0.5517143646641004,
+      "step_hz": 1.3953488372093024,
+      "step_hz_alexander": 1.3711039833289735,
+      "froude_human": 0.03139615416968662,
+      "froude_dog": 0.057085574590144725,
+      "dog_gait": "walk",
+      "dog_per_step": 2.9865689116641505,
+      "lock_dev": 0.0044971633781474285,
+      "in_window": true
+    },
+    {
+      "task": "sub5_largetable_030_17",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub5_largetable_030",
+      "start": 32,
+      "end": 145,
+      "duration_s": 3.7666666666666666,
+      "steps": 6,
+      "speed_mps": 0.5387786516895458,
+      "step_hz": 1.89873417721519,
+      "step_hz_alexander": 1.4269662358298905,
+      "froude_human": 0.032131627791861565,
+      "froude_dog": 0.05444005456726289,
+      "dog_gait": "walk",
+      "dog_per_step": 2.174050370899471,
+      "lock_dev": -0.08005811329360368,
+      "in_window": true
+    },
+    {
+      "task": "sub6_largetable_033_3",
+      "split": "dev",
+      "dataset": "omomo_new",
+      "clip": "sub6_largetable_033",
+      "start": 25,
+      "end": 163,
+      "duration_s": 4.6,
+      "steps": 9,
+      "speed_mps": 0.5757368102487356,
+      "step_hz": 2.4489795918367347,
+      "step_hz_alexander": 1.5058120643940949,
+      "froude_human": 0.03814716690445233,
+      "froude_dog": 0.06216497857610072,
+      "dog_gait": "walk",
+      "dog_per_step": 1.7309082629142132,
+      "lock_dev": 0.155462737599239,
+      "in_window": true
+    },
+    {
+      "task": "sub6_trashcan_003_24",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub6_trashcan_003",
+      "start": 4,
+      "end": 166,
+      "duration_s": 5.4,
+      "steps": 9,
+      "speed_mps": 0.46079677963016125,
+      "step_hz": 1.8320610687022902,
+      "step_hz_alexander": 1.3803930796734072,
+      "froude_human": 0.024510058350869637,
+      "froude_dog": 0.03982141281122134,
+      "dog_gait": "walk",
+      "dog_per_step": 2.1165739479760606,
+      "lock_dev": -0.05507671871683606,
+      "in_window": true
+    },
+    {
+      "task": "sub7_largebox_041_35",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub7_largebox_041",
+      "start": 0,
+      "end": 136,
+      "duration_s": 4.533333333333333,
+      "steps": 8,
+      "speed_mps": 0.5541171512739343,
+      "step_hz": 2.0792079207920793,
+      "step_hz_alexander": 1.487233483046155,
+      "froude_human": 0.03548245707521168,
+      "froude_dog": 0.057583887294737006,
+      "dog_gait": "walk",
+      "dog_per_step": 2.007762481378446,
+      "lock_dev": -0.003866234901011123,
+      "in_window": true
+    },
+    {
+      "task": "sub7_smallbox_041_41",
+      "split": "heldout",
+      "dataset": "omomo_new",
+      "clip": "sub7_smallbox_041",
+      "start": 0,
+      "end": 161,
+      "duration_s": 5.366666666666666,
+      "steps": 12,
+      "speed_mps": 0.602807442040203,
+      "step_hz": 2.4264705882352944,
+      "step_hz_alexander": 1.5417884996889029,
+      "froude_human": 0.04213252488872698,
+      "froude_dog": 0.06814829649721504,
+      "dog_gait": "walk",
+      "dog_per_step": 1.7793690359713514,
+      "lock_dev": 0.12399393243808299,
+      "in_window": true
+    }
+  ],
+  "errors": [],
+  "elapsed_s": 1.2279961109161377
+}
