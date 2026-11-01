@@ -1,0 +1,1848 @@
+{
+  "provenance": {
+    "run_id": "R027_fullopt_m1",
+    "started_utc": "2026-11-01T07:20:20+00:00",
+    "h2d_version": "0.3.3",
+    "git": {
+      "commit": "29c4830e354430e784e68fd4ee2da6f0b6780543",
+      "branch": "HEAD",
+      "describe": "v0.3.2-2-g29c4830",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "b2z1.yaml": "eec6bfcde93c5801",
+      "external.yaml": "847b4b4bf499bd9e",
+      "candidate_selection.yaml": "b425e69e29655d2a",
+      "fullopt/robots/b2z1.yaml": "e9a50b451017e01d",
+      "fullopt/correspondence.yaml": "66e24e3a5ce18686",
+      "fullopt/solver.yaml": "da2a34e110844703",
+      "fullopt/evaluation.yaml": "5e89aaa89c4b6a67"
+    },
+    "command": "solve.py --run-id R027_fullopt_m1 --clips outputs/R026b_fullopt_hoi/clips --learned-root outputs --learned-reach outputs/R022_reach/summary.json",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "robot": "b2z1",
+  "config": {
+    "task": {
+      "pre_s": 1.0,
+      "post_s": 1.0,
+      "smooth_frames": 5,
+      "patch_m": 0.03,
+      "tool_max_deg": 45.0,
+      "palm_max_deg": 60.0,
+      "approach_mps": 0.5,
+      "dilate_s": 0.5,
+      "smooth_s": 0.5
+    },
+    "relation": {
+      "kind": "a",
+      "object_samples": 24,
+      "human_smooth_s": 1.0
+    },
+    "weights": {
+      "relation": 1.0,
+      "task": 1000.0,
+      "lever_m": 0.05,
+      "roll_m": 0.02,
+      "tilt": 10.0,
+      "height": 10.0,
+      "home": 0.001,
+      "velocity": {
+        "base_pos": 10.0,
+        "base_rot": 1.0,
+        "legs": 0.1,
+        "arm": 0.1
+      },
+      "acceleration": {
+        "base_pos": 100.0,
+        "base_rot": 10.0,
+        "legs": 1.0,
+        "arm": 1.0
+      }
+    },
+    "constraints": {
+      "object_margin_m": 0.0,
+      "floor_clearance_m": 0.03,
+      "self_margin_m": 0.005,
+      "activation_m": 0.15,
+      "rows": {
+        "object": 48,
+        "floor": 16,
+        "self": 16
+      },
+      "slack_weight": "1.0e4"
+    },
+    "sqp": {
+      "trust_region": 0.1,
+      "max_iters": 10,
+      "first_frame_iters": 50,
+      "tol": 0.0001
+    }
+  },
+  "evaluation": {
+    "pos_tol_m": 0.01,
+    "max_angle_deg": 15.0,
+    "penetration_tol_m": 0.002,
+    "joint_limit_tol_rad": 0.0001,
+    "same_side_deg": 45.0,
+    "pass": {
+      "dev_reached_min": 9,
+      "body_in_object_max_m": 0.01,
+      "target_agreement": {
+        "position_m": 0.01,
+        "tool_x_deg": 5.0
+      }
+    }
+  },
+  "checks": {
+    "dev": {
+      "all_clips_solved": {
+        "pass": true,
+        "n": 10,
+        "n_errors": 0,
+        "qp_failures": 0
+      },
+      "reached": {
+        "pass": false,
+        "reached": 6,
+        "of": 10,
+        "min": 9,
+        "not_reached": [
+          "sub12_largebox_065_23",
+          "sub1_largetable_074_5",
+          "sub3_largebox_031_80",
+          "sub3_largebox_032_80"
+        ]
+      },
+      "body_in_object": {
+        "pass": true,
+        "max_m": 0.0074272683420508745
+      },
+      "targets_agree_with_learned": {
+        "pass": false,
+        "failing_or_missing": [
+          "sub1_largetable_073_6"
+        ]
+      }
+    },
+    "heldout": {
+      "all_clips_solved": {
+        "pass": true,
+        "n": 4,
+        "n_errors": 0,
+        "qp_failures": 0
+      },
+      "reached": {
+        "pass": false,
+        "reached": 2,
+        "of": 4,
+        "min": 9,
+        "not_reached": [
+          "sub6_trashcan_003_24",
+          "sub7_largebox_041_35"
+        ]
+      },
+      "body_in_object": {
+        "pass": true,
+        "max_m": 3.566404599864015e-06
+      },
+      "targets_agree_with_learned": {
+        "pass": false,
+        "failing_or_missing": [
+          "0630_61-2_472",
+          "sub6_trashcan_003_24"
+        ]
+      }
+    }
+  },
+  "pass": false,
+  "clips": [
+    {
+      "id": "0630_61-2_472",
+      "split": "heldout",
+      "task_id": "c11_0630_61-2",
+      "object": "backpack",
+      "subject": "session0630",
+      "dataset": "force",
+      "frames": 712,
+      "mode": "R",
+      "segment": [
+        472,
+        523
+      ],
+      "window": [
+        442,
+        553
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.4836647515701827,
+          "robot_contact_z_m": 0.5811512748694536,
+          "height_shift_m": 0.09748652329927093,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": 0.048601173700465544,
+        "proxy_surface_dist_median_m": 0.08640067978441762,
+        "patch_coherence_median": 0.8099559763699291,
+        "palm_face_deg": 64.6162921094368,
+        "palm_used": false,
+        "palm_flipped": false,
+        "forearm_face_deg": 37.36552218508134,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 51,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": false,
+        "target_m": [
+          0.056513757933128884,
+          0.08124262748257048
+        ],
+        "tool_x_deg": [
+          2.485591207802357,
+          5.744105782616334
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": false
+      },
+      "solver": {
+        "time_s": 14.095672369003296,
+        "ms_per_frame": 19.797292653094516,
+        "iters_mean": 2.9775280898876404,
+        "iters_max": 50,
+        "unconverged_frames": 14,
+        "qp_failures": 0,
+        "slack_max": 4.607722186041816e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 51,
+        "err_m": {
+          "median": 0.00024277662071274612,
+          "max": 0.0013611639026338176
+        },
+        "angle_deg": {
+          "median": 0.5188058095673772,
+          "max": 2.987650943648024
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 8.229320003216856e-10,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.0906396225380347,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.01630122074666704,
+        "body_in_object_frames": 1
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.000550202500818,
+        "speed_violation_frames": 2,
+        "trunk_speed_max_mps": 1.3054728744309012
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 3.657212050180757,
+          "heading_err_deg": 4.66235544970488,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 9.111207825231887,
+          "heading_err_deg": 11.461842746543162,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub12_largebox_000_0",
+      "split": "dev",
+      "task_id": "c02_sub12_largebox_000",
+      "object": "largebox",
+      "subject": "sub12",
+      "dataset": "omomo_new",
+      "frames": 258,
+      "mode": "B",
+      "segment": [
+        0,
+        234
+      ],
+      "window": [
+        0,
+        258
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.3530498792013145,
+          "robot_contact_z_m": 0.35034956053245253,
+          "height_shift_m": -0.002700318668861945,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.02310313976417641,
+        "proxy_surface_dist_median_m": 0.004294861503648847,
+        "patch_coherence_median": 0.9914059551083908,
+        "palm_face_deg": 9.741374125301613,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 8.396522162541332,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 234,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0008100161763147891,
+          0.009387685082032082
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          180.0,
+          180.0
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 5.19488787651062,
+        "ms_per_frame": 20.135224327560543,
+        "iters_mean": 2.817829457364341,
+        "iters_max": 45,
+        "unconverged_frames": 2,
+        "qp_failures": 0,
+        "slack_max": 3.23984803798225e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 234,
+        "err_m": {
+          "median": 0.0015219458808927167,
+          "max": 0.00431364623151611
+        },
+        "angle_deg": {
+          "median": 3.2212501619522924,
+          "max": 9.220143152440544
+        },
+        "roll_median_deg": 2.8879413201005013,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.007605101881691834,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.06485848380762141,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9999999999871051,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 1.0029116355452392
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 4.805830546778221,
+          "heading_err_deg": 14.740078878470202,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 5.303857906604644,
+          "heading_err_deg": 13.642189389937865,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub12_largebox_065_23",
+      "split": "dev",
+      "task_id": "c04_sub12_largebox_065",
+      "object": "largebox",
+      "subject": "sub12",
+      "dataset": "omomo_new",
+      "frames": 192,
+      "mode": "R",
+      "segment": [
+        23,
+        176
+      ],
+      "window": [
+        0,
+        192
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.35465718795532386,
+          "robot_contact_z_m": 0.3471296796593294,
+          "height_shift_m": -0.007527508295994467,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": 0.008081559721653274,
+        "proxy_surface_dist_median_m": 0.05380545505569078,
+        "patch_coherence_median": 0.9953426954936154,
+        "palm_face_deg": 65.83309074328253,
+        "palm_used": false,
+        "palm_flipped": false,
+        "forearm_face_deg": 65.86798157686039,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 153,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0055069103835748605,
+          0.013450128648517525
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.478779333471098e-06
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 10.016122341156006,
+        "ms_per_frame": 52.16730386018753,
+        "iters_mean": 7.020833333333333,
+        "iters_max": 36,
+        "unconverged_frames": 80,
+        "qp_failures": 0,
+        "slack_max": 2.952243378211953e-14
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9869281045751634,
+        "frames": 153,
+        "err_m": {
+          "median": 0.0026318665170131576,
+          "max": 0.009323213487543683
+        },
+        "angle_deg": {
+          "median": 4.8721708700898905,
+          "max": 15.295501410556044
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 2,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 5.909855437802314e-06,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.014457480576663406,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.12398736594865456,
+        "body_in_object_frames": 77
+      },
+      "body_in_object_contact_m": 5.909855437802314e-06,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.0015531567023872,
+        "speed_violation_frames": 2,
+        "trunk_speed_max_mps": 1.1095429928310925
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 76.35452119130773,
+          "heading_err_deg": 15.361205392816961,
+          "same_side_frac": 0.9281045751633987
+        },
+        "window": {
+          "edge_dir_err_deg": 70.28017002265138,
+          "heading_err_deg": 13.75283550829334,
+          "same_side_frac": 0.9427083333333334
+        }
+      }
+    },
+    {
+      "id": "sub12_largebox_089_16",
+      "split": "dev",
+      "task_id": "c09_sub12_largebox_089",
+      "object": "largebox",
+      "subject": "sub12",
+      "dataset": "omomo_new",
+      "frames": 245,
+      "mode": "B",
+      "segment": [
+        16,
+        85
+      ],
+      "window": [
+        0,
+        115
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.34473272738023003,
+          "robot_contact_z_m": 0.3393926708949937,
+          "height_shift_m": -0.005340056485236333,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.020858702691271457,
+        "proxy_surface_dist_median_m": 0.039059878324553154,
+        "patch_coherence_median": 0.9952316102942228,
+        "palm_face_deg": 59.54938787675817,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 24.30485495873931,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 69,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0014211081061510336,
+          0.011970439849797735
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          0.0,
+          1.478779333471098e-06
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 7.057393550872803,
+        "ms_per_frame": 28.805687962746134,
+        "iters_mean": 4.061224489795919,
+        "iters_max": 50,
+        "unconverged_frames": 13,
+        "qp_failures": 0,
+        "slack_max": 1.0554786001699171e-13
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 69,
+        "err_m": {
+          "median": 0.001991319448514326,
+          "max": 0.003772249005175183
+        },
+        "angle_deg": {
+          "median": 4.336510464127402,
+          "max": 8.048161601540096
+        },
+        "roll_median_deg": 2.124806731108636,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 4.734401759520779e-11,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.016342095867634215,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.05563225653789919,
+        "body_in_object_frames": 2
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9999999986489633,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 0.8464637918021607
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 5.500705420556968,
+          "heading_err_deg": 12.294889975291209,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 7.087859507870258,
+          "heading_err_deg": 9.873795928375543,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub1_largetable_073_6",
+      "split": "dev",
+      "task_id": "c12_sub1_largetable_073",
+      "object": "largetable",
+      "subject": "sub1",
+      "dataset": "omomo_new",
+      "frames": 203,
+      "mode": "B",
+      "segment": [
+        6,
+        44
+      ],
+      "window": [
+        0,
+        74
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "slant",
+          "human_contact_z_m": 0.46299485861935574,
+          "robot_contact_z_m": 0.46299485861935574,
+          "height_shift_m": 0.0,
+          "height_adapted": false,
+          "in_band": false,
+          "contact_moved": "",
+          "face_z_range_m": [
+            0.4614434796407874,
+            0.46234683089234013
+          ]
+        },
+        "palm_offset_m": 0.030659781451712775,
+        "proxy_surface_dist_median_m": 0.03581938483769653,
+        "patch_coherence_median": 0.7308383127267402,
+        "palm_face_deg": 63.26408629644876,
+        "palm_used": false,
+        "palm_flipped": false,
+        "forearm_face_deg": 5.367208912065275,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 38,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": false,
+        "target_m": [
+          0.014824329431856381,
+          0.021803696080212227
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": false
+      },
+      "solver": {
+        "time_s": 5.837952613830566,
+        "ms_per_frame": 28.758387260249094,
+        "iters_mean": 3.9064039408866993,
+        "iters_max": 50,
+        "unconverged_frames": 5,
+        "qp_failures": 0,
+        "slack_max": 4.228400553435358e-14
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 38,
+        "err_m": {
+          "median": 0.0014811573098018989,
+          "max": 0.002585532555833989
+        },
+        "angle_deg": {
+          "median": 3.2437761019576614,
+          "max": 5.522342036571525
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.005507988232281255,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.04948779612837753,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9999999888094231,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 0.8858518338602417
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 7.662441270604924,
+          "heading_err_deg": 5.974552360427845,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 9.221970833137936,
+          "heading_err_deg": 8.740320590484723,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub1_largetable_074_5",
+      "split": "dev",
+      "task_id": "c10_sub1_largetable_074",
+      "object": "largetable",
+      "subject": "sub1",
+      "dataset": "omomo_new",
+      "frames": 210,
+      "mode": "B",
+      "segment": [
+        5,
+        51
+      ],
+      "window": [
+        0,
+        81
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.4608092973857767,
+          "robot_contact_z_m": 0.4569799660137112,
+          "height_shift_m": -0.003829331372065481,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": 0.02831853461377226,
+        "proxy_surface_dist_median_m": 0.04022122877469221,
+        "patch_coherence_median": 0.735962626102934,
+        "palm_face_deg": 54.0473880414031,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 16.621803331703028,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 46,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0027667179300674555,
+          0.009496304764197942
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 7.938525199890137,
+        "ms_per_frame": 37.802500951857795,
+        "iters_mean": 5.042857142857143,
+        "iters_max": 50,
+        "unconverged_frames": 23,
+        "qp_failures": 0,
+        "slack_max": 0.00742726834049195
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9782608695652174,
+        "frames": 46,
+        "err_m": {
+          "median": 0.002374100650458657,
+          "max": 0.0048491912460518335
+        },
+        "angle_deg": {
+          "median": 5.1432231486358075,
+          "max": 10.912393041171644
+        },
+        "roll_median_deg": 2.5845319791836925,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 1,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0074272683420508745,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.04929849273658566,
+        "self_min_dist_m": -0.024111168724673098,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.039150698956322144,
+        "body_in_object_frames": 38
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.0312347816488145,
+        "speed_violation_frames": 2,
+        "trunk_speed_max_mps": 0.8578852126774824
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 5.836159816429015,
+          "heading_err_deg": 8.852748592062765,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 7.491413903380397,
+          "heading_err_deg": 7.134184315033941,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub1_suitcase_008_5",
+      "split": "dev",
+      "task_id": "c06_sub1_suitcase_008",
+      "object": "suitcase",
+      "subject": "sub1",
+      "dataset": "omomo_new",
+      "frames": 129,
+      "mode": "R",
+      "segment": [
+        5,
+        89
+      ],
+      "window": [
+        0,
+        119
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.5482863277288603,
+          "robot_contact_z_m": 0.5331749401919869,
+          "height_shift_m": -0.015111387536873466,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.01668065302847342,
+        "proxy_surface_dist_median_m": 0.0025994454066523005,
+        "patch_coherence_median": 0.9776019433574237,
+        "palm_face_deg": 39.300403706559855,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 7.576733182084708,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 84,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.003948162514437318,
+          0.006156395318005468
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          180.0,
+          180.0
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 4.393211841583252,
+        "ms_per_frame": 34.05590574870738,
+        "iters_mean": 3.0155038759689923,
+        "iters_max": 26,
+        "unconverged_frames": 0,
+        "qp_failures": 0,
+        "slack_max": 2.9800032141147996e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 84,
+        "err_m": {
+          "median": 0.00031911812917211904,
+          "max": 0.0015553483848445523
+        },
+        "angle_deg": {
+          "median": 0.6732349504215068,
+          "max": 3.3980596566841608
+        },
+        "roll_median_deg": 0.7009369490643291,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.007713171462352453,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.017858716263438573,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9999999356996051,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 0.7696783904676532
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 2.1491941913486636,
+          "heading_err_deg": 12.589555412658953,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 2.7677265576827272,
+          "heading_err_deg": 11.966455154730536,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub3_largebox_031_80",
+      "split": "dev",
+      "task_id": "c08_sub3_largebox_031",
+      "object": "largebox",
+      "subject": "sub3",
+      "dataset": "omomo_new",
+      "frames": 178,
+      "mode": "L",
+      "segment": [
+        80,
+        152
+      ],
+      "window": [
+        50,
+        178
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.3499292958774636,
+          "robot_contact_z_m": 0.34497019586546807,
+          "height_shift_m": -0.00495910001199551,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.01700276395164908,
+        "proxy_surface_dist_median_m": 0.04840620803471309,
+        "patch_coherence_median": 0.9973926158238382,
+        "palm_face_deg": 52.758087247563395,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 75.1626397594818,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 72,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0027300021013778545,
+          0.010283925554289943
+        ],
+        "tool_x_deg": [
+          8.537736462515939e-07,
+          1.478779333471098e-06
+        ],
+        "tool_z_deg": [
+          8.537736462515939e-07,
+          1.9090959104164224e-06
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 4.60307502746582,
+        "ms_per_frame": 25.85997206441472,
+        "iters_mean": 3.797752808988764,
+        "iters_max": 50,
+        "unconverged_frames": 15,
+        "qp_failures": 0,
+        "slack_max": 2.8831471808088157e-13
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9722222222222222,
+        "frames": 72,
+        "err_m": {
+          "median": 0.0012419633112696169,
+          "max": 0.009071918292141087
+        },
+        "angle_deg": {
+          "median": 2.609792520007952,
+          "max": 19.787587264994304
+        },
+        "roll_median_deg": 2.5670247198246,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 2,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 6.237371730222208e-11,
+        "arm_in_object_m": 1.9492223537392883e-05,
+        "tool_in_object_m": 0.05756852784700177,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.23800368482057624,
+        "body_in_object_frames": 8
+      },
+      "body_in_object_contact_m": 1.8261503420546887e-11,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.048271065213115,
+        "speed_violation_frames": 25,
+        "trunk_speed_max_mps": 1.414213562175141
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 11.503862133464198,
+          "heading_err_deg": 26.936360454814693,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 13.302691615490945,
+          "heading_err_deg": 22.64724361129862,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub3_largebox_032_80",
+      "split": "dev",
+      "task_id": "c07_sub3_largebox_032",
+      "object": "largebox",
+      "subject": "sub3",
+      "dataset": "omomo_new",
+      "frames": 181,
+      "mode": "L",
+      "segment": [
+        80,
+        160
+      ],
+      "window": [
+        50,
+        181
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.34537454249034893,
+          "robot_contact_z_m": 0.3380850024758536,
+          "height_shift_m": -0.007289540014495333,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.013665318913748836,
+        "proxy_surface_dist_median_m": 0.05927727312412016,
+        "patch_coherence_median": 0.9793204613003821,
+        "palm_face_deg": 49.94891413587,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 74.14527114972893,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 80,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.00595717166725248,
+          0.014115247880921507
+        ],
+        "tool_x_deg": [
+          8.537736462515939e-07,
+          1.7075472925031877e-06
+        ],
+        "tool_z_deg": [
+          8.537736462515939e-07,
+          1.9090959104164224e-06
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 4.85424542427063,
+        "ms_per_frame": 26.8190354932079,
+        "iters_mean": 3.955801104972376,
+        "iters_max": 50,
+        "unconverged_frames": 16,
+        "qp_failures": 0,
+        "slack_max": 2.1140541250224252e-13
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9625,
+        "frames": 80,
+        "err_m": {
+          "median": 0.000968576366266304,
+          "max": 0.01078203040508861
+        },
+        "angle_deg": {
+          "median": 2.0275455503014683,
+          "max": 23.35831557846913
+        },
+        "roll_median_deg": 2.0581108850986305,
+        "fail_reasons": {
+          "pos_error": 1,
+          "angle": 3,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 4.0156378222633293e-11,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.05982395263280038,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.23538176499046334,
+        "body_in_object_frames": 1
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.084801573460616,
+        "speed_violation_frames": 21,
+        "trunk_speed_max_mps": 1.4142135621803624
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 5.39670356014628,
+          "heading_err_deg": 26.352067769789706,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 7.487050744485948,
+          "heading_err_deg": 28.21654337072652,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub5_largetable_030_17",
+      "split": "dev",
+      "task_id": "c03_sub5_largetable_030",
+      "object": "largetable",
+      "subject": "sub5",
+      "dataset": "omomo_new",
+      "frames": 159,
+      "mode": "B",
+      "segment": [
+        17,
+        136
+      ],
+      "window": [
+        0,
+        159
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.4711663502313466,
+          "robot_contact_z_m": 0.46826044279011203,
+          "height_shift_m": -0.0029059074412345898,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.0055094349823539895,
+        "proxy_surface_dist_median_m": 0.011176424766279086,
+        "patch_coherence_median": 0.8055890849609684,
+        "palm_face_deg": 18.583053144239543,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 11.73836702133703,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 119,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0011897471052181436,
+          0.005943583898827413
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          180.0,
+          180.0
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 3.4480104446411133,
+        "ms_per_frame": 21.68560028076172,
+        "iters_mean": 3.069182389937107,
+        "iters_max": 37,
+        "unconverged_frames": 3,
+        "qp_failures": 0,
+        "slack_max": 3.495594454407424e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 119,
+        "err_m": {
+          "median": 0.0005228277883959419,
+          "max": 0.0034019876777339887
+        },
+        "angle_deg": {
+          "median": 1.1210773333028061,
+          "max": 7.244022323610935
+        },
+        "roll_median_deg": 1.1145349056979923,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.004964569135235547,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.08895566719381404,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9999999996697408,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 0.7289348355118633
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 3.850962205175416,
+          "heading_err_deg": 8.027914470100065,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 4.222309561937265,
+          "heading_err_deg": 7.238612291187367,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub6_largetable_033_3",
+      "split": "dev",
+      "task_id": "c01_sub6_largetable_033",
+      "object": "largetable",
+      "subject": "sub6",
+      "dataset": "omomo_new",
+      "frames": 186,
+      "mode": "B",
+      "segment": [
+        3,
+        150
+      ],
+      "window": [
+        0,
+        180
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.4711071501332564,
+          "robot_contact_z_m": 0.4606624102510137,
+          "height_shift_m": -0.010444739882242704,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.007706807588798537,
+        "proxy_surface_dist_median_m": 0.012404394215675657,
+        "patch_coherence_median": 0.9079619339498246,
+        "palm_face_deg": 39.035722285577464,
+        "palm_used": true,
+        "palm_flipped": false,
+        "forearm_face_deg": 30.064788693289717,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 147,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0024392275597494,
+          0.006644006968293271
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          180.0,
+          180.0
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 5.063410997390747,
+        "ms_per_frame": 27.222639770917993,
+        "iters_mean": 3.6774193548387095,
+        "iters_max": 39,
+        "unconverged_frames": 6,
+        "qp_failures": 0,
+        "slack_max": 5.025855868915398e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 147,
+        "err_m": {
+          "median": 0.0010258238134172196,
+          "max": 0.0028642409507581897
+        },
+        "angle_deg": {
+          "median": 2.1573395282211627,
+          "max": 6.145230263838063
+        },
+        "roll_median_deg": 1.3470706549935925,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.005105378362341012,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.02573701347851934,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.9953200721768846,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 0.7404125254258318
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 5.393806389285505,
+          "heading_err_deg": 11.020737997741788,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 5.473315416857981,
+          "heading_err_deg": 10.353614891496782,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub6_trashcan_003_24",
+      "split": "heldout",
+      "task_id": "trashcan_side",
+      "object": "trashcan",
+      "subject": "sub6",
+      "dataset": "omomo_new",
+      "frames": 192,
+      "mode": "R",
+      "segment": [
+        24,
+        160
+      ],
+      "window": [
+        0,
+        190
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "side",
+          "human_contact_z_m": 0.17532963503199644,
+          "robot_contact_z_m": 0.17532963503199644,
+          "height_shift_m": 0.0,
+          "height_adapted": false,
+          "in_band": false,
+          "contact_moved": "",
+          "face_z_range_m": [
+            0.009796071116588395,
+            0.32642771441167073
+          ]
+        },
+        "palm_offset_m": 0.04293290603408561,
+        "proxy_surface_dist_median_m": 0.043066933443039655,
+        "patch_coherence_median": 0.9783108030265617,
+        "palm_face_deg": 73.76854549924036,
+        "palm_used": false,
+        "palm_flipped": true,
+        "forearm_face_deg": 77.74744835748956,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 136,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.027485026003214647,
+          0.040678521543295
+        ],
+        "tool_x_deg": [
+          3.2013534235615473,
+          3.5583830782894195
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 15.699982643127441,
+        "ms_per_frame": 81.77074293295543,
+        "iters_mean": 8.072916666666666,
+        "iters_max": 50,
+        "unconverged_frames": 107,
+        "qp_failures": 0,
+        "slack_max": 9.81572990546273e-15
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9705882352941176,
+        "frames": 136,
+        "err_m": {
+          "median": 0.005326295457351809,
+          "max": 0.0075869247469953485
+        },
+        "angle_deg": {
+          "median": 11.166241123842411,
+          "max": 15.441389034018767
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 4,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 3.566404599864015e-06,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.039870514644209404,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.1873022841663178,
+        "body_in_object_frames": 79
+      },
+      "body_in_object_contact_m": 3.3990719170151618e-06,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.0542332387915712,
+        "speed_violation_frames": 7,
+        "trunk_speed_max_mps": 1.253944402369924
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 28.183520926658158,
+          "heading_err_deg": 15.558348607392258,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 24.824792269257905,
+          "heading_err_deg": 13.686083873205812,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub7_largebox_041_35",
+      "split": "heldout",
+      "task_id": "largebox_top",
+      "object": "largebox",
+      "subject": "sub7",
+      "dataset": "omomo_new",
+      "frames": 165,
+      "mode": "R",
+      "segment": [
+        35,
+        120
+      ],
+      "window": [
+        5,
+        150
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.3514834472191496,
+          "robot_contact_z_m": 0.3476572932667522,
+          "height_shift_m": -0.003826153952397382,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": -0.005005180175029229,
+        "proxy_surface_dist_median_m": 0.036080465921182386,
+        "patch_coherence_median": 0.9944759644814077,
+        "palm_face_deg": 67.01009209482797,
+        "palm_used": false,
+        "palm_flipped": false,
+        "forearm_face_deg": 49.73788016542212,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 85,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.002749030857055238,
+          0.005972976068945273
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 3.6775710582733154,
+        "ms_per_frame": 22.2883094440807,
+        "iters_mean": 3.16969696969697,
+        "iters_max": 41,
+        "unconverged_frames": 4,
+        "qp_failures": 0,
+        "slack_max": 4.2884354423771645e-15
+      },
+      "reach": {
+        "reached": false,
+        "reached_frac": 0.9411764705882353,
+        "frames": 85,
+        "err_m": {
+          "median": 0.0005190519384112343,
+          "max": 0.009211355774211998
+        },
+        "angle_deg": {
+          "median": 1.139246938354375,
+          "max": 19.238670821253944
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 5,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 1.3553880240380067e-12,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.016668654219854834,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.0838896712382032,
+        "body_in_object_frames": 4
+      },
+      "body_in_object_contact_m": 8.087697178638109e-13,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 1.0002750383480243,
+        "speed_violation_frames": 1,
+        "trunk_speed_max_mps": 0.9671900617229772
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 13.236718561504295,
+          "heading_err_deg": 9.488764893049282,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 10.46402848808967,
+          "heading_err_deg": 9.551761647146304,
+          "same_side_frac": 1.0
+        }
+      }
+    },
+    {
+      "id": "sub7_smallbox_041_41",
+      "split": "heldout",
+      "task_id": "smallbox_top",
+      "object": "smallbox",
+      "subject": "sub7",
+      "dataset": "omomo_new",
+      "frames": 173,
+      "mode": "R",
+      "segment": [
+        41,
+        120
+      ],
+      "window": [
+        11,
+        150
+      ],
+      "task": {
+        "source": "meta",
+        "interaction": "push",
+        "contact_labels": true,
+        "height": {
+          "face": "edge",
+          "human_contact_z_m": 0.15517273026201212,
+          "robot_contact_z_m": 0.1502996487683238,
+          "height_shift_m": -0.004873081493688314,
+          "height_adapted": false,
+          "in_band": true,
+          "contact_moved": "rear_edge"
+        },
+        "palm_offset_m": 0.009788789468734987,
+        "proxy_surface_dist_median_m": 0.0521457190367111,
+        "patch_coherence_median": 0.9909290143178814,
+        "palm_face_deg": 62.58973964008611,
+        "palm_used": false,
+        "palm_flipped": false,
+        "forearm_face_deg": 54.07960009154802,
+        "forearm_used": true
+      },
+      "agreement": {
+        "frames": 79,
+        "segment_same": true,
+        "mode_same": true,
+        "contact_moved_same": true,
+        "target_m": [
+          0.0038261867100794814,
+          0.009221327241053767
+        ],
+        "tool_x_deg": [
+          0.0,
+          1.2074182697257333e-06
+        ],
+        "tool_z_deg": [
+          null,
+          null
+        ],
+        "roll_target_same": true
+      },
+      "solver": {
+        "time_s": 5.082510471343994,
+        "ms_per_frame": 29.37867324476297,
+        "iters_mean": 3.393063583815029,
+        "iters_max": 35,
+        "unconverged_frames": 2,
+        "qp_failures": 0,
+        "slack_max": 3.67996272200464e-15
+      },
+      "reach": {
+        "reached": true,
+        "reached_frac": 1.0,
+        "frames": 79,
+        "err_m": {
+          "median": 0.001378330315264014,
+          "max": 0.0024458839078390668
+        },
+        "angle_deg": {
+          "median": 2.832538333238083,
+          "max": 4.994547577160613
+        },
+        "roll_median_deg": null,
+        "fail_reasons": {
+          "pos_error": 0,
+          "angle": 0,
+          "self_collision": 0,
+          "floor": 0,
+          "arm_object": 0
+        }
+      },
+      "penetration": {
+        "body_in_object_m": 0.0,
+        "arm_in_object_m": 0.0,
+        "tool_in_object_m": 0.01102722505404563,
+        "self_min_dist_m": 0.0,
+        "arm_floor_min_dist_m": 0.05,
+        "feet_below_floor_m": 0.09681200461605238,
+        "body_in_object_frames": 0
+      },
+      "body_in_object_contact_m": 0.0,
+      "limits": {
+        "range_violation_max_rad": 0.0,
+        "range_violation_frames": 0,
+        "speed_ratio_max": 0.999999999954123,
+        "speed_violation_frames": 0,
+        "trunk_speed_max_mps": 1.0632747181794653
+      },
+      "relations": {
+        "contact": {
+          "edge_dir_err_deg": 17.109395335650078,
+          "heading_err_deg": 8.981624954345957,
+          "same_side_frac": 1.0
+        },
+        "window": {
+          "edge_dir_err_deg": 14.83879974754214,
+          "heading_err_deg": 8.474040260064985,
+          "same_side_frac": 1.0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "elapsed_s": 234.59077763557434
+}
