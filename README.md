@@ -56,3 +56,4 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R022_tasks | #32 | `22536df` | Ubuntu, CPU | pass=true, 14 tasks; tasks.csv columns 1–10 = R015, task npz max diff 0, meta same |
 | R022_d0 | #32 | `22536df` | Ubuntu RTX 5070 (cuda:0) | pass=true, 13/13 clips; G1 and B2-Z1 identical to R020 (diff 0) |
 | R022_reach | #32 | `22536df` | Ubuntu, CPU (render: RTX 5070, MUJOCO_GL=egl) | pass=true (10/10 tasks, 4 layouts); report rows identical to R020 (0 lines differ), solutions npz identical; videos 2 x 3 and 1 x 3 (mp4 on Drive) |
+| R023_fullopt_m0 | #34 | `40242b6` | Ubuntu, CPU | **pass=false**: 3/5 checks pass; step_hz_in_human_range fails (c12 2.78 Hz > 2.6), leg_length_in_range fails (c02 h_h 0.33 m < 0.70); 10 tasks (= R022_reach), 10 walk segments |
