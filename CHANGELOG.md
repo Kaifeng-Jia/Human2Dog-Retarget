@@ -2,6 +2,25 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.1] — 2026-10-31 (full-optimization line: spec v0.1 and M0)
+
+### Added
+- `docs/spec/fullopt/v0.1_zh.md`: the full-optimization line as discussed with Kevin. Per-frame whole-body solve
+  in two passes; the human-object interaction network mapped as a whole to a dog-object network (topology transport
+  and per-type edge maps), vertex substitution as the baseline; gait: when to move from the human, how from the dog
+  (lateral-sequence walk by default, trot only in fast segments), bounded soft synchronisation with the human's steps
+  (delta to be chosen by a sweep), single needed steps when the human shuffles; G1 bridge as a comparison;
+  evaluation and milestones.
+- M0 (`scripts/fullopt/m0_gait_stats.py`, `h2d/fullopt/{signals,gait}.py`, `configs/fullopt/gait.yaml`): human foot
+  contacts, touchdowns and segments on the solvable tasks, leg length, step frequency against Alexander's relation,
+  the B2 hip height from the model, and the dog's natural footfalls per human step with the share lockable per delta.
+  It checks the measurement only (no double touchdowns, alternating feet, a leg length that does not depend on
+  posture: bone lengths plus the flat-foot ankle height, the same across one subject's clips); step frequencies are data: R023 found people take short quick steps around objects (median 1.93 Hz
+  at 0.53 m/s), so the dog/human ratio is mostly near 2, not 3.
+- The full-optimization line is kept apart from the learned line (Kevin): its code is only in `*/fullopt/`, it
+  does not change learned code, and it selects the same tasks with its own copy of the rule
+  (`h2d/fullopt/tasks.py`).
+
 ## [0.3.0] — 2026-10-31 (learned line, cleaned for release; results unchanged)
 
 ### Removed
