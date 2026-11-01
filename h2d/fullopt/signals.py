@@ -77,6 +77,14 @@ def alternation(events: list[tuple[int, str]]) -> float:
     return float(np.mean([a != b for a, b in zip(sides[:-1], sides[1:])])) if len(sides) > 1 else float("nan")
 
 
+def same_foot_gap_s(events: list[tuple[int, str]], fps: float) -> float:
+    """Shortest time between two touchdowns of the same foot (a double detection when tiny); NaN without such pairs.
+    Alternating feet may land closer: quick steps around an object, 0.17 s apart on held-out (R026b)."""
+    gaps = [np.diff([f for f, s in events if s == side]) for side in "LR"]
+    gaps = np.concatenate([g for g in gaps if g.size] or [np.zeros(0)])
+    return float(gaps.min() / fps) if gaps.size else float("nan")
+
+
 def leg_length(c: HOIClip, contact: np.ndarray, flat_pct: float = 5.0) -> float:
     """Hip-joint height of the straightened leg, averaged over both legs: thigh + shank (bone lengths, fixed per
     person) + the ankle's height above the floor with the foot flat. A lifted heel (squatting, pushing) only raises the
