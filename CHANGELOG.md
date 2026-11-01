@@ -70,6 +70,9 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - New check, collision free on all frames (self pairs, every geom but the soles against the floor, 2 mm); dev pass
   needs 0 frames. The held-out `reached` row no longer applies the dev minimum.
 - Tests run with one BLAS / OpenMP thread (`tests/conftest.py`).
+- Kept as known (lead): c01's push start (contact frames 2-9) stays the one dev miss; reaching it needs both a
+  higher trunk yaw rate and unbounded trunk accelerations, or a look-ahead on the object's motion. c07 / c08's
+  trunk lunge on the approach (tilt at the 15 deg limit) stays until the gait (M3) lets the trunk walk up.
 
 ### Changed (R026b follow-ups)
 - M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared
