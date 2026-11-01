@@ -83,3 +83,53 @@ def test_steps_and_differences_are_inverse():
     d = ROBOT.dofs("base", "arm")
     q0, dx = random_q(3), np.linspace(-0.05, 0.05, 12)
     assert np.allclose(ROBOT.difference(q0, ROBOT.integrate(q0, dx, d), d), dx, atol=1e-9)
+
+
+# R027, clip c10 (sub1_largetable_074_5) frame 45, to the last bit (rounded to 1e-7 the sign comes out right): MuJoCo
+# 3.11's mj_geomDistance gives the gripper's stator mesh and the trunk's front plate -24 mm, in both orders, with
+# witness points 41 mm apart; neither has a vertex in the other.
+C10_Q45 = [0.801445186668244, 0.8996163964105698, 0.521188608299796, 0.8265722360767332, -0.0017266115640159018,
+           -0.005459862943291754, -0.5628015167501395, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8,
+           -1.5, 0.6273133231986965, 2.7322807020793753, -0.146149997770955, -1.410770592909264,
+           -0.24448283188305892, 0.6809764522319842, 0.0]
+
+
+def test_a_negative_distance_needs_consistent_witness_points():
+    import mujoco
+
+    coll, m = Collision(ROBOT), ROBOT.model
+    a = next(x for x in coll.tool if coll.body_of[x] == "gripperStator")             # the stator's mesh
+    g = next(x for x in coll.body if coll.body_of[x] == "base_link" and m.geom_pos[x][0] > 0.4)   # the front plate
+    ROBOT.set(np.array(C10_Q45))
+    ft = np.zeros(6)
+    raw = mujoco.mj_geomDistance(ROBOT.model, ROBOT.data, a, g, 0.05, ft)
+    dist, ft2 = coll.distance(a, g, 0.05)
+    assert dist > 0.02                                           # apart by 24 mm (the samples' estimate)
+    if raw < 0:                                                  # the bug as R027 met it (fixed MuJoCo: no fallback)
+        assert abs(np.linalg.norm(ft[3:] - ft[:3]) - abs(raw)) > 0.01 and coll.fallbacks == 1
+        assert np.linalg.norm(ft2[3:] - ft2[:3]) == pytest.approx(dist, abs=1e-3)
+    assert coll.check()["collision_free"] and coll.check()["self_min_dist_m"] > 0
+
+
+def test_real_penetrations_keep_mujocos_distance():
+    coll = Collision(ROBOT)
+    q = ROBOT.placed([0.0, 0.0], 0.0)
+    q[[ROBOT.qadr[n] for n in ROBOT.desc["arm"]]] = [0.0, 2.9, -0.4, -1.4, 0.0, 0.0]   # the gripper down into the trunk
+    ROBOT.set(q)
+    deep = [coll.distance(a, g, 0.05)[0] for a, g in coll.pairs]
+    assert min(deep) < -0.005 and coll.fallbacks == 0
+
+
+def test_feet_footholds_and_the_under_body_box():
+    ROBOT.set(ROBOT.home)
+    coll = Collision(ROBOT)
+    assert len(coll.feet) == 4 and all(ROBOT.model.geom_type[g] == 2 for g in coll.feet)   # the sole spheres
+    assert np.abs(ROBOT.soles()).max() < 1e-3
+    assert np.allclose(ROBOT.footholds()[:, :2], ROBOT.data.xpos[ROBOT.feet][:, :2], atol=1e-9)
+    P = ROBOT.cage_points()
+    Rc, c = ROBOT.cage_frame()
+    assert np.allclose(P.mean(0), c) and np.isclose(P[:, 2].min(), 0.0, atol=1e-3)   # down to the floor
+    assert (P[:, 2].max() - ROBOT.data.xpos[ROBOT.base][2]) == pytest.approx(-0.075, abs=1e-3)   # trunk underside
+    d, n = ROBOT.outside_cage(np.array([c, c + Rc[:, 0] * 0.5, c - Rc[:, 2] * 0.3]))
+    assert d[0] < 0 and d[1] == pytest.approx(0.5 - 0.328) and np.allclose(n[1], Rc[:, 0])
+    assert np.allclose(n[2], -Rc[:, 2])

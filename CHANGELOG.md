@@ -18,8 +18,7 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   M2.
 - `h2d/fullopt/solver.py`, `configs/fullopt/solver.yaml`: per-frame SQP, one QP with a second-order cone per iteration
   (cvxpy + Clarabel, compiled once with parameters), relation + gated task + nominal + smoothness, joint and trunk
-  speed and height boxes, linearised object / floor / self constraints with L1 slacks, trust region 0.1; pass 1 moves
-  the trunk and the arm, the legs stay at home. 25-35 ms per frame on the cloud dry run.
+  speed and height boxes, linearised object / floor / self constraints with L1 slacks, trust region 0.1.
 - `h2d/fullopt/evaluate.py`, `configs/fullopt/evaluation.yaml`: reach, penetration, limits and the relation metrics
   (edge direction, heading, same side) with the learned line's definitions.
 - `scripts/fullopt/solve.py` (dev and held-out apart, pass on dev: reach >= 9, body in object <= 1 cm, targets agree
@@ -35,6 +34,28 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - With the contact moved to the robot's side, the palm is still 10 cm from the edge the frame before contact: the
   approach target now closes in at most 0.5 m/s (contact frames unchanged).
 - The trunk jumped where the task gate opens (8 m/s): trunk speed limits 1 m/s and 2 rad/s per axis.
+
+### Changed after R027 (dev 6/10; lead decisions A-F, fullopt spec v0.2 revision table "R027 之后")
+- Pass 1 moves the legs too (24 dofs): every sole within 1 mm of the floor (evaluation: 2 mm), sliding, pulled softly
+  to its foothold under the hip; leg speed limits from the B2 URDF (23 / 23 / 14 rad/s); every geom but the soles
+  3 cm above the floor; trunk roll and pitch within 15 deg. The evaluation reports foot slide instead of feet below
+  the floor.
+- The space under the trunk counts as body: a virtual box in the description (inside the hips, from the trunk's
+  underside to the floor), its voxel grid outside the object's hull and the hull's vertices outside it; evaluated as
+  the overlap of the box and the hull (an LP per frame); dev pass: 0 frames.
+- The line's own task gate: rising from 1.5 s before the contact, 1 from 0.5 s before; targets over the whole rise.
+  Trunk limits: 1 m/s horizontal, 0.3 m/s vertical, 1 rad/s; accelerations as hard step bounds, 5 m/s2 horizontal
+  (friction), 3 m/s2 vertical, 15 rad/s2. Rows the trunk closes in on (object, under-body box, tilt, height range)
+  cap the closing speed so that the trunk can still stop (`solver.held`); step bounds no longer force dx = 0 inside.
+- `Collision.distance` cross-checks MuJoCo's negative distances: MuJoCo 3.11 gives -24 mm for two geoms 24 mm apart
+  (R027 c10 frame 45, a test reproduces it), detected by witness points that are not |distance| apart; the pair is
+  then measured by sample points.
+- The face class (top or not) comes from the hand joints that touch the surface, not from the palm centre, which a
+  lifted wrist holds over a table's edge (R027 c12: 1.48 -> 0.59 cm from the learned target).
+- `solve.py` records cvxpy, clarabel and mujoco versions and the thread settings; every fullopt script sets one BLAS /
+  OpenMP thread before numpy loads (R027: more system than user time).
+- Evaluation pass adds: no object under the body, every sole on the floor, trunk within its speed and acceleration
+  limits.
 
 ### Changed (R026b follow-ups)
 - M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared

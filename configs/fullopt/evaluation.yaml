@@ -10,6 +10,10 @@ same_side_deg: 45.0         # the robot is on the human's side of the object: di
 pass:                       # decided on the dev split only (spec §8.5)
   dev_reached_min: 9        # tasks fully reached: no worse than the learned line's interaction-mesh layout (9/10)
   body_in_object_max_m: 0.01
+  object_under_body_frames_max: 0   # frames whose object / under-body overlap is thicker than penetration_tol_m
+  sole_height_max_m: 0.002          # every sole within this of the floor on every frame
+  trunk_limit_ratio_max: 1.01       # trunk speeds and accelerations within the description's limits (no dive); 1 %
+                                    # for the rotation increments, which the step bounds add to first order only
   target_agreement:         # task targets vs the learned line's task files of the same segments (median, contact frames)
     position_m: 0.01
     tool_x_deg: 5.0

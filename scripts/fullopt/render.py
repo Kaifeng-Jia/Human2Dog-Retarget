@@ -13,14 +13,18 @@ Offscreen rendering: MUJOCO_GL=egl on a GPU machine, MUJOCO_GL=osmesa without on
 
 from __future__ import annotations
 
-import argparse
-import json
 import os
-import subprocess
-import sys
-from pathlib import Path
 
-import numpy as np
+# One BLAS / OpenMP thread, set before numpy loads (as solve.py): small problems, where threads only contend.
+os.environ.update({k: "1" for k in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
+
+import argparse  # noqa: E402
+import json  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import numpy as np  # noqa: E402
 
 os.environ.setdefault("MUJOCO_GL", "egl")
 import mujoco  # noqa: E402
@@ -146,7 +150,7 @@ class Renderer:
         if kind == "human":
             return label(img, [f"human ({self.info.get('dataset') or 'input'}) · {self.info['object']}", sec])
         lines = [f"{self.robot.desc.get('title', self.robot.name)} · full optimization, pass 1, relation (a)",
-                 "legs held at home (gait: M3) · dark sphere: contact target"]
+                 "the soles slide on the floor (gait: M3) · dark sphere: contact target"]
         if 0 <= i < len(sol["reached"]):
             lines.append(f"{'reached' if ok else 'NOT reached'}: {100 * sol['err'][i]:.1f} cm, tool axis "
                          f"{sol['angle'][i]:.0f}°, body in object {100 * sol['body_in_object'][t]:.1f} cm")

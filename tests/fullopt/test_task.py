@@ -70,17 +70,19 @@ def test_segment_mode_and_contacts_without_labels():
     assert abs(task.segment[0] - 30) <= 3 and abs(task.segment[1] - 90) <= 3
 
 
-def test_gate_is_one_in_contact_and_zero_outside_the_window():
+def test_gate_rises_before_contact_and_the_targets_cover_it():
     from h2d.fullopt import task as tk
 
     _, _, c = clips()
     task = tk.build(c, CFG, BAND)
-    s, e = task.segment
-    w0, w1 = task.window
-    g = task.gate
-    assert np.all(g[s:e] == 1.0) and np.all(g[:w0] == 0) and np.all(g[w1:] == 0) and g.max() <= 1.0
-    assert np.all(np.diff(g[w0:s]) >= -1e-12) and np.all(np.diff(g[e:w1]) <= 1e-12)
-    assert np.isfinite(task.target[w0:w1]).all() and np.isnan(task.target[w1:]).all()
+    (s, e), (a0, a1), (w0, w1) = task.segment, task.span, task.window
+    rise, full = (round(CFG[k] * c.fps) for k in ("gate_rise_s", "gate_full_s"))
+    t, g = np.arange(c.n), task.gate
+    assert np.all(g[(t <= s - rise) | (t >= e - 1 + rise)] == 0) and g.max() <= 1.0
+    assert np.all(g[(t >= s - full) & (t <= e - 1 + full)] == 1.0)
+    assert np.all(np.diff(g[:s]) >= -1e-12) and np.all(np.diff(g[e:]) <= 1e-12)
+    assert (a0, a1) == (max(0, s - rise), min(c.n, e + rise)) and a0 <= w0 and w1 <= a1
+    assert np.isfinite(task.target[a0:a1]).all() and np.isnan(task.target[a1:]).all() and a1 < c.n
     loc = task.local["target"]                               # no jump onto or off the face (object frame)
     for a, b in ((s - 1, s), (e - 1, e)):
-        assert np.linalg.norm(loc[b - w0] - loc[a - w0]) <= CFG["approach_mps"] / c.fps + 1e-9
+        assert np.linalg.norm(loc[b - a0] - loc[a - a0]) <= CFG["approach_mps"] / c.fps + 1e-9

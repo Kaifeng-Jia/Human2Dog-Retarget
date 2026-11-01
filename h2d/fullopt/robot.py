@@ -3,23 +3,27 @@ only through this module and ``configs/fullopt/robots/<name>.yaml``.
 
 Configuration ``q``: the MuJoCo qpos (free base [x y z, qw qx qy qz], then the joints). Increments ``dx`` live in the
 tangent space as MuJoCo velocities: base translation (world frame), base rotation (base frame), joint angles.
-``dofs("base", "arm")`` picks the variables of a solve (pass 1: base 6 + arm 6; pass 2: base 6 + legs 12 + arm 6,
-spec §7.3); Jacobians are d(point) / d(dx) from ``mj_jac``, and ``integrate`` / ``difference`` are MuJoCo's
-``mj_integratePos`` / ``mj_differentiatePos``, so a step and a Jacobian always agree.
+``dofs("base", "legs", "arm")`` picks the variables of a solve (spec §7.3); Jacobians are d(point) / d(dx) from
+``mj_jac``, and ``integrate`` / ``difference`` are MuJoCo's ``mj_integratePos`` / ``mj_differentiatePos``, so a step
+and a Jacobian always agree. The description also gives the feet (soles, home stance in the trunk frame) and the
+under-body box, a virtual volume on the trunk that the object may not enter.
 
 ``Collision`` applies the learned line's collision rules (``h2d/common/collision.py``: which pairs, which sample
-points, which tolerance) to the groups the description names, so both lines measure penetration the same way.
+points, which tolerance) to the groups the description names, so both lines measure penetration the same way, and
+cross-checks MuJoCo's negative distances (``Collision.distance``).
 """
 
 from __future__ import annotations
 
 import mujoco
 import numpy as np
+from scipy.spatial import ConvexHull
 
 from h2d.common.collision import _geom_samples
 from h2d.paths import load_config, xmorph_path
 
 GROUPS = ("base", "legs", "arm")
+WITNESS_TOL_M = 1e-3   # a penetration's two witness points lie |distance| apart (mj_geomDistance's fromto)
 
 
 class Robot:
@@ -46,8 +50,11 @@ class Robot:
         for n, v in d.get("speed_limit_rad_s", {}).items():
             self.speed[m.jnt_dofadr[jid[n]]] = v
         b = self.groups["base"]
-        lim = d["base_speed_limit"]
-        self.speed[b[:3]], self.speed[b[3:]] = lim["linear_mps"], lim["angular_radps"]
+        self.accel = np.full(m.nv, np.inf)                 # trunk only (the description's base_accel_limit)
+        for lim, k, arr in (("base_speed_limit", "mps", self.speed), ("base_accel_limit", "mps2", self.accel)):
+            if lim in d:
+                arr[b[:3]], arr[b[3:]] = d[lim][f"linear_{k}"], d[lim][f"angular_rad{k[1:]}"]
+        self.tilt_limit = np.radians(float(d.get("tilt_limit_deg", 90.0)))
         self.forward = np.asarray(d["forward_axis"], float)
         self.nominal_height = float(d["nominal_base_height_m"])
         self.height_range = tuple(float(x) for x in d["base_height_range_m"])
@@ -68,8 +75,18 @@ class Robot:
                 self.points[k] = ([self.body_id(p["body"])], np.asarray(p.get("offset", [0, 0, 0]), float), False)
         self.point_names = list(self.points)
         self.feet = [self.body_id(b) for b in d["feet"].values()]
+        self.foot_radius = float(d["foot_radius_m"])
         self._jp, self._jr = np.zeros((3, m.nv)), np.zeros((3, m.nv))
         self.set(self.home)
+        Rb, xb = self.base_rot(), self.data.xpos[self.base]
+        self.foot_home = (self.data.xpos[self.feet] - xb) @ Rb      # home stance in the trunk frame, (4, 3)
+        ub = d.get("under_body")
+        self.cage = None
+        if ub:
+            c, h = np.asarray(ub["center"], float), np.asarray(ub["half_size"], float)
+            axes = [np.linspace(-hi, hi, max(2, int(np.ceil(2 * hi / ub["spacing_m"])) + 1)) for hi in h]
+            grid = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, 3) + c
+            self.cage = {"body": self.body_id(ub["body"]), "center": c, "half": h, "samples": grid}
 
     # ------------------------------------------------------------------ ids
     def body_id(self, name: str) -> int:
@@ -166,6 +183,40 @@ class Robot:
     def tool_point(self) -> np.ndarray:
         return self.data.xpos[self.tool_body] + self.data.xmat[self.tool_body].reshape(3, 3) @ self.r_c
 
+    def soles(self, floor_z: float = 0.0) -> np.ndarray:
+        """Height of each sole above the floor, (4,)."""
+        return self.data.xpos[self.feet][:, 2] - self.foot_radius - floor_z
+
+    def footholds(self) -> np.ndarray:
+        """Nominal footholds (4, 3) on the trunk: the home stance in the trunk frame at the trunk's level (z = 0 there),
+        so their horizontal position is the stance under the hips, little changed by roll and pitch."""
+        return self.data.xpos[self.base] + (self.foot_home * [1, 1, 0]) @ self.base_rot().T
+
+    def tilt(self) -> np.ndarray:
+        """Vertical components of the trunk's forward and lateral axes (sin of pitch and, about, of roll), (2,)."""
+        return self.base_rot()[2, :2].copy()
+
+    def cage_frame(self) -> tuple[np.ndarray, np.ndarray]:
+        """World rotation and centre of the under-body box."""
+        b = self.cage["body"]
+        Rb = self.data.xmat[b].reshape(3, 3).copy()
+        return Rb, self.data.xpos[b] + Rb @ self.cage["center"]
+
+    def cage_points(self) -> np.ndarray:
+        """World sample grid of the under-body box, (n, 3)."""
+        b = self.cage["body"]
+        return self.data.xpos[b] + self.cage["samples"] @ self.data.xmat[b].reshape(3, 3).T
+
+    def outside_cage(self, P: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """Signed distance of world points to the under-body box by its face planes (n,) (> 0 outside; exact inside, a
+        lower bound outside) and the world normal of the face that decides it (n, 3)."""
+        Rc, c = self.cage_frame()
+        loc = (P - c) @ Rc
+        s = np.abs(loc) - self.cage["half"]
+        i = s.argmax(1)
+        n = Rc[:, i].T * np.sign(loc[np.arange(len(P)), i])[:, None]
+        return s.max(1), n
+
 
 class Collision:
     """Collision groups of the description with the rules of ``h2d.common.collision.RobotCollision``:
@@ -175,7 +226,14 @@ class Collision:
     * self-collision pairs: arm against body and arm against arm, skipping links fewer than two apart in the chain
       and pairs that already overlap in the model's folded reference pose (qpos0, base lifted 1 m);
     * object: sample points of the geoms (primitive surfaces, hull vertices of meshes) against the object's convex
-      hull; the tool may touch it, so its depth is reported apart.
+      hull; the tool may touch it, so its depth is reported apart;
+    * feet: the leg geoms centred on a foot body (the sole spheres), which stand on the floor.
+
+    MuJoCo 3.11's ``mj_geomDistance`` can return a negative distance for a mesh and a box that do not touch (R027,
+    clip c10 frame 45: the gripper's stator mesh and the trunk's front plate, -24 mm with witness points 41 mm apart,
+    the same in both orders, while no vertex of either lies in the other). ``distance`` keeps a negative distance only
+    when its witness points are |distance| apart, in one order or the other, and else measures the pair by sample
+    points, as the object check does.
     """
 
     def __init__(self, robot: Robot, tol_m: float = 0.002):
@@ -189,6 +247,8 @@ class Collision:
         self.tool = [g for g in self.arm if self.body_of[g] in c["tool"]]
         self.body = [g for g in coll if g not in self.arm and g not in self.floor]
         self.legs = [g for g in self.body if self.body_of[g] in c["leg_bodies"]]
+        self.feet = [g for g in self.legs for f in robot.feet if m.geom_bodyid[g] == m.body_parentid[f]
+                     and np.linalg.norm(m.geom_pos[g] - m.body_pos[f]) < 1e-3]
         apart = lambda a, g: abs(chain[self.body_of[a]] - chain.get(self.body_of[g], -9)) >= 2  # noqa: E731
         pairs = [(a, g) for a in self.arm for g in self.body if apart(a, g)]
         pairs += [(a, g) for a in self.arm for g in self.arm if g > a and apart(a, g)]
@@ -202,6 +262,60 @@ class Collision:
         self.pairs = [(a, g) for a, g in pairs if (self.body_of[a], self.body_of[g]) not in self.excluded]
         robot.set(saved)
         self.samples = {g: _geom_samples(m, g) for g in self.arm + self.body}
+        self._planes = {g: ConvexHull(self.samples[g]).equations for g in self.samples
+                        if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH}
+        self.fallbacks = 0                                    # negative distances replaced by ``distance``
+
+    def _sdf(self, g: int, P: np.ndarray) -> np.ndarray:
+        """Signed distance (< 0 inside) of points in geom g's frame; a mesh by the planes of its convex hull."""
+        m, T = self.robot.model, mujoco.mjtGeom
+        t, s = m.geom_type[g], m.geom_size[g]
+        if t == T.mjGEOM_SPHERE:
+            return np.linalg.norm(P, axis=1) - s[0]
+        if t == T.mjGEOM_CAPSULE:
+            return np.linalg.norm(P - np.c_[0 * P[:, :2], np.clip(P[:, 2], -s[1], s[1])], axis=1) - s[0]
+        if t == T.mjGEOM_CYLINDER:
+            q = np.stack([np.linalg.norm(P[:, :2], axis=1) - s[0], np.abs(P[:, 2]) - s[1]], 1)
+        elif t == T.mjGEOM_BOX:
+            q = np.abs(P) - s
+        elif t == T.mjGEOM_MESH:
+            return (P @ self._planes[g][:, :3].T + self._planes[g][:, 3]).max(1)
+        else:
+            raise NotImplementedError(f"geom type {t}")
+        return np.linalg.norm(np.maximum(q, 0.0), axis=1) + np.minimum(q.max(1), 0.0)
+
+    def _by_samples(self, a: int, g: int) -> tuple[float, np.ndarray]:
+        """Distance of a pair from each geom's sample points against the other's signed distance (< 0: the deepest
+        sample), with witness points on a and on g as ``mj_geomDistance`` orders them."""
+        d, best = self.robot.data, None
+        for p_geom, o_geom in ((a, g), (g, a)):
+            Ro, po = d.geom_xmat[o_geom].reshape(3, 3), d.geom_xpos[o_geom]
+            P = (self.samples[p_geom] @ d.geom_xmat[p_geom].reshape(3, 3).T + d.geom_xpos[p_geom] - po) @ Ro
+            sd = self._sdf(o_geom, P)
+            j = int(sd.argmin())
+            if best is None or sd[j] < best[0]:
+                e = 1e-6 * np.eye(3)                          # the other geom's surface point: along the SDF gradient
+                n = np.array([self._sdf(o_geom, P[j] + e[k:k + 1])[0] - self._sdf(o_geom, P[j] - e[k:k + 1])[0]
+                              for k in range(3)])
+                n /= max(float(np.linalg.norm(n)), 1e-12)
+                pw, qw = po + Ro @ P[j], po + Ro @ (P[j] - sd[j] * n)
+                best = (float(sd[j]), np.r_[pw, qw] if p_geom == a else np.r_[qw, pw])
+        return best
+
+    def distance(self, a: int, g: int, distmax: float) -> tuple[float, np.ndarray]:
+        """``mj_geomDistance`` (distance and fromto) with its negative values cross-checked (see the class)."""
+        m, d = self.robot.model, self.robot.data
+        ft = np.zeros(6)
+        dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
+        if dist >= 0 or abs(np.linalg.norm(ft[3:] - ft[:3]) - abs(dist)) <= WITNESS_TOL_M:
+            return float(dist), ft
+        ft2 = np.zeros(6)
+        dist2 = mujoco.mj_geomDistance(m, d, g, a, distmax, ft2)
+        if dist2 < 0 and abs(np.linalg.norm(ft2[3:] - ft2[:3]) - abs(dist2)) <= WITNESS_TOL_M:
+            return float(dist2), np.r_[ft2[3:], ft2[:3]]
+        self.fallbacks += 1
+        dist, ft = self._by_samples(a, g)
+        return min(dist, distmax), ft
 
     def world_samples(self, geoms) -> tuple[np.ndarray, np.ndarray]:
         """Sample points (n, 3) of the geoms at the current state and the body each belongs to (n,)."""
@@ -219,8 +333,7 @@ class Collision:
                - m.geom_rbound[P[:, 0]] - m.geom_rbound[P[:, 1]])
         out = []
         for a, g in P[gap < margin]:
-            ft = np.zeros(6)
-            dist = mujoco.mj_geomDistance(m, d, int(a), int(g), margin, ft)
+            dist, ft = self.distance(int(a), int(g), margin)
             if dist < margin:
                 out.append((float(dist), ft, int(m.geom_bodyid[a]), int(m.geom_bodyid[g])))
         return out
@@ -233,7 +346,7 @@ class Collision:
         ft = np.zeros(6)
         self_min, worst = distmax, None
         for a, g in self.pairs:
-            dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
+            dist = self.distance(a, g, distmax)[0]
             if dist < self_min:
                 self_min, worst = dist, (self.body_of[a], self.body_of[g])
         floor_min = min((mujoco.mj_geomDistance(m, d, a, f, distmax, ft) for a in self.arm for f in self.floor),

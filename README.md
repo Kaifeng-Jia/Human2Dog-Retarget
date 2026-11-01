@@ -81,8 +81,8 @@ Each step writes `outputs/<run-id>/` with `summary.json` and `report.md`.
 No learned prior: the B2-Z1's whole body is solved frame by frame (SQP, cvxpy + Clarabel) from one standard input, a
 human-object clip of world joint positions with the object's mesh and poses (`h2d/fullopt/hoi.py`); the robot enters
 only through its description (`configs/fullopt/robots/b2z1.yaml`). Milestones and their status: spec §10. M1 is
-pass 1: trunk and arm with the legs held at home, the relation term (a) (vertex substitution), the learned line's task
-targets and evaluation.
+pass 1: the whole body with the soles on the floor (they slide; the gait is M3), the relation term (a) (vertex
+substitution), the learned line's task targets and evaluation.
 
 ```bash
 pip install -e ".[dev,fullopt]" -c constraints.txt
