@@ -76,14 +76,33 @@ MUJOCO_GL=egl python scripts/learned/render_mujoco.py --reach-dir outputs/reach 
 
 Each step writes `outputs/<run-id>/` with `summary.json` and `report.md`.
 
+## Full-optimization line (in progress)
+
+No learned prior: the B2-Z1's whole body is solved frame by frame (SQP, cvxpy + Clarabel) from one standard input, a
+human-object clip of world joint positions with the object's mesh and poses (`h2d/fullopt/hoi.py`); the robot enters
+only through its description (`configs/fullopt/robots/b2z1.yaml`). Milestones and their status: spec §10. M1 is
+pass 1: the whole body with the soles on the floor (they slide; the gait is M3), the relation term (a) (vertex
+substitution), the learned line's task targets and evaluation.
+
+```bash
+pip install -e ".[dev,fullopt]" -c constraints.txt
+python scripts/fullopt/export_hoi.py --run-id hoi --dev outputs/tasks --heldout outputs/tasks_force outputs/tasks_omomo
+python scripts/fullopt/m0_gait_stats.py --run-id m0 --clips outputs/hoi/clips
+python scripts/fullopt/solve.py --run-id m1 --clips outputs/hoi/clips --learned-root outputs \
+  --learned-reach outputs/reach/summary.json
+MUJOCO_GL=egl python scripts/fullopt/render.py --solve-dir outputs/m1 --clips outputs/hoi/clips
+```
+
 ## Layout
 
 ```
 configs/      b2z1.yaml (robot, tool, collision conventions), external.yaml (pinned third-party code),
-              data.yaml (dataset paths), candidate selection, registration, learned/ (prior, IK, mesh)
+              data.yaml (dataset paths), candidate selection, registration, learned/ (prior, IK, mesh),
+              fullopt/ (input formats, robot descriptions, correspondence, gait, solver, evaluation)
 h2d/common/   data adapters (OMOMO_new, FORCE), contact description, candidates, task targets, robot model,
               collision, registration, provenance
 h2d/learned/  GMR wrapper, X-Morph prior, interaction-mesh placement, arm IK
+h2d/fullopt/  standard input, gait signals, task targets, robot description, relation term, SQP solver, evaluation
 scripts/      runnable steps, one folder per line
 tests/        fast regression tests (synthetic clip; X-Morph assets when available)
 docs/         setup, data formats, method spec, results, versioning

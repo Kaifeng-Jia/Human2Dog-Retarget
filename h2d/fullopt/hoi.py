@@ -11,7 +11,7 @@ On disk: one ``.npz`` per clip (``HOIClip.save`` / ``HOIClip.load``).
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import numpy as np
@@ -61,6 +61,12 @@ class HOIClip:
                    obj_verts=z["obj_verts"], obj_faces=z["obj_faces"], obj_pos=z["obj_pos"], obj_quat=z["obj_quat"],
                    floor_z=float(z["floor_z"]), hand_contact=z["hand_contact"] if "hand_contact" in z.files else None,
                    meta=json.loads(str(z["meta"])))
+
+
+def leveled(c: HOIClip) -> HOIClip:
+    """The same clip with the floor moved to z = 0 (the robot model's floor)."""
+    dz = np.array([0.0, 0.0, c.floor_z])
+    return replace(c, joints=c.joints - dz, obj_pos=c.obj_pos - dz, floor_z=0.0)
 
 
 def mapping(fmt: str) -> dict[str, str]:

@@ -7,24 +7,30 @@ walk, shuffle or stand. Per walk segment: speed, measured step frequency, the Al
 and the dog's natural footfalls per human step at that speed with the lock deviation (the frequency change a
 whole-number ratio needs). The B2 hip height h_d comes from the model.
 
-Checks of the input and the measurement (all must hold, every split): every clip loads and passes ``hoi.validate``;
-every clip has a walk or shuffle segment; no two touchdowns closer than 0.2 s (a double detection; quick real steps
-around an object are 0.24 s apart and more); touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h within
-0.70-1.05 m and, as the bones are fixed per person, within 3 cm across one subject's clips. Step frequencies are
-data, not checked: around objects people take short quick steps far from steady walking.
+Checks of the input and the measurement, per split: every clip loads and passes ``hoi.validate``; every clip has a
+walk or shuffle segment; no foot touches down twice within 0.2 s (a double detection; alternating feet can land
+0.17 s apart in quick real steps around an object); touchdowns alternate feet (>= 0.8 of consecutive pairs); h_h
+within 0.70-1.05 m and, as the bones are fixed per person, within 3 cm across one subject's clips. The run passes on
+the dev split (spec §8.5); the held-out split and the leg length of a subject across both splits are reported apart.
+Step frequencies are data, not checked: around objects people take short quick steps far from steady walking.
 
 Writes outputs/<run-id>/{summary.json, report.md, segments.csv, figures/{freq_speed,timelines}.png}.
 """
 
 from __future__ import annotations
 
-import argparse
-import json
-import sys
-import time
-from pathlib import Path
+import os
 
-import numpy as np
+# One BLAS / OpenMP thread, set before numpy loads (as solve.py): small problems, where threads only contend.
+os.environ.update({k: "1" for k in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
+
+import argparse  # noqa: E402
+import json  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data.omomo_new import intervals  # noqa: E402
@@ -34,7 +40,7 @@ from h2d.common.tables import clean, write_csv  # noqa: E402
 from h2d.fullopt import gait, hoi, signals  # noqa: E402
 from h2d.paths import load_config  # noqa: E402
 
-LIMITS = {"min_step_gap_s": 0.2, "alternation_min": 0.8, "leg_m": (0.70, 1.05), "leg_spread_subject_m": 0.03}
+LIMITS = {"min_same_foot_gap_s": 0.2, "alternation_min": 0.8, "leg_m": (0.70, 1.05), "leg_spread_subject_m": 0.03}
 INK, INK2, GRID, SURF = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 FOOT = {"L": "#2a78d6", "R": "#eb6834"}
 SPLIT = {"dev": "#2a78d6", "heldout": "#eb6834"}
@@ -69,6 +75,7 @@ def analyse(c: hoi.HOIClip, cfg: dict, h_d: float) -> tuple[dict, list[dict]]:
     row = {**key, "subject": m.get("subject"), "frames": c.n, "fps": c.fps, "window": [w0, w1], "leg_m": h_h,
            "problems": hoi.validate(c), "touchdowns": len(ev), "alternation": signals.alternation(ev),
            "min_step_gap_s": float(np.diff([f for f, _ in ev]).min() / c.fps) if len(ev) > 1 else float("nan"),
+           "min_same_foot_gap_s": signals.same_foot_gap_s(ev, c.fps),
            "walk_segments": sum(s["kind"] == "walk" for s in segs),
            "shuffle_segments": sum(s["kind"] == "shuffle" for s in segs),
            "window_steps": sum(w0 <= f < w1 for f, _ in ev),
@@ -86,11 +93,17 @@ def lockable(walks: list[dict], deltas) -> dict:
             for d in deltas}
 
 
-def checks_of(rows: list[dict], n_errors: int) -> dict:
+def leg_spread(rows: list[dict]) -> dict:
+    """Leg length spread per subject with more than one clip, and whether all are within the limit."""
     by_subject = {}
     for r in rows:
         by_subject.setdefault(r["subject"], []).append(r["leg_m"])
     spread = {s: float(np.ptp(v)) for s, v in by_subject.items() if len(v) > 1}
+    return {"pass": all(v <= LIMITS["leg_spread_subject_m"] for v in spread.values()), "spread_m": spread}
+
+
+def checks_of(rows: list[dict], n_errors: int) -> dict:
+    gap = LIMITS["min_same_foot_gap_s"]
     lo, hi = LIMITS["leg_m"]
     return {
         "inputs_valid": {"pass": bool(rows) and not n_errors and not any(r["problems"] for r in rows),
@@ -98,15 +111,19 @@ def checks_of(rows: list[dict], n_errors: int) -> dict:
                          "invalid": {r["task"]: r["problems"] for r in rows if r["problems"]}},
         "steps_found": {"pass": all(r["walk_segments"] + r["shuffle_segments"] > 0 for r in rows),
                         "without": [r["task"] for r in rows if r["walk_segments"] + r["shuffle_segments"] == 0]},
-        "no_double_touchdowns": {"pass": all(not r["min_step_gap_s"] < LIMITS["min_step_gap_s"] for r in rows),
-                                 "below": [r["task"] for r in rows if r["min_step_gap_s"] < LIMITS["min_step_gap_s"]]},
+        "no_double_touchdowns": {"pass": all(not r["min_same_foot_gap_s"] < gap for r in rows),
+                                 "below": [r["task"] for r in rows if r["min_same_foot_gap_s"] < gap]},
         "feet_alternate": {"pass": all(not r["alternation"] < LIMITS["alternation_min"] for r in rows),
                            "below": [r["task"] for r in rows if r["alternation"] < LIMITS["alternation_min"]]},
         "leg_length_in_range": {"pass": all(lo <= r["leg_m"] <= hi for r in rows),
                                 "outside": [r["task"] for r in rows if not lo <= r["leg_m"] <= hi]},
-        "leg_length_same_per_subject": {"pass": all(v <= LIMITS["leg_spread_subject_m"] for v in spread.values()),
-                                        "spread_m": spread},
+        "leg_length_same_per_subject": leg_spread(rows),
     }
+
+
+def dev_passes(checks: dict) -> bool:
+    """The run passes on the dev split (spec §8.5): parameters are tuned there; held-out is reported apart."""
+    return bool(checks.get("dev")) and all(c["pass"] for c in checks["dev"].values())
 
 
 def aggregate(rows: list[dict], walks: list[dict], h_d: float, deltas) -> dict:
@@ -179,14 +196,16 @@ def figures(out: Path, per: list[dict], walks: list[dict], h_h: float, h_d: floa
     plt.close(fig)
 
 
-def report(prov, passed, checks, dog, agg, rows, walks) -> list[str]:
+def report(prov, passed, checks, across, dog, agg, rows, walks) -> list[str]:
     f = lambda x, nd=2: "–" if x is None or x != x else f"{x:.{nd}f}"  # noqa: E731
     L = ["# M0: human gait and the dog's natural rhythm (fullopt spec §6.1-6.3, §8.5)", "",
          f"Run `{prov['run_id']}` · code `{prov['git']['describe']}` (dirty={prov['git']['dirty']}) · "
-         f"{len(rows)} clips · **{'PASS' if passed else 'FAIL'}**", "",
+         f"{len(rows)} clips · **{'PASS' if passed else 'FAIL'}** (decided on dev; held-out reported apart)", "",
          "| check | " + " | ".join(checks) + " |", "|---|" + "---|" * len(checks),
          *[f"| {k} | " + " | ".join(str(checks[s][k]["pass"]) for s in checks) + " |"
            for k in (next(iter(checks.values())) if checks else [])],
+         "", f"Leg length of a subject across both splits (reported): {across['pass']}"
+         + "".join(f", {k} {100 * v:.1f} cm" for k, v in across["spread_m"].items()) + ".",
          "", f"B2 (home pose): hip height h_d {f(dog['hip_height_m'])} m, thigh {f(dog['thigh_m'])} m, calf "
          f"{f(dog['calf_m'])} m, longest walk stride {f(dog['max_stride_walk_m'])} m.", "",
          "| split | clips | h_h median [m] | walk segments (s) | speed [m/s] | step Hz | dog per step | lock dev | "
@@ -196,10 +215,12 @@ def report(prov, passed, checks, dog, agg, rows, walks) -> list[str]:
            f"{f(a['speed_mps_median'])} | {f(a['step_hz_median'])} | {f(a['dog_per_step_median'])} | "
            f"{f(a['lock_dev_median'], 3)} | " + " / ".join(f(v["segments"]) for v in a["lockable"].values()) + " |"
            for s, a in agg.items()], "",
-         "| split | task | dataset / clip | h_h [m] | touchdowns | shortest gap [s] | alternation | walk / shuffle | "
-         "window: steps, walk / shuffle / stand | problems |", "|---|---|---|---|---|---|---|---|---|---|",
+         "| split | task | dataset / clip | h_h [m] | touchdowns | shortest gap: any / same foot [s] | alternation | "
+         "walk / shuffle | window: steps, walk / shuffle / stand | problems |",
+         "|---|---|---|---|---|---|---|---|---|---|",
          *[f"| {r['split']} | {r['task']} | {r['dataset']} / {r['clip']} | {f(r['leg_m'])} | {r['touchdowns']} | "
-           f"{f(r['min_step_gap_s'])} | {f(r['alternation'])} | {r['walk_segments']} / {r['shuffle_segments']} | "
+           f"{f(r['min_step_gap_s'])} / {f(r['min_same_foot_gap_s'])} | {f(r['alternation'])} | "
+           f"{r['walk_segments']} / {r['shuffle_segments']} | "
            f"{r['window_steps']}, {f(r['window_walk_frac'])} / {f(r['window_shuffle_frac'])} / "
            f"{f(r['window_stand_frac'])} | {'; '.join(r['problems'])} |" for r in rows], "",
          "| split | task | frames | steps | speed [m/s] | step Hz (Alexander) | dog gait | dog per step | lock dev |",
@@ -245,16 +266,18 @@ def main() -> int:
     rows = [p["row"] for p in per]
     splits = sorted({r["split"] for r in rows})
     checks = {s: checks_of([r for r in rows if r["split"] == s], len(errors)) for s in splits}
-    passed = bool(rows) and all(c["pass"] for cs in checks.values() for c in cs.values())
+    passed = dev_passes(checks)
+    across = leg_spread(rows)                       # one person's bones are the same in both splits
     deltas = cfg["dog"]["deltas"]
     agg = {s: aggregate([r for r in rows if r["split"] == s], [w for w in walks if w["split"] == s], h_d, deltas)
            for s in splits}
     figures(out / "figures", per, walks, float(np.median([r["leg_m"] for r in rows])) if rows else 0.9, h_d)
     write_csv(out / "segments.csv", walks)
-    summary = {"provenance": prov, "limits": LIMITS, "checks": checks, "pass": passed, "dog": dog, "aggregate": agg,
+    summary = {"provenance": prov, "limits": LIMITS, "checks": checks, "pass": passed, "pass_rule": "dev split only",
+               "leg_length_same_per_subject_across_splits": across, "dog": dog, "aggregate": agg,
                "clips": rows, "walk_segments": walks, "errors": errors, "elapsed_s": time.time() - t0}
     (out / "summary.json").write_text(json.dumps(clean(summary), indent=2), encoding="utf-8")
-    L = report(prov, passed, checks, dog, agg, rows, walks)
+    L = report(prov, passed, checks, across, dog, agg, rows, walks)
     if errors:
         L += ["", "Errors:", *[f"- {e['file']}: {e['error']}" for e in errors]]
     (out / "report.md").write_text("\n".join(L) + "\n", encoding="utf-8")

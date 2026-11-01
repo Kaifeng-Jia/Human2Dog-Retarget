@@ -1,0 +1,21 @@
+# Evaluation of the full-optimization line (fullopt spec v0.2 §8.1, h2d/fullopt/evaluate.py) and the pass criteria of
+# a solve run. The thresholds are the learned line's (configs/learned/reach.yaml), so both lines count alike.
+
+pos_tol_m: 0.01             # contact point within this of the target on every contact frame ...
+max_angle_deg: 15.0         # ... the tool axis within this of the approach target ...
+penetration_tol_m: 0.002    # ... and no self, floor or arm-object penetration deeper than this (numerical tolerance)
+joint_limit_tol_rad: 1.0e-4
+same_side_deg: 45.0         # the robot is on the human's side of the object: directions from the object centre within this
+
+pass:                       # decided on the dev split only (spec §8.5)
+  dev_reached_min: 9        # tasks fully reached: no worse than the learned line's interaction-mesh layout (9/10)
+  body_in_object_max_m: 0.01
+  object_under_body_frames_max: 0   # frames whose object / under-body overlap is thicker than penetration_tol_m
+  collision_frames_max: 0           # frames (all, not only contact) with a self pair or a non-sole geom through the
+                                    # floor deeper than penetration_tol_m (R027b: two such frames outside contact)
+  sole_height_max_m: 0.002          # every sole within this of the floor on every frame
+  trunk_limit_ratio_max: 1.01       # trunk speeds and accelerations within the description's limits (no dive); 1 %
+                                    # for the rotation increments, which the step bounds add to first order only
+  target_agreement:         # task targets vs the learned line's task files of the same segments (median, contact frames)
+    position_m: 0.01
+    tool_x_deg: 5.0

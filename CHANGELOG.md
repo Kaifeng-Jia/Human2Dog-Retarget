@@ -2,6 +2,96 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.3] — 2026-11-01 (full-optimization line: M1, the solver and pass 1)
+
+### Added (fullopt spec v0.2 §3 steps 1-3, §4, §5.1, §7, §8.1)
+- Robot description `configs/fullopt/robots/b2z1.yaml` (model, trunk, feet, joints, home and nominal height, speed
+  limits, tool, the dog points of the correspondence, collision groups) and the correspondence
+  `configs/fullopt/correspondence.yaml`; `h2d/fullopt/robot.py` reads any robot from its description (FK of named
+  points, point and axis Jacobians in MuJoCo's tangent space, limits, the learned line's collision rules). Only these
+  files name B2-Z1 parts.
+- `h2d/fullopt/task.py`: the learned line's task targets (contact, approach, tool pose, roll, height band, top pushes
+  from the robot's side) from a `HOIClip` alone, and the task gate a c kappa; `task.compare` checks them against the
+  learned line's task files.
+- `h2d/fullopt/relation.py`: the relation interface and representation (a), vertex substitution (horizontal Laplacian
+  coordinates on the robot vertices, the end effector's target is the contact target inside the task window); (b) is
+  M2.
+- `h2d/fullopt/solver.py`, `configs/fullopt/solver.yaml`: per-frame SQP, one QP with a second-order cone per iteration
+  (cvxpy + Clarabel, compiled once with parameters), relation + gated task + nominal + smoothness, joint and trunk
+  speed and height boxes, linearised object / floor / self constraints with L1 slacks, trust region 0.1.
+- `h2d/fullopt/evaluate.py`, `configs/fullopt/evaluation.yaml`: reach, penetration, limits and the relation metrics
+  (edge direction, heading, same side) with the learned line's definitions.
+- `scripts/fullopt/solve.py` (dev and held-out apart, pass on dev: reach >= 9, body in object <= 1 cm, targets agree
+  with the learned line's) and `scripts/fullopt/render.py` (MuJoCo, human | robot with one camera, mp4 + key-frame
+  strip).
+- Dependencies `cvxpy==1.7.5`, `clarabel==0.11.1` (extra `fullopt`; 1.7.5 is the newest cvxpy for Python 3.10 with
+  numpy 1.x).
+
+### Found on the cloud dry run (synthetic clips and the two real dev windows of R015, not a reported run)
+- The palm's joint centre can lie inside a thin table top, where the patch normal points down: the face normal now
+  points to the human's side (the elbow). The learned line's "flipped palm" on two-hand table pushes (R014) comes from
+  this; the full-optimization line's roll target differs from it by 180 deg there (soft, does not decide reach).
+- With the contact moved to the robot's side, the palm is still 10 cm from the edge the frame before contact: the
+  approach target now closes in at most 0.5 m/s (contact frames unchanged).
+- The trunk jumped where the task gate opens (8 m/s): trunk speed limits 1 m/s and 2 rad/s per axis.
+
+### Changed after R027 (dev 6/10; lead decisions A-F, fullopt spec v0.2 revision table "R027 之后")
+- Pass 1 moves the legs too (24 dofs): every sole within 1 mm of the floor (evaluation: 2 mm), sliding, pulled softly
+  to its foothold under the hip; leg speed limits from the B2 URDF (23 / 23 / 14 rad/s); every geom but the soles
+  3 cm above the floor; trunk roll and pitch within 15 deg. The evaluation reports foot slide instead of feet below
+  the floor.
+- The space under the trunk counts as body: a virtual box in the description (inside the hips, from the trunk's
+  underside to the floor), its voxel grid outside the object's hull and the hull's vertices outside it; evaluated as
+  the overlap of the box and the hull (an LP per frame); dev pass: 0 frames.
+- The line's own task gate: rising from 1.5 s before the contact, 1 from 0.5 s before; targets over the whole rise.
+  Trunk limits: 1 m/s horizontal, 0.3 m/s vertical, 1 rad/s; accelerations as hard step bounds, 5 m/s2 horizontal
+  (friction), 3 m/s2 vertical, 15 rad/s2. Rows the trunk closes in on (object, under-body box, tilt, height range)
+  cap the closing speed so that the trunk can still stop (`solver.held`); step bounds no longer force dx = 0 inside.
+- `Collision.distance` cross-checks MuJoCo's negative distances: MuJoCo 3.11 gives -24 mm for two geoms 24 mm apart
+  (R027 c10 frame 45, a test reproduces it), detected by witness points that are not |distance| apart; the pair is
+  then measured by sample points.
+- The face class (top or not) comes from the hand joints that touch the surface, not from the palm centre, which a
+  lifted wrist holds over a table's edge (R027 c12: 1.48 -> 0.59 cm from the learned target).
+- `solve.py` records cvxpy, clarabel and mujoco versions and the thread settings; every fullopt script sets one BLAS /
+  OpenMP thread before numpy loads (R027: more system than user time).
+- Evaluation pass adds: no object under the body, every sole on the floor, trunk within its speed and acceleration
+  limits.
+
+### Changed after R027b (dev 8/10 on Ubuntu, unconverged frames, order dependence; lead decisions A-G)
+- Every QP starts from a fresh solver state (`warm_start=False`); the compiled problem is kept. Solving two clips in
+  either order gives bitwise-identical q (tested).
+- Globalised SQP (`Solver._frame`): L1 merit, step accepted at 0.1 of the predicted decrease, second-order
+  correction, trust region from 0.1 (x1/4 on rejection, x2 on agreement, 1e-6 to 0.4), up to 150 iterations per
+  frame and 200 on the first. The merit counts violations beyond 10 um (the QP still holds the rows exactly);
+  velocity and acceleration rows use the exact rotation Jacobian. Per clip: unconverged frames, rejected steps and
+  the final radius.
+- `Collision.distance` also catches MuJoCo's distance of exactly 0 for a mesh and a box 24 mm apart, and re-measures
+  inconsistent pairs with one geom moved by 0.1-10 um before falling back to sample points.
+- New check, collision free on all frames (self pairs, every geom but the soles against the floor, 2 mm); dev pass
+  needs 0 frames. The held-out `reached` row no longer applies the dev minimum.
+- Tests run with one BLAS / OpenMP thread (`tests/conftest.py`).
+- Kept as known (lead): c01's push start (contact frames 2-9) stays the one dev miss; reaching it needs both a
+  higher trunk yaw rate and unbounded trunk accelerations, or a look-ahead on the object's motion. c07 / c08's
+  trunk lunge on the approach (tilt at the 15 deg limit) stays until the gait (M3) lets the trunk walk up. So does
+  the backpack's front-right sole sliding ~0.3 m out and back within 1-2 frames while the human swings it (before
+  the task; the sole stays on the floor, no check covers its speed).
+
+### Changed after R027c (Ubuntu: every solve check passed; the synthetic push test's frame 1 stopped on its radius)
+- Looser per-frame stop, after the references: a frame converges on the first of a step below 1e-3 inside the radius
+  (was 1e-4), an accepted step changing the merit by at most 1e-5 of it (OmniRetarget's stop on the cost), or the
+  radius below 1e-5 (scipy trust-constr's xtol) with no row violated beyond 1e-4 (IPOPT's constr_viol_tol). Before,
+  a stop on the radius (floor 1e-6) was unconverged and fell on either side of the floor across machines (cloud
+  1.6e-6, Ubuntu 8.0e-7). Per clip: `solver.stops` counts the frames by reason; `solutions/*.npz` has `stop`.
+- Cloud dry run: dev passes with the same reached frames; every frame converges (9 did not); at most 79 iterations
+  (was 150); 6:30 for 14 clips (was 8:03); soles <= 1.2 mm, trunk ratio <= 1.008.
+
+### Changed (R026b follow-ups)
+- M0: the run passes on the dev split only; held-out is reported apart; the leg length of a subject is also compared
+  across the two splits (reported); "no double touchdowns" means the same foot twice within 0.2 s (alternating feet
+  0.17 s apart are a real quick step); `signals.same_foot_gap_s`.
+- Spec: FORCE's "subject" is a recording session, so a FORCE clip is held out by its object only; the M1 decisions in
+  the revision table.
+
 ## [0.3.2] — 2026-11-01 (full-optimization line: one standard input; dev and held-out splits)
 
 ### Added (Kevin: the method must not fit only this dataset)

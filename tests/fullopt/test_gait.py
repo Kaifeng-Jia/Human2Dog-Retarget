@@ -112,3 +112,26 @@ def test_b2_hip_height():
     d = gait.hip_height(ROBOT)
     assert d["thigh_m"] == pytest.approx(0.35, abs=1e-3) and d["calf_m"] == pytest.approx(0.35, abs=1e-3)
     assert d["hip_height_m"] == pytest.approx(0.5435, abs=2e-3)
+
+
+def test_double_touchdowns_are_counted_per_foot():
+    ev = [(0, "L"), (5, "R"), (20, "L"), (40, "R")]               # alternating feet 5 frames apart: a quick step
+    assert signals.same_foot_gap_s(ev, FPS) == pytest.approx(20 / FPS)
+    assert signals.same_foot_gap_s(ev + [(43, "R")], FPS) == pytest.approx(3 / FPS)
+    assert np.isnan(signals.same_foot_gap_s([(0, "L"), (9, "R")], FPS))
+
+
+def test_m0_passes_on_the_dev_split_and_reports_legs_across_splits():
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "fullopt" / "m0_gait_stats.py"
+    spec = importlib.util.spec_from_file_location("m0_gait_stats", path)
+    m0 = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m0)
+    row = {"problems": [], "walk_segments": 1, "shuffle_segments": 0, "min_same_foot_gap_s": 0.5, "alternation": 1.0}
+    rows = [{**row, "task": "a", "split": "dev", "subject": "sub6", "leg_m": 0.89},
+            {**row, "task": "b", "split": "dev", "subject": "sub6", "leg_m": 0.90},
+            {**row, "task": "c", "split": "heldout", "subject": "sub6", "leg_m": 0.95, "min_same_foot_gap_s": 0.1}]
+    checks = {s: m0.checks_of([r for r in rows if r["split"] == s], 0) for s in ("dev", "heldout")}
+    assert m0.dev_passes(checks) and not checks["heldout"]["no_double_touchdowns"]["pass"]
+    assert checks["dev"]["leg_length_same_per_subject"]["pass"] and not m0.leg_spread(rows)["pass"]

@@ -13,11 +13,16 @@ clips out of git.
 
 from __future__ import annotations
 
-import argparse
-import csv
-import json
-import sys
-from pathlib import Path
+import os
+
+# One BLAS / OpenMP thread, set before numpy loads (as solve.py): small problems, where threads only contend.
+os.environ.update({k: "1" for k in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
+
+import argparse  # noqa: E402
+import csv  # noqa: E402
+import json  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from h2d.common.data.sources import SOURCES  # noqa: E402

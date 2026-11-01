@@ -5,7 +5,7 @@ Layout
 h2d.common   modules shared by both project lines (robot geometry, data, contact,
              registration, evaluation).
 h2d.learned  the learned line: frozen X-Morph prior + regularized arm correction.
-h2d.fullopt  the full-optimization line: whole-body optimization, no learned prior (in progress).
+h2d.fullopt  the full-optimization line: whole-body optimization, no learned prior (in progress, M1: pass 1).
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"

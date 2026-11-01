@@ -17,13 +17,18 @@ pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128
 python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
-## 2. This package (with X-Morph runtime deps)
+## 2. This package (with X-Morph runtime deps and the full-optimization solver)
 
 ```bash
 cd Human2Dog-Retarget
-pip install -e ".[dev,xmorph]" -c constraints.txt
+pip install -e ".[dev,xmorph,fullopt]" -c constraints.txt
 python -c "import mujoco; print(mujoco.__version__)"   # must print 3.11.0
+python -c "import cvxpy; print(cvxpy.__version__, 'CLARABEL' in cvxpy.installed_solvers())"   # 1.7.5 True
 ```
+
+The full-optimization line solves its per-frame QPs with cvxpy and Clarabel. cvxpy is pinned to **1.7.5**, the newest
+release for Python 3.10 with numpy 1.x (1.8 needs Python 3.11 and numpy 2). Its videos need `ffmpeg` with libx264
+(`sudo apt install ffmpeg`) and offscreen OpenGL (`MUJOCO_GL=egl` on this machine).
 
 MuJoCo is pinned to **3.11.0**: it is the newest release that `pytorch-kinematics 0.10.0` (used inside
 X-Morph inference) can parse; 3.12 and later break X-Morph's FK loader. If another version is installed,

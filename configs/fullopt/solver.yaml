@@ -1,0 +1,72 @@
+# Per-frame SQP of the full-optimization line (fullopt spec v0.2 §7, h2d/fullopt/solver.py). Development values, tuned
+# on the dev split only (spec §8.5). Units: metres, radians; a weight multiplies a squared residual.
+
+task:                       # h2d/fullopt/task.py, the learned line's task semantics (learned spec v0.8 §5)
+  pre_s: 1.0                # window before / after the contact segment (as prepare_tasks.py) when meta has none
+  post_s: 1.0
+  smooth_frames: 5          # contact target and hand frame, centred moving average
+  patch_m: 0.03             # surface patch radius of the face normal
+  tool_max_deg: 45.0        # approach cone about the inward normal
+  palm_max_deg: 60.0        # roll target only when the palm faces the contact within this
+  approach_mps: 0.5         # the target closes in on the face / leaves it at most this fast (the human's palm can jump)
+  # The task gate (this line's own, not the learned kappa: 1 within 0.25 s of contact, 0 from 0.75 s on): 0 until
+  # gate_rise_s before the first contact frame, 1 from gate_full_s before it (smoothstep), mirrored after the last.
+  # R027: with 0.75 s the trunk and the arm moved at their speed limits and still missed the first 2-3 contact frames.
+  gate_rise_s: 1.5
+  gate_full_s: 0.5
+
+relation:                   # h2d/fullopt/relation.py
+  kind: a                   # (a) vertex substitution; (b) whole-network mapping in M2
+  object_samples: 24        # farthest-point samples of the object's hull
+  human_smooth_s: 1.0       # spec §6.1: the relation, not the gait sway
+
+weights:
+  relation: 1.0             # Laplacian coordinates, per robot vertex, horizontal [m]
+  task: 1000.0              # contact point and the direction point [m], times the gate: 1 cm costs as much as 30 cm of
+                            # relation (at 100 the relation held the arm off the first contact frames)
+  lever_m: 0.05             # two-point direction: tool point and the point lever_m along the approach axis
+  roll_m: 0.02              # soft roll: roll_m x (jaw axis - target), below the direction lever (does not decide reach)
+  tilt: 10.0                # trunk up axis, horizontal part (roll and pitch -> 0)
+  height: 10.0              # trunk height -> nominal, weak: a low edge needs the trunk ~8 cm lower (as the X-Morph
+                            # prior's 0.46-0.55 m)
+  foothold: 10.0            # each foot's horizontal offset from its nominal foothold [m]: soft, the feet slide under
+                            # the trunk (no gait before M3) and give way where a stance has to widen
+  home: 1.0e-3              # joints -> home (very weak: removes redundancy only)
+  velocity: {base_pos: 10.0, base_rot: 1.0, legs: 0.1, arm: 0.1}        # (q_t - q_t-1)^2 per frame
+  acceleration: {base_pos: 100.0, base_rot: 10.0, legs: 1.0, arm: 1.0}  # (q_t - 2 q_t-1 + q_t-2)^2
+
+constraints:                # linearised every iteration, L1 slacks (spec §7.2)
+  object_margin_m: 0.0      # robot samples (body and arm, not the tool) outside the object's convex hull
+  cage_margin_m: 0.01       # the under-body box this far from it: its grid (8 cm) and the object's corners leave edges
+                            # that can cross between samples by a few mm
+  floor_clearance_m: 0.03   # every geom but the soles (trunk, legs, arm) at least this above the floor
+  foot_band_m: 0.001        # every sole within this of the floor (the evaluation allows 2 mm)
+  self_margin_m: 0.005      # arm against the trunk, the legs and itself; a few mm absorb the linearisation of round links
+  activation_m: 0.15        # constraints of points closer than this
+  # The most critical rows per iteration (fixed sizes: one compiled QP): robot and under-body samples in the object,
+  # object corners in the under-body box, floor, self; then 2 per sole and 4 for the tilt.
+  rows: {object: 64, cage: 16, floor: 24, self: 16}
+  slack_weight: 1.0e+4      # per metre of violation; far above the objective's gradients, so slack only when infeasible
+  hard_rows_scale: 100.0    # the soles and the tilt cost this many times more per violation: they give way last
+  feasibility_tol: 1.0e-5   # the merit counts a row's violation beyond this [m; sin for the tilt; rad or m per frame
+                            # for the step bounds]. The QP holds the rows exactly; their linearisation errs by up to
+                            # ~1e-6 m at steps of 1e-5 (MuJoCo's witness points on meshes), which times the merit's
+                            # weight decided the steps and collapsed the radius (R027b dry runs)
+
+sqp:                        # trust-region SQP on an L1 merit (solver.Solver._frame)
+  trust_region: 0.1         # initial radius of ||dx|| <= rho on every frame (SOC; OmniRetarget: 0.2, fixed)
+  trust_region_max: 0.4
+  accept: 0.1               # a step is accepted when the merit drops by at least this share of the predicted drop;
+  expand_above: 0.75        # the radius doubles above this share when the step reached it, and shrinks to 1/4 of the
+                            # step on a rejection (Nocedal & Wright, Alg. 4.1: accept in (0, 1/4), 3/4, x2, x1/4)
+  max_iters: 150            # a safety net, rarely reached (R027b revision: 99.9 % of the frames within 30 at the old
+  first_frame_iters: 200    # tol); OmniRetarget stops at 10 (50 on the first frame) on a fixed radius
+  # A frame stops, converged, on the first of (after R027c, looser than before: a stop on the radius was unconverged,
+  # and fell on either side of its floor across machines):
+  tol: 1.0e-3               # a step below this inside the radius [m, rad]: 1 mm / 1 mrad, against the evaluation's
+                            # 2 mm (collisions, soles) and 1 cm (reach)
+  merit_rtol: 1.0e-5        # an accepted step changing the merit by at most this share (OmniRetarget: np.isclose on
+                            # the cost, rtol 1e-5)
+  trust_region_min: 1.0e-5  # the radius shrunk below this (scipy trust-constr's xtol stop) with no row violated
+  violation_max: 1.0e-4     # beyond this [m; sin for the tilt] (IPOPT's constr_viol_tol); with a row violated, the
+                            # frame stops unconverged
