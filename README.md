@@ -59,3 +59,7 @@ Commit message: `[report] <run-id> on <code commit, first 7 chars>`. Rules: `doc
 | R023_fullopt_m0 | #34 | `40242b6` | Ubuntu, CPU | **pass=false**: 3/5 checks pass; step_hz_in_human_range fails (c12 2.78 Hz > 2.6), leg_length_in_range fails (c02 h_h 0.33 m < 0.70); 10 tasks (= R022_reach), 10 walk segments |
 | R024_fullopt_m0 | #35 | `a4adfc1` | Ubuntu, CPU | script pass=true (5/5 checks), segments/δ table = R023; **ticket criterion not met**: c02 h_h 1.01 m (want 0.85–0.95; stance ankle height 0.20/0.17 m vs 0.12 in c04/c09, same bones) |
 | R025_fullopt_m0 | #36 | `488a421` | Ubuntu, CPU | pass=true (6/6 checks incl. leg_length_same_per_subject: spread sub12 1.4 cm, sub1 2.2 cm, sub3 0.5 cm); c02 h_h 0.94 m (c04/c09 0.93); segments and δ table = R023/R024 |
+| R026_candidates_force | #38 | `8877af2` | Ubuntu, CPU | **pass=false**: enough_candidates 1 < 3 (FORCE only; same single candidate 0630_61-2 as R022); run stopped here per ticket, steps 5–7 not run |
+| R026_tasks_force | #38 | `8877af2` | Ubuntu, CPU | pass=true, 4 tasks (0630_61-2 + 3 tool tasks) |
+| R026_candidates_omomo | #38 | `8877af2` | Ubuntu, CPU | pass=true, 11 candidates (= R022's 11 OMOMO candidates; only 11 segments pass the funnel, --top 32 not binding) |
+| R026_tasks_omomo | #38 | `8877af2` | Ubuntu, CPU | pass=true, 13 tasks (10 = dev clips + 3 tool tasks) |

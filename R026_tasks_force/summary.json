@@ -1,0 +1,269 @@
+{
+  "provenance": {
+    "run_id": "R026_tasks_force",
+    "started_utc": "2026-11-01T04:10:32+00:00",
+    "h2d_version": "0.3.2",
+    "git": {
+      "commit": "8877af231386b4e849b9a5777d45140d8f44873f",
+      "branch": "HEAD",
+      "describe": "v0.3.1-1-g8877af2",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "hoi_retarget": {
+        "path": "/home/kevin/Human2Dog-Retarget/external/hoi-retarget",
+        "pinned": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "present": true,
+        "actual": "b341dadde3fc745ef5ea606eaacbde9a0cbb916f",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "data.yaml": "5af44ae598ec197f",
+      "external.yaml": "847b4b4bf499bd9e",
+      "push_candidates.yaml": "aaa76d396453d120"
+    },
+    "command": "prepare_tasks.py --run-id R026_tasks_force --candidates outputs/R026_candidates_force/candidates.csv --selection configs/candidate_selection.yaml",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "task_version": 2,
+  "limits": {
+    "proxy_surface_dist_median_m": [
+      "<=",
+      0.08
+    ],
+    "patch_coherence_median": [
+      ">=",
+      0.8
+    ],
+    "normal_spread_p90_deg": [
+      "<=",
+      20.0
+    ],
+    "target_equals_c_bar_in_contact_m": [
+      "<=",
+      1e-06
+    ],
+    "contact_frames": [
+      ">",
+      0
+    ],
+    "target_on_face_m": [
+      "<=",
+      0.02
+    ]
+  },
+  "reach_band": {
+    "side": [
+      0.5,
+      1.2
+    ],
+    "top": [
+      0.3,
+      0.8
+    ],
+    "slant": [
+      0.4,
+      1.2
+    ],
+    "grasp": [
+      0.3,
+      1.2
+    ]
+  },
+  "window_s": [
+    1.0,
+    1.0
+  ],
+  "checks": {
+    "all_segments_processed": {
+      "pass": true,
+      "n_errors": 0,
+      "n_segments": 4
+    },
+    "confirmed_tasks_pass": {
+      "pass": true,
+      "n_confirmed": 3,
+      "failing": []
+    }
+  },
+  "pass": true,
+  "errors": [],
+  "tasks": [
+    {
+      "id": "trashcan_side",
+      "dataset": "omomo_new",
+      "clip": "sub6_trashcan_003",
+      "object": "trashcan",
+      "mode": "R",
+      "start": 24,
+      "end": 160,
+      "confirmed": true,
+      "interaction": "push",
+      "grip": "press",
+      "pass": true,
+      "failed": "",
+      "contact_frames": 136,
+      "proxy_surface_dist_median_m": 0.036282241527492626,
+      "patch_coherence_median": 0.970225892854492,
+      "normal_spread_p90_deg": 7.574144515247955,
+      "target_equals_c_bar_in_contact_m": 0.0,
+      "d_max_m": 0.45008748375508423,
+      "target_step_max_m": 0.03669705492563276,
+      "palm_offset_m": 0.04088981573339902,
+      "target_on_face_m": 0.002722651448219921,
+      "height_shift_m": 0.0,
+      "robot_contact_z_m": 0.1488098360481721,
+      "in_band": false,
+      "contact_moved": "",
+      "palm_face_deg": 68.17784738743227,
+      "palm_used": false,
+      "palm_flipped": true,
+      "forearm_face_deg": 78.2116936907477,
+      "forearm_used": true,
+      "approach_angle_deg": 74.33246376674273,
+      "retreat_angle_deg": 45.27940252708167,
+      "normal_tilt_deg": 4.75518629947853,
+      "contact_z_m": 0.1488098360481721
+    },
+    {
+      "id": "smallbox_top",
+      "dataset": "omomo_new",
+      "clip": "sub7_smallbox_041",
+      "object": "smallbox",
+      "mode": "R",
+      "start": 41,
+      "end": 120,
+      "confirmed": true,
+      "interaction": "push",
+      "grip": "press",
+      "pass": true,
+      "failed": "",
+      "contact_frames": 79,
+      "proxy_surface_dist_median_m": 0.021209550737064948,
+      "patch_coherence_median": 0.9908677523026537,
+      "normal_spread_p90_deg": 2.0166162845225895,
+      "target_equals_c_bar_in_contact_m": 0.0,
+      "d_max_m": 0.6337428616522215,
+      "target_step_max_m": 0.10032714687726625,
+      "palm_offset_m": 0.010396919403640292,
+      "target_on_face_m": 1.4304896245381992e-17,
+      "height_shift_m": -0.004909692997907528,
+      "robot_contact_z_m": 0.14953673976285992,
+      "in_band": true,
+      "contact_moved": "rear_edge",
+      "palm_face_deg": 62.46131296163195,
+      "palm_used": false,
+      "palm_flipped": false,
+      "forearm_face_deg": 54.07960009154802,
+      "forearm_used": true,
+      "approach_angle_deg": 30.846845637955838,
+      "retreat_angle_deg": 24.46377101988571,
+      "normal_tilt_deg": 84.12567550438827,
+      "contact_z_m": 0.15103459925949878
+    },
+    {
+      "id": "largebox_top",
+      "dataset": "omomo_new",
+      "clip": "sub7_largebox_041",
+      "object": "largebox",
+      "mode": "R",
+      "start": 35,
+      "end": 120,
+      "confirmed": true,
+      "interaction": "push",
+      "grip": "press",
+      "pass": true,
+      "failed": "",
+      "contact_frames": 85,
+      "proxy_surface_dist_median_m": 0.006123063183996836,
+      "patch_coherence_median": 0.9920208203688022,
+      "normal_spread_p90_deg": 2.857362346753019,
+      "target_equals_c_bar_in_contact_m": 0.0,
+      "d_max_m": 0.5575757644895023,
+      "target_step_max_m": 0.11829718444082905,
+      "palm_offset_m": -0.0040620826542641375,
+      "target_on_face_m": 3.1031676915590914e-17,
+      "height_shift_m": -0.0029727467860815593,
+      "robot_contact_z_m": 0.347444450057787,
+      "in_band": true,
+      "contact_moved": "rear_edge",
+      "palm_face_deg": 66.24774370653743,
+      "palm_used": false,
+      "palm_flipped": false,
+      "forearm_face_deg": 49.737880165422126,
+      "forearm_used": true,
+      "approach_angle_deg": 42.302124545227294,
+      "retreat_angle_deg": 31.646512568576185,
+      "normal_tilt_deg": 87.40749410271049,
+      "contact_z_m": 0.3480385661242727
+    },
+    {
+      "id": "c01_0630_61-2",
+      "dataset": "force",
+      "clip": "0630_61-2",
+      "object": "backpack",
+      "mode": "R",
+      "start": 472,
+      "end": 523,
+      "confirmed": false,
+      "interaction": "push",
+      "grip": "press",
+      "pass": true,
+      "failed": "",
+      "contact_frames": 51,
+      "proxy_surface_dist_median_m": 0.031986761964525504,
+      "patch_coherence_median": 0.8722111817875258,
+      "normal_spread_p90_deg": 17.239310663855612,
+      "target_equals_c_bar_in_contact_m": 0.0,
+      "d_max_m": 0.15658000672261968,
+      "target_step_max_m": 0.05700589523944285,
+      "palm_offset_m": 0.08089529545949842,
+      "target_on_face_m": 0.010390404785196419,
+      "height_shift_m": 0.0,
+      "robot_contact_z_m": 0.4694871748822127,
+      "in_band": false,
+      "contact_moved": "",
+      "palm_face_deg": 38.502647913557034,
+      "palm_used": true,
+      "palm_flipped": false,
+      "forearm_face_deg": 47.4855912078025,
+      "forearm_used": true,
+      "approach_angle_deg": 127.89422841734425,
+      "retreat_angle_deg": 57.58696012899623,
+      "normal_tilt_deg": 57.01639232034682,
+      "contact_z_m": 0.4694871748822127
+    }
+  ],
+  "data_versions": {
+    "force": {
+      "force_commit": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_pinned": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_match": true,
+      "smplh_file": "SMPLH_male.pkl",
+      "smplh_bytes": 130422893,
+      "smplh_sha256_16": "996338a29346b4d4",
+      "smplh_joints": 52,
+      "smplh_vertices": 6890,
+      "src_fps_assumed": 60.0
+    },
+    "omomo_new": {}
+  },
+  "elapsed_s": 3.3752846717834473
+}

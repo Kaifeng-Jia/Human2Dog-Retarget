@@ -1,0 +1,349 @@
+{
+  "provenance": {
+    "run_id": "R026_candidates_force",
+    "started_utc": "2026-11-01T04:05:24+00:00",
+    "h2d_version": "0.3.2",
+    "git": {
+      "commit": "8877af231386b4e849b9a5777d45140d8f44873f",
+      "branch": "HEAD",
+      "describe": "v0.3.1-1-g8877af2",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {},
+    "configs": {
+      "data.yaml": "5af44ae598ec197f",
+      "external.yaml": "847b4b4bf499bd9e"
+    },
+    "command": "push_candidates.py --run-id R026_candidates_force --datasets force --selection configs/candidate_selection.yaml --top 24 --per-object 6",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "datasets": [
+    "force"
+  ],
+  "data_versions": {
+    "force": {
+      "root": "/home/kevin/CS6758Project/data/force",
+      "force_commit": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_pinned": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "force_commit_match": true,
+      "smplh_file": "SMPLH_male.pkl",
+      "smplh_bytes": 130422893,
+      "smplh_sha256_16": "996338a29346b4d4",
+      "smplh_joints": 52,
+      "smplh_vertices": 6890,
+      "src_fps_assumed": 60.0
+    }
+  },
+  "n_files": {
+    "force": 398
+  },
+  "n_segments": {
+    "force": 696
+  },
+  "n_slid_segments": 146,
+  "errors": [],
+  "segment_params": {
+    "min_run_s": 0.2,
+    "max_gap_s": 0.3,
+    "min_seg_s": 0.3,
+    "lift_m": 0.05,
+    "lift_frac": 0.3,
+    "tilt_deg": 15.0,
+    "slide_m": 0.1,
+    "yaw_deg": 20.0,
+    "walk_m": 0.5
+  },
+  "criteria": [
+    {
+      "name": "slid",
+      "key": "object_state",
+      "op": "==",
+      "value": "slid",
+      "meaning": "object slides on the floor (moves >= 0.10 m, not lifted or tilted)"
+    },
+    {
+      "name": "on_floor",
+      "key": "obj_lifted_frac",
+      "op": "<=",
+      "value": 0.1,
+      "meaning": "object lowest point > 5 cm in at most 10 % of the frames"
+    },
+    {
+      "name": "one_mode",
+      "key": "hands",
+      "op": "in",
+      "value": [
+        "left",
+        "right",
+        "both"
+      ],
+      "meaning": "one hand, or both hands together, in >= 60 % of the contact frames (no switching)"
+    },
+    {
+      "name": "long_enough",
+      "key": "duration_s",
+      "op": ">=",
+      "value": 1.0,
+      "meaning": "contact lasts at least 1 s"
+    },
+    {
+      "name": "small_tilt",
+      "key": "obj_tilt_max_deg",
+      "op": "<",
+      "value": 10.0,
+      "meaning": "object tilts less than 10 deg"
+    },
+    {
+      "name": "small_yaw",
+      "key": "obj_yaw_maxabs_deg",
+      "op": "<",
+      "value": 45.0,
+      "meaning": "object turns less than 45 deg about z"
+    },
+    {
+      "name": "hand_only",
+      "key": "frac_body",
+      "op": "<",
+      "value": 0.05,
+      "meaning": "other body parts touch in < 5 % of the frames"
+    },
+    {
+      "name": "same_face",
+      "key": "hands_face_angle_deg",
+      "op": "<=",
+      "value": 30.0,
+      "meaning": "both hands on the same face (0 for one hand; squeeze fails)"
+    },
+    {
+      "name": "on_surface",
+      "key": "contact_surface_dist_median_m",
+      "op": "<=",
+      "value": 0.08,
+      "meaning": "hand contact proxy within 8 cm of the surface"
+    },
+    {
+      "name": "interaction",
+      "key": "interaction",
+      "op": "in",
+      "value": [
+        "push",
+        "pull"
+      ],
+      "meaning": "object moves away from (push) or towards (pull) the hand, abs(cos) >= 0.7: push/pull"
+    },
+    {
+      "name": "contact_shape",
+      "key": "contact_shape_ok",
+      "op": "==",
+      "value": true,
+      "meaning": "one flat face (press), or a grasp"
+    },
+    {
+      "name": "grip",
+      "key": "grip",
+      "op": "in",
+      "value": [
+        "press"
+      ],
+      "meaning": "robot grip: press"
+    },
+    {
+      "name": "reach_band",
+      "key": "in_reach_band",
+      "op": "==",
+      "value": true,
+      "meaning": "contact height within the arm's band (side 0.5-1.2 m, top 0.3-0.8 m, slant 0.4-1.2 m, grasp 0.3-1.2 m)"
+    }
+  ],
+  "selection": {
+    "max_yaw_deg": 45,
+    "reach_band": {
+      "side": [
+        0.5,
+        1.2
+      ],
+      "top": [
+        0.3,
+        0.8
+      ],
+      "slant": [
+        0.4,
+        1.2
+      ],
+      "grasp": [
+        0.3,
+        1.2
+      ]
+    },
+    "interactions": [
+      "push",
+      "pull"
+    ],
+    "grips": [
+      "press"
+    ]
+  },
+  "ranking": {
+    "near_normal_deg": 30.0,
+    "vertical_face_deg": 30.0,
+    "top": 24,
+    "per_object": 6
+  },
+  "funnel": {
+    "force": {
+      "all segments": 696,
+      "slid": 146,
+      "on_floor": 145,
+      "one_mode": 108,
+      "long_enough": 97,
+      "small_tilt": 95,
+      "small_yaw": 15,
+      "hand_only": 14,
+      "same_face": 7,
+      "on_surface": 7,
+      "interaction": 5,
+      "contact_shape": 3,
+      "grip": 1,
+      "reach_band": 1
+    }
+  },
+  "by_object": {
+    "force/backpack": {
+      "slid": 3,
+      "passed": 1,
+      "first_failure": {
+        "small_tilt": 1,
+        "contact_shape": 1
+      }
+    },
+    "force/box_huge": {
+      "slid": 56,
+      "passed": 0,
+      "first_failure": {
+        "small_yaw": 25,
+        "one_mode": 16,
+        "long_enough": 7,
+        "same_face": 4
+      }
+    },
+    "force/chair": {
+      "slid": 86,
+      "passed": 0,
+      "first_failure": {
+        "small_yaw": 55,
+        "one_mode": 21,
+        "long_enough": 4,
+        "same_face": 3
+      }
+    },
+    "force/plasticcontainer": {
+      "slid": 1,
+      "passed": 0,
+      "first_failure": {
+        "on_floor": 1
+      }
+    }
+  },
+  "passed_by_mode": {
+    "force/R": 1
+  },
+  "passed_by_interaction_grip": {
+    "force/push/press": 1
+  },
+  "reached_by_interaction_grip": {
+    "force/push/press": 4,
+    "force/pull/grasp": 7,
+    "force/pull/press": 1,
+    "force//press": 2
+  },
+  "finger_motion_std_m_median": {
+    "force": 0.0006526458534344801
+  },
+  "checks": {
+    "all_files_processed": {
+      "pass": true,
+      "n_errors": 0
+    },
+    "enough_candidates": {
+      "pass": false,
+      "threshold": 3,
+      "n_candidates": 1,
+      "n_passing_segments": 1
+    },
+    "contact_proxy_on_surface": {
+      "pass": true,
+      "threshold_m": 0.08,
+      "median_m": 0.021197907253900986,
+      "n_segments": 14
+    },
+    "force_data_pinned": {
+      "pass": true,
+      "actual": "695c8b8616f0915dd61658862751e40ec658b81c",
+      "pinned": "695c8b8616f0915dd61658862751e40ec658b81c"
+    }
+  },
+  "pass": false,
+  "candidates": [
+    {
+      "rank": 1,
+      "tier": "C",
+      "mode": "R",
+      "interaction": "push",
+      "grip": "press",
+      "face": "slant",
+      "dataset": "force",
+      "object": "backpack",
+      "name": "0630_61-2",
+      "subject": "session0630",
+      "start_s": 15.733333333333333,
+      "duration_s": 1.7,
+      "obj_disp_xy_m": 0.19040598630135563,
+      "push_alignment": 0.994969726048684,
+      "normal_spread_p90_deg": 17.239310663855612,
+      "normal_tilt_median_deg": 57.01639232034682,
+      "patch_coherence_median": 0.8722111817875258,
+      "hands_face_angle_deg": 0.0,
+      "approach_angle_deg": 127.89422841734425,
+      "retreat_angle_deg": 57.58696012899623,
+      "approach_available_s": 15.733333333333333,
+      "contact_z_median_m": 0.49297909250429756,
+      "robot_contact_z_m": 0.49297909250429756,
+      "contact_surface_dist_median_m": 0.031986761964525504,
+      "obj_tilt_max_deg": 7.483237304954755,
+      "obj_yaw_maxabs_deg": 7.385483991181628,
+      "frac_body": 0.0,
+      "root_disp_xy_m": 0.08260338870148179,
+      "human": "stand",
+      "obj_size_m": "0.54x0.43x0.36",
+      "normal_local": [
+        -0.0895322193642994,
+        0.8069706525542395,
+        0.5837656615559773
+      ],
+      "start": 472,
+      "end": 523,
+      "ann_hands": "R",
+      "ann_dir": "",
+      "ann_weight_kg": 10.0,
+      "figure": "candidates/01_0630_61-2.png",
+      "file": "0630_61-2.npz",
+      "file_sha256_16": "e509bbaad793b0ce"
+    }
+  ],
+  "elapsed_s": 306.11687564849854
+}
