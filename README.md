@@ -93,6 +93,17 @@ python scripts/fullopt/solve.py --run-id m1 --clips outputs/hoi/clips --learned-
 MUJOCO_GL=egl python scripts/fullopt/render.py --solve-dir outputs/m1 --clips outputs/hoi/clips
 ```
 
+Grasp segments (pulls on a side or slant face; the gripper is modelled in this line only):
+
+```bash
+python scripts/common/push_candidates.py --run-id grasp_candidates --datasets omomo_new force \
+  --selection configs/fullopt/grasp_selection.yaml
+python scripts/fullopt/export_hoi.py --run-id grasp_hoi --grasp outputs/grasp_candidates/pool.csv \
+  --dev-people-from outputs/hoi/summary.json
+MUJOCO_GL=egl python scripts/fullopt/contact_sheet.py --clips outputs/grasp_hoi/clips --out outputs/grasp_hoi/sheets
+python scripts/fullopt/grasp_reach.py --out outputs/grasp_reach      # whole-body reach map, no data needed
+```
+
 ## Layout
 
 ```

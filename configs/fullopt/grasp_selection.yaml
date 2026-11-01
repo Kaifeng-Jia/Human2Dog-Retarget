@@ -1,0 +1,23 @@
+# Grasp segments of the full-optimization line (fullopt spec v0.2 §8.5): scripts/common/push_candidates.py
+# --selection. Segment and contact criteria are the learned line's (configs/candidate_selection.yaml), with three
+# changes:
+#   - pulls that need a grasp only: a pull on a side or slant face (a pull on a top face is a drag the closed gripper
+#     presses, a press task). Two hands on different faces stay out (criterion same_face): one gripper cannot squeeze.
+#   - no yaw limit: the targets live in the object frame and the solver takes any object pose. A pulled table turns;
+#     554 of the 1183 slid segments of R015's pool turned 45 deg or more and were never classified.
+#   - the grasp height band of the whole body (scripts/fullopt/grasp_reach.py, cloud, 11/1): feet planted, trunk
+#     0.40-0.58 m, nose down at most 15 deg, no collision, body behind the part. Lowest contact-point height found:
+#     level 0.40 m, 15 deg down 0.30 m, 30 deg down 0.20 m, 45-90 deg down 0.15 m (the lowest tested); standing
+#     level, 0.65 m. The band keeps every height some approach reaches; which approach a part allows (a table top is
+#     clamped across its thickness, a bin rim from above) is the task's business, not the selection's.
+
+max_yaw_deg: 360       # no limit (|yaw| <= 180)
+
+reach_band:
+  side: [0.5, 1.2]     # the learned line's press bands, unused here (grips: grasp only)
+  top: [0.3, 0.8]
+  slant: [0.4, 1.2]
+  grasp: [0.15, 1.2]   # a grasped part keeps its height (adapt_height); 1.2 m: the learned line's upper bound
+
+interactions: [pull]
+grips: [grasp]
