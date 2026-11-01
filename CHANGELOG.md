@@ -2,6 +2,27 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.4] — 2026-11-01 (full-optimization line: grasp inventory)
+
+### Added (Kevin: the gripper is done in the full-optimization line; the learned line stays as it is)
+- `configs/fullopt/grasp_selection.yaml`: the line's own selection of grasp segments for `push_candidates.py`: pulls
+  on a side or slant face only, no yaw limit (targets live in the object frame), the whole-body grasp height band
+  0.15-1.2 m. Two hands on different faces stay out.
+- `scripts/fullopt/grasp_reach.py`: whole-body reach map of a grasp (feet planted, trunk 0.40-0.58 m, nose down
+  <= 15 deg, no collision, body behind the part) per contact height and approach angle. Cloud: level down to 0.40 m
+  (0.65 m standing), 15 deg down 0.30 m, 30 deg down 0.20 m, 45-90 deg down 0.15 m.
+- `scripts/fullopt/export_hoi.py --grasp`: grasp segments of a candidate pool as HOI clips, split by person (the
+  people of the press dev split are dev; everyone else, and FORCE, held out); `meta` records grip and interaction;
+  the report counts clips per object and split. `h2d/fullopt/tasks.py`: `grasp_rows`, `split_by_person`.
+- `scripts/fullopt/contact_sheet.py`: one MuJoCo still per clip (person and object at mid contact, pelvis and object
+  paths), 16 a page.
+- Spec: the grasp inventory (R015 pool: 62 usable grasp pulls, 4 main part types), the grasp split, grasping moved
+  into the line's scope (kinematics and the gripper's timing; forces stay out).
+
+### Fixed (merging M1)
+- `grasp_reach.py` maps the self pairs' geoms to their bodies (`Collision.self_distances` returns geoms since the
+  R027b revision).
+
 ## [0.3.3] — 2026-11-01 (full-optimization line: M1, the solver and pass 1)
 
 ### Added (fullopt spec v0.2 §3 steps 1-3, §4, §5.1, §7, §8.1)
