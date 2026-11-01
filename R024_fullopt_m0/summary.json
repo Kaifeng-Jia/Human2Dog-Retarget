@@ -1,0 +1,516 @@
+{
+  "provenance": {
+    "run_id": "R024_fullopt_m0",
+    "started_utc": "2026-11-01T00:27:42+00:00",
+    "h2d_version": "0.3.1",
+    "git": {
+      "commit": "a4adfc1a297cee7511bf2384edf39ae9a651ac2b",
+      "branch": "HEAD",
+      "describe": "v0.3.0-3-ga4adfc1",
+      "dirty": false
+    },
+    "flags": {
+      "allow_dirty": false,
+      "allow_external_mismatch": false
+    },
+    "externals": {
+      "xmorph": {
+        "path": "/home/kevin/CS6758Project/morph",
+        "pinned": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "present": true,
+        "actual": "a9f4a7713ac9e593a1e40f77851ba5ba44c92d78",
+        "match": true,
+        "dirty": false
+      }
+    },
+    "configs": {
+      "data.yaml": "5af44ae598ec197f",
+      "external.yaml": "847b4b4bf499bd9e",
+      "b2z1.yaml": "eec6bfcde93c5801",
+      "fullopt/gait.yaml": "bfef985f1a80e81d"
+    },
+    "command": "m0_gait_stats.py --run-id R024_fullopt_m0 --tasks-csv outputs/R022_tasks/tasks.csv --tasks-dir outputs/R022_tasks/tasks --max-tasks 12",
+    "host": "kevin-Legion-R9000P-ADR10",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "packages": {
+      "python": "3.10.20",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "mujoco": "3.11.0",
+      "torch": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+      "torch_cuda": "12.8"
+    }
+  },
+  "limits": {
+    "min_step_gap_s": 0.2,
+    "alternation_min": 0.8,
+    "leg_m": [
+      0.7,
+      1.05
+    ]
+  },
+  "checks": {
+    "all_clips_loaded": {
+      "pass": true,
+      "n": 10,
+      "n_errors": 0
+    },
+    "steps_found": {
+      "pass": true,
+      "without": []
+    },
+    "no_double_touchdowns": {
+      "pass": true,
+      "min_s": 0.23333333333333334,
+      "below": []
+    },
+    "feet_alternate": {
+      "pass": true,
+      "min": 0.8
+    },
+    "leg_length_in_range": {
+      "pass": true,
+      "range": [
+        0.7,
+        1.05
+      ],
+      "outside": []
+    }
+  },
+  "pass": true,
+  "dog": {
+    "hip_height_m": 0.543542113821079,
+    "thigh_m": 0.3500000108088802,
+    "calf_m": 0.3500000108093773,
+    "foot_radius_m": 0.032,
+    "home_base_z_m": 0.58,
+    "home_feet_clearance_m": 0.03645788617892101,
+    "max_stride_walk_m": 1.050654568770391
+  },
+  "aggregate": {
+    "leg_m_median": 0.9327536949975779,
+    "hip_height_dog_m": 0.543542113821079,
+    "ratio_constant": 1.4593976593779627,
+    "walk_segments": 10,
+    "walking_s": 52.16666666666666,
+    "speed_mps_median": 0.5323805230106158,
+    "step_hz_median": 1.9329736459846443,
+    "dog_per_step_median": 1.884762523416052,
+    "lock_dev_median": 0.030471472335410144,
+    "dog_trot_segments": 0,
+    "lockable": {
+      "0.05": {
+        "segments": 0.2,
+        "time": 0.25239616613418536
+      },
+      "0.10": {
+        "segments": 0.7,
+        "time": 0.7028753993610226
+      },
+      "0.15": {
+        "segments": 0.7,
+        "time": 0.7028753993610226
+      },
+      "0.20": {
+        "segments": 0.8,
+        "time": 0.7910543130990416
+      }
+    },
+    "lockable_in_windows": {
+      "0.05": {
+        "segments": 0.2,
+        "time": 0.25239616613418536
+      },
+      "0.10": {
+        "segments": 0.7,
+        "time": 0.7028753993610226
+      },
+      "0.15": {
+        "segments": 0.7,
+        "time": 0.7028753993610226
+      },
+      "0.20": {
+        "segments": 0.8,
+        "time": 0.7910543130990416
+      }
+    }
+  },
+  "tasks": [
+    {
+      "task": "c01_sub6_largetable_033",
+      "clip": "sub6_largetable_033",
+      "frames": 186,
+      "fps": 30.0,
+      "window": [
+        0,
+        180
+      ],
+      "leg_m": 0.8912006618383992,
+      "touchdowns": 9,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 9,
+      "window_walk_frac": 0.7666666666666667,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.23333333333333334
+    },
+    {
+      "task": "c02_sub12_largebox_000",
+      "clip": "sub12_largebox_000",
+      "frames": 258,
+      "fps": 30.0,
+      "window": [
+        0,
+        258
+      ],
+      "leg_m": 1.0050215579017543,
+      "touchdowns": 8,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 8,
+      "window_walk_frac": 0.7325581395348837,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.26744186046511625
+    },
+    {
+      "task": "c03_sub5_largetable_030",
+      "clip": "sub5_largetable_030",
+      "frames": 159,
+      "fps": 30.0,
+      "window": [
+        0,
+        159
+      ],
+      "leg_m": 0.9265813646850828,
+      "touchdowns": 7,
+      "alternation": 0.8333333333333334,
+      "min_step_gap_s": 0.3333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 1,
+      "window_steps": 7,
+      "window_walk_frac": 0.710691823899371,
+      "window_shuffle_frac": 0.16981132075471697,
+      "window_stand_frac": 0.11949685534591195
+    },
+    {
+      "task": "c04_sub12_largebox_065",
+      "clip": "sub12_largebox_065",
+      "frames": 192,
+      "fps": 30.0,
+      "window": [
+        0,
+        192
+      ],
+      "leg_m": 0.9389260253100729,
+      "touchdowns": 13,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 13,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "c06_sub1_suitcase_008",
+      "clip": "sub1_suitcase_008",
+      "frames": 129,
+      "fps": 30.0,
+      "window": [
+        0,
+        119
+      ],
+      "leg_m": 0.8015460073022399,
+      "touchdowns": 5,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.26666666666666666,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 0.7310924369747899,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.2689075630252101
+    },
+    {
+      "task": "c07_sub3_largebox_032",
+      "clip": "sub3_largebox_032",
+      "frames": 181,
+      "fps": 30.0,
+      "window": [
+        50,
+        181
+      ],
+      "leg_m": 1.0030439257767996,
+      "touchdowns": 5,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.6,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "c08_sub3_largebox_031",
+      "clip": "sub3_largebox_031",
+      "frames": 178,
+      "fps": 30.0,
+      "window": [
+        50,
+        178
+      ],
+      "leg_m": 1.0055999500987305,
+      "touchdowns": 6,
+      "alternation": 0.8,
+      "min_step_gap_s": 0.5333333333333333,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 6,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "c09_sub12_largebox_089",
+      "clip": "sub12_largebox_089",
+      "frames": 245,
+      "fps": 30.0,
+      "window": [
+        0,
+        115
+      ],
+      "leg_m": 0.9410424391377317,
+      "touchdowns": 14,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.23333333333333334,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 5,
+      "window_walk_frac": 1.0,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.0
+    },
+    {
+      "task": "c10_sub1_largetable_074",
+      "clip": "sub1_largetable_074",
+      "frames": 210,
+      "fps": 30.0,
+      "window": [
+        0,
+        81
+      ],
+      "leg_m": 0.8227750132199504,
+      "touchdowns": 9,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.3,
+      "walk_segments": 1,
+      "shuffle_segments": 0,
+      "window_steps": 3,
+      "window_walk_frac": 0.8148148148148148,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.18518518518518517
+    },
+    {
+      "task": "c12_sub1_largetable_073",
+      "clip": "sub1_largetable_073",
+      "frames": 203,
+      "fps": 30.0,
+      "window": [
+        0,
+        74
+      ],
+      "leg_m": 0.8231249597335903,
+      "touchdowns": 11,
+      "alternation": 1.0,
+      "min_step_gap_s": 0.23333333333333334,
+      "walk_segments": 1,
+      "shuffle_segments": 1,
+      "window_steps": 1,
+      "window_walk_frac": 0.3918918918918919,
+      "window_shuffle_frac": 0.0,
+      "window_stand_frac": 0.6081081081081081
+    }
+  ],
+  "walk_segments": [
+    {
+      "task": "c01_sub6_largetable_033",
+      "clip": "sub6_largetable_033",
+      "start": 25,
+      "end": 163,
+      "duration_s": 4.6,
+      "steps": 9,
+      "speed_mps": 0.5757368102487356,
+      "step_hz": 2.4489795918367347,
+      "step_hz_alexander": 1.4993727394876093,
+      "froude_human": 0.03791433883273177,
+      "froude_dog": 0.06216497857610072,
+      "dog_gait": "walk",
+      "dog_per_step": 1.7309082629142132,
+      "lock_dev": 0.155462737599239,
+      "in_window": true
+    },
+    {
+      "task": "c02_sub12_largebox_000",
+      "clip": "sub12_largebox_000",
+      "start": 39,
+      "end": 228,
+      "duration_s": 6.3,
+      "steps": 8,
+      "speed_mps": 0.16664003394059895,
+      "step_hz": 1.3636363636363635,
+      "step_hz_alexander": 0.839444205721247,
+      "froude_human": 0.0028165295097973934,
+      "froude_dog": 0.005207826226956593,
+      "dog_gait": "walk",
+      "dog_per_step": 1.8931402211221755,
+      "lock_dev": 0.05644578129267286,
+      "in_window": true
+    },
+    {
+      "task": "c03_sub5_largetable_030",
+      "clip": "sub5_largetable_030",
+      "start": 32,
+      "end": 145,
+      "duration_s": 3.7666666666666666,
+      "steps": 6,
+      "speed_mps": 0.5387786516895458,
+      "step_hz": 1.89873417721519,
+      "step_hz_alexander": 1.420850945057916,
+      "froude_human": 0.03193509330514311,
+      "froude_dog": 0.05444005456726289,
+      "dog_gait": "walk",
+      "dog_per_step": 2.174050370899471,
+      "lock_dev": -0.08005811329360368,
+      "in_window": true
+    },
+    {
+      "task": "c04_sub12_largebox_065",
+      "clip": "sub12_largebox_065",
+      "start": 0,
+      "end": 192,
+      "duration_s": 6.4,
+      "steps": 13,
+      "speed_mps": 0.2933149937523044,
+      "step_hz": 1.9672131147540985,
+      "step_hz_alexander": 1.103810709690692,
+      "froude_human": 0.00934045738600937,
+      "froude_dog": 0.01613490161115789,
+      "dog_gait": "walk",
+      "dog_per_step": 1.6453258186288977,
+      "lock_dev": 0.21556470904143699,
+      "in_window": true
+    },
+    {
+      "task": "c06_sub1_suitcase_008",
+      "clip": "sub1_suitcase_008",
+      "start": 13,
+      "end": 100,
+      "duration_s": 2.9,
+      "steps": 5,
+      "speed_mps": 0.6071912309749058,
+      "step_hz": 2.3076923076923075,
+      "step_hz_alexander": 1.6496170610350742,
+      "froude_human": 0.04688711587971231,
+      "froude_dog": 0.0691430885881126,
+      "dog_gait": "walk",
+      "dog_per_step": 1.876384825709929,
+      "lock_dev": 0.06587943613501634,
+      "in_window": true
+    },
+    {
+      "task": "c07_sub3_largebox_032",
+      "clip": "sub3_largebox_032",
+      "start": 31,
+      "end": 181,
+      "duration_s": 5.0,
+      "steps": 5,
+      "speed_mps": 0.5517143646641004,
+      "step_hz": 1.3953488372093024,
+      "step_hz_alexander": 1.3569523950701785,
+      "froude_human": 0.030934252313415313,
+      "froude_dog": 0.057085574590144725,
+      "dog_gait": "walk",
+      "dog_per_step": 2.9865689116641505,
+      "lock_dev": 0.0044971633781474285,
+      "in_window": true
+    },
+    {
+      "task": "c08_sub3_largebox_031",
+      "clip": "sub3_largebox_031",
+      "start": 14,
+      "end": 178,
+      "duration_s": 5.466666666666667,
+      "steps": 6,
+      "speed_mps": 0.539534867824511,
+      "step_hz": 1.2605042016806722,
+      "step_hz_alexander": 1.3424959934945966,
+      "froude_human": 0.029508340251135256,
+      "froude_dog": 0.054592983192109756,
+      "dog_gait": "walk",
+      "dog_per_step": 3.276673185773499,
+      "lock_dev": -0.0844372233931493,
+      "in_window": true
+    },
+    {
+      "task": "c09_sub12_largebox_089",
+      "clip": "sub12_largebox_089",
+      "start": 0,
+      "end": 245,
+      "duration_s": 8.166666666666666,
+      "steps": 14,
+      "speed_mps": 0.3492201478664783,
+      "step_hz": 1.7180616740088106,
+      "step_hz_alexander": 1.1817242067923897,
+      "froude_human": 0.013210533804511508,
+      "froude_dog": 0.022871591064609165,
+      "dog_gait": "walk",
+      "dog_per_step": 2.0200893784508596,
+      "lock_dev": -0.009944796831843905,
+      "in_window": true
+    },
+    {
+      "task": "c10_sub1_largetable_074",
+      "clip": "sub1_largetable_074",
+      "start": 15,
+      "end": 167,
+      "duration_s": 5.066666666666666,
+      "steps": 9,
+      "speed_mps": 0.4915690466263824,
+      "step_hz": 2.142857142857143,
+      "step_hz_alexander": 1.488469387601877,
+      "froude_human": 0.02993773603527507,
+      "froude_dog": 0.04531759460005172,
+      "dog_gait": "walk",
+      "dog_per_step": 1.8569927597100075,
+      "lock_dev": 0.07701012270630758,
+      "in_window": true
+    },
+    {
+      "task": "c12_sub1_largetable_073",
+      "clip": "sub1_largetable_073",
+      "start": 45,
+      "end": 180,
+      "duration_s": 4.5,
+      "steps": 10,
+      "speed_mps": 0.5259823943316858,
+      "step_hz": 2.783505154639175,
+      "step_hz_alexander": 1.5288515053351601,
+      "froude_human": 0.034261599725776755,
+      "froude_dog": 0.051884807409737645,
+      "dog_gait": "walk",
+      "dog_per_step": 1.4688115245146083,
+      "lock_dev": -0.3191774551670503,
+      "in_window": true
+    }
+  ],
+  "errors": [],
+  "elapsed_s": 1.041078805923462
+}
