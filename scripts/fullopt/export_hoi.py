@@ -4,8 +4,8 @@
 The tasks come from ``prepare_tasks.py`` runs (any dataset its sources read: OMOMO_new, FORCE). Split (spec §8.5):
 ``--dev``: the tasks both lines solve (h2d/fullopt/tasks.py), where parameters are tuned; ``--heldout``: every other
 passing press task of the given runs whose subject or object the dev split does not have (Kevin: objects and people
-not used yet), fixed by this rule before any held-out result is seen. A segment already exported is skipped. Each
-clip is the whole recording; the task's window and segment go into ``meta``.
+not used yet), fixed by this rule before any held-out result is seen. A segment already exported is skipped; every
+skipped row is listed with its reason. Each clip is the whole recording; the task's window and segment go into ``meta``.
 
 Writes outputs/<run-id>/{clips/<clip>_<start>.npz, summary.json, report.md}. Derived from licensed data: keep the
 clips out of git.
@@ -61,13 +61,15 @@ def main() -> int:
     roots = {"omomo_new": args.omomo_root, "force": args.force_root}
     srcs = {d: SOURCES[d](Path(roots[d]).expanduser() if roots[d] else data_path(d), args) for d in datasets}
     files = {d: {p.stem: p for p in s.files} for d, s in srcs.items()}
-    rows, seen, errors, skipped, dev_seen = [], set(), [], [], {"subject": set(), "object": set()}
+    rows, seen, errors, skipped, dev_seen = [], {}, [], [], {"subject": set(), "object": set()}
     for split, run, r in todo:
         key = (r["dataset"], r["clip"], int(r["start"]), int(r["end"]))
-        if key in seen:
-            continue
-        seen.add(key)
         uid = f"{r['clip']}_{r['start']}"
+        if key in seen:
+            skipped.append({"id": uid, "task_id": r["id"], "task_run": run.name,
+                            "reason": f"same segment as {seen[key]}"})
+            continue
+        seen[key] = f"{split} {r['id']} ({run.name})"
         try:
             task = load_task(run / "tasks" / f"{r['id']}.npz")
             clip, mesh, _ = srcs[r["dataset"]].load(files[r["dataset"]][r["clip"]])
@@ -75,7 +77,8 @@ def main() -> int:
                 dev_seen["subject"].add(clip.subject)
                 dev_seen["object"].add(clip.obj)
             elif clip.subject in dev_seen["subject"] and clip.obj in dev_seen["object"]:
-                skipped.append({"id": uid, "task_id": r["id"], "reason": "subject and object both in dev"})
+                skipped.append({"id": uid, "task_id": r["id"], "task_run": run.name,
+                                "reason": "not held out: subject and object both in dev"})
                 continue
             c = from_common_clip(clip, mesh, {"id": uid, "task_id": r["id"], "task_run": run.name, "split": split,
                                               "dataset": r["dataset"], "mode": r["mode"], "window": task["window"],
@@ -104,8 +107,8 @@ def main() -> int:
                f"{r['subject']} | {r['frames']} | {r['fps']:g} | {r['hand_contact']} | {'; '.join(r['problems'])} |"
                for r in rows]]
     if skipped:
-        lines += ["", "Not held out (subject and object both in dev):",
-                  *[f"- {k['id']} ({k['task_id']})" for k in skipped]]
+        lines += ["", f"Skipped ({len(skipped)}):", *[f"- {k['id']} ({k['task_id']}, {k['task_run']}): {k['reason']}"
+                                                     for k in skipped]]
     if errors:
         lines += ["", "Errors:", *[f"- {e['id']}: {e['error']}" for e in errors]]
     (out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

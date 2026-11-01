@@ -48,6 +48,18 @@ def test_validation_catches_axes_units_and_missing_joints():
     assert validate(no_head) == ["missing joint pelvis"]
 
 
+def test_validation_does_not_depend_on_posture():
+    """R026: crouching over a box, or bent over a low bin with the head below the pelvis, for most of the clip."""
+    c = clip()
+    j, names = c.joints.copy(), list(c.joint_names)
+    low = slice(0, int(0.8 * T))
+    legs = [names.index(f"{s}_{n}") for s in "lr" for n in ("knee", "ankle", "toe")]
+    upper = [k for k in range(len(names)) if k not in legs]
+    j[low, upper, 2] -= 0.45
+    j[low, names.index("head"), 2] = j[low, names.index("pelvis"), 2] - 0.05
+    assert validate(clip(j, c.joint_names)) == []
+
+
 try:
     from h2d.common.data.omomo_objects import load_object
 

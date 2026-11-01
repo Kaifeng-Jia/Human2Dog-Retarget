@@ -21,6 +21,7 @@ from h2d.paths import load_config
 REQUIRED = ("pelvis", "spine", "chest", "neck", "head", "l_hip", "r_hip", "l_knee", "r_knee", "l_ankle", "r_ankle",
             "l_toe", "r_toe", "l_shoulder", "r_shoulder", "l_elbow", "r_elbow", "l_wrist", "r_wrist")
 OPTIONAL = ("l_index", "r_index", "l_pinky", "r_pinky")      # finger bases (the palm); else the palm comes from the arm
+UPRIGHT_FRAC = 0.10      # validate units and axes on this share of frames, those with the head highest above the ankles
 
 
 @dataclass
@@ -90,12 +91,17 @@ def validate(c: HOIClip) -> list[str]:
         out.append(f"fps {c.fps:g} outside 10-240")
     if np.abs(np.linalg.norm(c.obj_quat, axis=1) - 1).max() > 1e-3:
         out.append("object quaternions not unit")
-    z = {k: float(np.median(c.joint(k)[:, 2])) for k in ("head", "pelvis", "l_ankle", "r_ankle")}
-    if not z["head"] > z["pelvis"] > max(z["l_ankle"], z["r_ankle"]):
-        out.append("not z-up: head, pelvis and ankles are not above one another")
-    stature = z["head"] - min(z["l_ankle"], z["r_ankle"])
+    # Units and axes on the person's most upright frames: crouching or bending over for most of a clip lowers the head
+    # (R026: head below the pelvis in the median), standing up at some point shows the height and the up axis again.
+    ank = np.stack([c.joint("l_ankle")[:, 2], c.joint("r_ankle")[:, 2]], 1)
+    head, pelvis = c.joint("head")[:, 2], c.joint("pelvis")[:, 2]
+    stand = head - ank.min(1)
+    up = stand >= np.quantile(stand, 1 - UPRIGHT_FRAC)
+    if not np.median(head[up]) > np.median(pelvis[up]) > np.median(ank[up].max(1)):
+        out.append("not z-up: head, pelvis and ankles are not above one another when most upright")
+    stature = float(np.median(stand[up]))
     if not 0.8 <= stature <= 2.1:
-        out.append(f"head above the ankles {stature:.2f} m: not metres, or not a standing person")
+        out.append(f"head above the ankles {stature:.2f} m when most upright: not metres, or not a person")
     foot = np.minimum(c.joint("l_toe")[:, 2], c.joint("r_toe")[:, 2]) - c.floor_z
     if not -0.05 <= np.percentile(foot, 5) <= 0.20:
         out.append(f"feet not near the floor (lowest toe {np.percentile(foot, 5):+.2f} m from floor_z)")

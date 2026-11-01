@@ -17,6 +17,12 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 ### Changed
 - `signals.py` and M0 read only HOI clips; M0 checks the inputs and reports the dev and held-out splits apart.
 
+### Fixed (R026)
+- `validate` checks z up and metres on the person's most upright 10 % of frames instead of the whole-clip median,
+  which crouching over a box or bending over a low bin pulls down (head above the ankles 0.70-0.77 m in the median,
+  1.47-1.49 m standing).
+- `export_hoi.py` lists every skipped row with its reason, including segments already exported.
+
 ## [0.3.1] — 2026-10-31 (full-optimization line: spec v0.1 and M0)
 
 ### Added
