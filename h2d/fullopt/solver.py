@@ -6,7 +6,9 @@ Frame by frame, the robot configuration q_t minimises
 
 * E_rel: the relation term (``h2d/fullopt/relation.py``);
 * E_task: contact point, two-point direction (lever 0.05 m) and a soft roll (0.02 m), gated by the task's gate g_t
-  (``h2d/fullopt/task.py``);
+  (``h2d/fullopt/task.py``); a grasp: the point between the pads (its error along the closing axis weighted by
+  ``grasp_c``), the approach and closing axes as two-point rows, the arm at rest until the gate rises, the gripper on
+  its schedule;
 * E_nom: trunk roll and pitch to 0, trunk height to the nominal one (weak), joints to home (very weak);
 * E_foot: each foot's horizontal position to its nominal foothold, the home stance under the hips (soft);
 
@@ -112,6 +114,7 @@ class Solver:
         self.sv = np.sqrt([w["velocity"][key[d]] for d in self.dofs])
         self.sa = np.sqrt([w["acceleration"][key[d]] for d in self.dofs])
         self.sh = np.sqrt(w["home"]) * (robot.dof_qadr[self.dofs] >= 0)
+        self.s_rest = np.sqrt(w["grasp_arm_rest"]) * np.isin(self.dofs, robot.groups["arm"])
         c = self.coll
         self.obj_geoms = c.body + [g for g in c.arm if g not in c.tool]
         self.floor_geoms = [g for g in c.body + c.arm if g not in c.feet]
@@ -137,9 +140,11 @@ class Solver:
         rows: list[tuple[np.ndarray, np.ndarray, np.ndarray | float]] = []
         rows.append((*relation.residual(t, r, d), np.sqrt(w["relation"])))
         g = float(task.gate[t])
-        if g > 0:
+        if task.grip == "grasp":
+            rows += self._grasp_rows(t, task, g)
+        elif g > 0:
             sw, lev, rm = np.sqrt(w["task"] * g), w["lever_m"], w["roll_m"]
-            p = r.tool_point()
+            p = r.tool_point(task.tool_offset)
             Jp = r.body_point_jac(r.tool_body, p, d)
             a, Ja = r.axis(r.tool_body, r.approach_local), r.axis_jac(r.tool_body, r.approach_local, d)
             y = task.target[t]
@@ -159,6 +164,8 @@ class Solver:
             J = r.body_point_jac(f, p, d) - r.body_point_jac(r.base, h, d)
             rows.append(((p - h)[:2], J[:2], np.sqrt(w["foothold"])))
         rows.append((r.difference(r.home, q, d), eye, self.sh))
+        if task.grip == "grasp":       # the arm rests at home until the gate rises (it would fold against its limits
+            rows.append((r.difference(r.home, q, d), eye, self.s_rest * np.sqrt(1.0 - g)))   # chasing the hand)
         v = r.difference(q1, q, d) if q1 is not None else np.zeros(self.n)
         Jv = r.difference_jac(q1, q, d) if q1 is not None else eye   # (rotations: exact, not the identity)
         rows.append((v, Jv, self.sv * (q1 is not None)))
@@ -167,6 +174,22 @@ class Solver:
         res = np.concatenate([np.reshape(s, -1) * np.asarray(e) for e, _, s in rows])
         jac = np.vstack([np.reshape(s, (-1, 1)) * J for _, J, s in rows])
         return res, jac
+
+    def _grasp_rows(self, t: int, task, g: float) -> list:
+        """A grasp's task rows, gated: the point between the pads (its error along the closing axis weighted by
+        ``grasp_c``) and the approach and closing axes as two-point rows (lever ``grasp_lever_m``)."""
+        if g <= 0:
+            return [(np.zeros(3), np.zeros((3, self.n)), 0.0)] * 3
+        r, d, w = self.robot, self.dofs, self.cfg["weights"]
+        lev, sw = w["grasp_lever_m"], np.sqrt(w["task"] * g)
+        p, y, c = r.tool_point(task.tool_offset), task.target[t], task.tool_z[t]
+        Jp = r.body_point_jac(r.tool_body, p, d)
+        W = np.eye(3) + (np.sqrt(w["grasp_c"]) - 1.0) * np.outer(c, c)
+        rows = [(W @ (p - y), W @ Jp, sw)]
+        for local, ref in ((r.approach_local, task.tool_x[t]), (r.jaw_local, c)):
+            rows.append((p + lev * r.axis(r.tool_body, local) - (y + lev * ref),
+                         Jp + lev * r.axis_jac(r.tool_body, local, d), sw))
+        return rows
 
     def _samples(self) -> tuple[np.ndarray, np.ndarray]:
         """World samples kept out of the object (body, arm without the tool, the under-body box) and their bodies."""
@@ -395,6 +418,8 @@ class Solver:
             else:
                 v = r.difference(q2, q1, self.dofs) if q2 is not None else np.zeros(self.n)
                 q = r.clip(r.integrate(q1, v, self.dofs))
+            if task.theta is not None:                           # a grasp's gripper, on its schedule
+                q = r.opened(q, task.theta[t])
             q, rec = self._frame(t, q, q1, q2, task, relation, (hull, verts, Ro[t], po[t]),
                                  sq["first_frame_iters"] if t == 0 else sq["max_iters"])
             out["q"][t] = q

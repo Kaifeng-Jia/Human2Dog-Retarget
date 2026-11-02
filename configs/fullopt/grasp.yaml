@@ -1,0 +1,29 @@
+# Grasp tasks of the full-optimization line (fullopt spec v0.2 §2.2, §7.5; h2d/fullopt/grasp.py). A kinematic grasp:
+# the arm's pose and the gripper's timing, no forces. Values from the dev survey (R028) and the Z1 jaw meshes.
+
+insertion_m: 0.02           # the part this far between the pads; the tool point r_g is there, mid-gap
+# Candidate grasps at the human's contact. A candidate is feasible when the contact point is reachable for its
+# approach pitch, its pads hold the part alone (the part's section between them fits the widest gap at the insertion)
+# within max_shift_m of the contact, and the open jaws clear the part on the last approach_check_m. Among the feasible
+# ones, the thinnest section wins (least friction needed); ties keep this order.
+#   edge: along the part's plane, pitched down by beta, closing across it (table tops, a seat)
+#   top: from above, closing across a lip, a rim or a rail
+#   post: level, closing across a vertical bar (the wrist turned)
+candidates: [[edge, 0], [edge, 15], [edge, 30], [top, 90], [post, 0]]
+# Heights of the contact point r_c the whole body reaches per approach pitch, feet planted (grasp_reach.py: the R028
+# map; 0.85-0.95 m added in M1g: from above up to 0.90 m, level up to 0.95 m). The post uses the level band.
+reach_band_m: {0: [0.40, 0.95], 15: [0.30, 0.85], 30: [0.20, 0.85], 90: [0.15, 0.90]}
+max_shift_m: 0.03           # the part's leading edge within this of the contact point along the approach
+slide_max_m: 0.12           # straight parts (edge, post): slide along them past a leg or a rail, at most this far
+slide_step_m: 0.005
+band_gap_m: 0.01            # material farther apart than this along the closing axis is another part (a leg's end)
+surface_spacing_m: 0.0015   # part surface samples, within surface_radius_m of the contact
+surface_radius_m: 0.2
+clearance_m: 0.01           # per side between the open jaws and the part, on the approach and after the release
+open_max_deg: 45.0          # beyond 42 deg the moving jaw's tip has left the insertion: opening more only costs time
+open_before_s: 0.3          # fully open this long before the contact (0.3 s x 0.5 m/s: 15 cm out at most)
+touch_m: 0.001              # theta_c: the moving jaw's first penetration beyond this, closing in 0.5 deg steps
+reclose_m: 0.15             # after the release, the jaws close again once the target is this far out
+approach_check_m: [0.15, 0.10, 0.07, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0]
+shell_odd_frac: 0.05        # a mesh whose random lines cross it an odd number of times this often is a single sheet
+voxel_m: 0.001              # jaw signed distances

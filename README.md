@@ -104,6 +104,16 @@ MUJOCO_GL=egl python scripts/fullopt/contact_sheet.py --clips outputs/grasp_hoi/
 python scripts/fullopt/grasp_reach.py --out outputs/grasp_reach      # whole-body reach map, no data needed
 ```
 
+M1g, grasping (spec §2.2, §7.5, §8.6): `solve.py` takes press and grasp clips alike (`meta.grip`); a grasp's frame
+comes from the part's geometry at the human's contact, the gripper opens before the contact and closes on the part,
+and the run is checked per task kind. Videos of a grasp add a close-up of the gripper.
+
+```bash
+python scripts/fullopt/solve.py --run-id m1g --clips outputs/grasp_hoi/clips
+MUJOCO_GL=egl python scripts/fullopt/render.py --solve-dir outputs/m1g --clips outputs/grasp_hoi/clips
+MUJOCO_GL=egl python scripts/fullopt/render.py --solve-dir outputs/m1g --clips outputs/grasp_hoi/clips --strips-only
+```
+
 ## Layout
 
 ```

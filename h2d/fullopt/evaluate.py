@@ -19,7 +19,8 @@ compare (``scripts/learned/reach_diag.py``, ``h2d/learned/imesh.py``; thresholds
   human points averaged over 1 s inside the task window; on the robot, the points phi gives the pelvis and the chest,
   and the contact target for the hand. Mean edge-direction error and heading error (trunk forward against the
   human's facing, shoulder line x vertical) over the contact frames, and the share of frames where the robot stands on
-  the human's side of the object (horizontal directions from the object's centre within ``same_side_deg``).
+  the human's side of the object (horizontal directions from the object's centre within ``same_side_deg``);
+* a grasp (spec §8.6) replaces reach with ``grasp``: the grasp frame's errors, the jaws against the part, the timing.
 """
 
 from __future__ import annotations
@@ -76,6 +77,96 @@ def reach(robot: Robot, coll: Collision, task: tk.Task, Q: np.ndarray, hull: Obj
                             "floor": int(np.sum(fail & (a["floor"] <= -tol))),
                             "arm_object": int(np.sum(fail & (a["arm_obj"] > tol)))}}
     return out, a
+
+
+def grasp(c: HOIClip, robot: Robot, coll: Collision, gr, task: tk.Task, Q: np.ndarray, hull: ObjectHull, Ro, po,
+          cfg: dict) -> tuple[dict, dict]:
+    """A grasp task (spec §8.6). Per contact frame (the hold, with its closing): the tool point's error along the
+    approach a, the part t and the closing axis c of the target, both axes' angles, collision free as ``reach``, the
+    pads in the part (the jaws' front 2 x insertion) and any other jaw part in it; the jaws in the part before the
+    closing (from fully open) and after the release (until the tool point is ``clear_until_m`` out); the timing and the
+    friction needed. Jaws against the part: the part's surface samples near the grasp point inside the jaws' voxel
+    meshes (``grasp.Gripper.depth``). Returns (summary, per contact frame arrays as ``reach``)."""
+    from h2d.fullopt.grasp import surface_points
+
+    g, gc, (s, e) = task.record["grasp"], cfg["grasp"], task.segment
+    a0, a1 = task.span
+    E = np.asarray(g["E_local"])
+    P = surface_points(c.obj_verts, c.obj_faces, E, 0.2, 0.002)
+    jaw = gc["jaw_in_part_max_shell_m"] if g["shell"] else gc["jaw_in_part_max_m"]
+    sign = robot.desc["gripper"]["open_sign"]
+    jq = robot.qadr[robot.desc["gripper"]["joint"]]
+    n = c.n
+    pad, other, dist, gaps = np.zeros(n), np.zeros(n), np.full(n, np.inf), np.full((n, 2), np.nan)
+    Ew = np.einsum("tij,j->ti", Ro, E) + po
+    for t in range(a0, a1):
+        robot.set(Q[t])
+        dist[t] = np.linalg.norm(robot.tool_point(task.tool_offset) - Ew[t])
+    ph = g["phases"]
+    out_f = next((t for t in range(e, a1) if dist[t] >= gc["clear_until_m"]), a1)
+    for t in range(max(min(ph["open_done"], s), a0), out_f):          # from fully open until out again
+        robot.set(Q[t])
+        b = robot.tool_body
+        Pt = (P @ Ro[t].T + po[t] - robot.data.xpos[b]) @ robot.data.xmat[b].reshape(3, 3)
+        deg = float(np.degrees(Q[t, jq] / sign))
+        st, mv = gr.sdf(Pt, deg)
+        d = np.maximum(-np.minimum(st, mv), 0.0)
+        front = Pt[:, 0] >= gr.tip_x - 2 * gr.ins
+        pad[t], other[t] = d[front].max(initial=0.0), d[~front].max(initial=0.0)
+        gaps[t] = st[front].min(initial=np.inf), mv[front].min(initial=np.inf)
+    fr = np.arange(s, e)
+    k = {x: np.zeros(len(fr)) for x in ("e_a", "e_t", "e_c", "err", "ang", "ang_c", "self", "floor", "arm_obj")}
+    k["ok"] = np.zeros(len(fr), bool)
+    for i, t in enumerate(fr):
+        robot.set(Q[t])
+        aw, cw = task.tool_x[t], task.tool_z[t]
+        err = robot.tool_point(task.tool_offset) - task.target[t]
+        k["e_a"][i], k["e_t"][i], k["e_c"][i] = err @ aw, err @ np.cross(cw, aw), err @ cw
+        k["err"][i] = np.linalg.norm(err)
+        k["ang"][i] = _deg(robot.axis(robot.tool_body, robot.approach_local), aw)
+        k["ang_c"][i] = _deg(robot.axis(robot.tool_body, robot.jaw_local), cw)
+        col = coll.check(hull, lambda X, t=t: (X - po[t]) @ Ro[t])
+        k["self"][i], k["floor"][i], k["arm_obj"][i] = (col["self_min_dist_m"], col["floor_min_dist_m"],
+                                                        col["arm_obj_depth_m"])
+        k["ok"][i] = (abs(k["e_c"][i]) <= gc["e_c_max_m"] and abs(k["e_a"][i]) <= gc["e_a_max_m"]
+                      and abs(k["e_t"][i]) <= gc["e_t_max_m"] and max(k["ang"][i], k["ang_c"][i]) <= gc["max_angle_deg"]
+                      and col["collision_free"] and pad[t] <= gc["pad_in_part_max_m"] and other[t] <= jaw)
+    clear = np.r_[np.arange(max(ph["open_done"], a0), s), np.arange(e, out_f)]   # (reopening: the pads' bound)
+    bad = clear[(other[clear] > jaw) | (pad[clear] > np.where(clear <= ph["released"], gc["pad_in_part_max_m"], jaw))]
+    rel = lambda m, x: next(((t - e) / c.fps for t in range(e, a1) if x(t) >= m), None)  # noqa: E731
+    pd = task.local["palm_dist"]
+    r_rob, r_hum = rel(gc["release_m"], lambda t: dist[t]), rel(gc["release_m"], lambda t: pd[t - a0])
+    theta = np.degrees(Q[:, jq] / sign)
+    mu, tol, fail = g["mu_need"], cfg["penetration_tol_m"], ~k["ok"]
+    summary = {
+        "reached": bool(k["ok"].all()), "reached_frac": float(k["ok"].mean()), "frames": int(len(fr)),
+        "err_m": _stat(k["err"]), "angle_deg": _stat(k["ang"]), "closing_angle_deg": _stat(k["ang_c"]),
+        "e_c_m": _stat(np.abs(k["e_c"])), "e_a_m": _stat(np.abs(k["e_a"])), "e_t_m": _stat(np.abs(k["e_t"])),
+        "pad_in_part_m": _stat(pad[fr]), "jaw_in_part_m": _stat(other[fr]),
+        "pad_gaps_median_m": [float(np.nanmedian(gaps[fr, 0])), float(np.nanmedian(gaps[fr, 1]))],
+        "fail_reasons": {"e_c": int(np.sum(fail & (np.abs(k["e_c"]) > gc["e_c_max_m"]))),
+                         "e_a": int(np.sum(fail & (np.abs(k["e_a"]) > gc["e_a_max_m"]))),
+                         "e_t": int(np.sum(fail & (np.abs(k["e_t"]) > gc["e_t_max_m"]))),
+                         "angle": int(np.sum(fail & (np.maximum(k["ang"], k["ang_c"]) > gc["max_angle_deg"]))),
+                         "pads_in_part": int(np.sum(fail & (pad[fr] > gc["pad_in_part_max_m"]))),
+                         "jaws_in_part": int(np.sum(fail & (other[fr] > jaw))),
+                         "self_collision": int(np.sum(fail & (k["self"] <= -tol))),
+                         "floor": int(np.sum(fail & (k["floor"] <= -tol))),
+                         "arm_object": int(np.sum(fail & (k["arm_obj"] > tol)))},
+        "clear": {"frames": int(len(clear)), "bad_frames": [int(t) for t in bad],
+                  "jaw_in_part_max_m": float(np.maximum(pad[clear], other[clear]).max(initial=0.0))},
+        "grasp": {x: g[x] for x in ("kind", "beta_deg", "feasible", "reasons", "w_m", "slide_m", "h_rc_m", "shell",
+                                    "theta_open_deg", "theta_c_deg", "theta_c_gap_deg", "mu_need")},
+        "friction": "ok" if mu <= gc["mu_ok"] else "limit" if mu <= gc["mu_limit"] else "beyond",
+        "timing": {"late_start": ph["late_start"],
+                   "open_lead_s": (s - next((t for t in range(s) if theta[t] >= g["theta_open_deg"] - 1e-6), s))
+                   / c.fps,                                                   # 0 if the clip starts in contact
+                   "closing_s": (ph["closed"] - s + 1) / c.fps,
+                   "moved_while_closing_m": float(np.linalg.norm(Ew[min(ph["closed"], n - 1)] - Ew[s])),
+                   "reopen_s": (ph["released"] - e + 1) / c.fps, "robot_out_s": r_rob, "human_out_s": r_hum,
+                   "release_lag_s": None if r_rob is None or r_hum is None else r_rob - r_hum,
+                   "gripper_speed_max_deg_s": float(np.abs(np.diff(theta)).max(initial=0.0) * c.fps)}}
+    return summary, k
 
 
 def under_body(robot: Robot, hull: ObjectHull, Ro: np.ndarray, po: np.ndarray) -> float:
@@ -197,11 +288,16 @@ def relations(c: HOIClip, task: tk.Task, Q: np.ndarray, robot: Robot, corr: dict
     return out
 
 
-def evaluate(c: HOIClip, task: tk.Task, Q: np.ndarray, robot: Robot, coll: Collision, corr: dict, cfg: dict):
-    """All of §8.1 for one solved clip (floor at z = 0). Returns (summary, per contact frame arrays)."""
+def evaluate(c: HOIClip, task: tk.Task, Q: np.ndarray, robot: Robot, coll: Collision, corr: dict, cfg: dict,
+             gripper=None):
+    """All of §8.1 for one solved clip (floor at z = 0), and §8.6 for a grasp (``gripper``: ``grasp.Gripper``).
+    Returns (summary, per contact frame arrays)."""
     hull = ObjectHull.from_vertices(np.asarray(c.obj_verts, float))
     Ro, po = R.from_quat(c.obj_quat).as_matrix(), c.obj_pos
-    rch, arrays = reach(robot, coll, task, Q, hull, Ro, po, cfg)
+    if task.grip == "grasp":
+        rch, arrays = grasp(c, robot, coll, gripper, task, Q, hull, Ro, po, cfg)
+    else:
+        rch, arrays = reach(robot, coll, task, Q, hull, Ro, po, cfg)
     pen = penetration(robot, coll, Q, hull, Ro, po, range(c.n), cfg["penetration_tol_m"])
     arrays["body_in_object"] = pen.pop("per_frame_body_in_object_m")
     arrays["object_under_body"] = pen.pop("per_frame_object_under_body_m")

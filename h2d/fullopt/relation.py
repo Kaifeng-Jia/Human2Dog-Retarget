@@ -12,7 +12,8 @@ residual L_k(V(q)) - L_k(V~) on the robot vertices' rows. As in (b) (spec §5.2 
 horizontal part only: the human's heights mean nothing for the dog's trunk, whose height comes from E_nom, and the
 hand's height comes from the task. The robot's end effector stands in for the virtual hand; inside the task window its
 target is the task's contact target, blended in with the task gate (the learned line's mesh does the same, spec
-v0.8 §5.5), so the relation and the task do not pull the gripper apart.
+v0.8 §5.5), so the relation and the task do not pull the gripper apart; for a grasp the end effector is the task's
+tool point between the pads.
 
 (b) whole-network mapping (spec §5.2) is milestone M2.
 """
@@ -58,8 +59,9 @@ def robot_targets(corr: dict, human: dict, task: tk.Task) -> np.ndarray:
 class VertexSubstitution:
     """Representation (a). ``targets`` (T, K, 3) robot target points, ``objects`` (T, S, 3) world object samples."""
 
-    def __init__(self, names: list[str], targets: np.ndarray, objects: np.ndarray):
+    def __init__(self, names: list[str], targets: np.ndarray, objects: np.ndarray, offsets: dict | None = None):
         self.names, self.K = list(names), len(names)
+        self.offsets = offsets or {}            # robot points at another offset on their body (a grasp's tool point)
         self.n_rows = 2 * self.K
         self.targets, self.objects = targets, objects
         self.nbrs, self.lap = [], np.zeros((len(targets), self.K, 3))
@@ -78,8 +80,8 @@ class VertexSubstitution:
         return sorted({(k, int(j)) for k, n in enumerate(self.nbrs[t]) for j in n if k < j or j >= self.K})
 
     def residual(self, t: int, robot, dofs: np.ndarray, floor_z: float = 0.0) -> tuple[np.ndarray, np.ndarray]:
-        P = np.vstack([[robot.point(k, floor_z) for k in self.names], self.objects[t]])
-        J = np.stack([robot.point_jac(k, dofs) for k in self.names])
+        P = np.vstack([[robot.point(k, floor_z, self.offsets.get(k)) for k in self.names], self.objects[t]])
+        J = np.stack([robot.point_jac(k, dofs, self.offsets.get(k)) for k in self.names])
         r, Jr = np.zeros((self.K, 2)), np.zeros((self.K, 2, len(dofs)))
         for k, n in enumerate(self.nbrs[t]):
             r[k] = (P[k] - P[n].mean(0) - self.lap[t, k])[:2]
@@ -90,7 +92,8 @@ class VertexSubstitution:
 def vertex_substitution(c: HOIClip, task: tk.Task, robot, corr: dict, cfg: dict) -> VertexSubstitution:
     """Representation (a) of a clip; ``cfg``: configs/fullopt/solver.yaml ``relation``."""
     targets = robot_targets(corr, human_points(c, task.mode, cfg["human_smooth_s"]), task)
-    return VertexSubstitution(list(corr["points"]), targets, object_track(c, cfg["object_samples"]))
+    offsets = {corr["end_effector"]: task.tool_offset} if task.tool_offset is not None else None
+    return VertexSubstitution(list(corr["points"]), targets, object_track(c, cfg["object_samples"]), offsets)
 
 
 def object_track(c: HOIClip, k: int) -> np.ndarray:

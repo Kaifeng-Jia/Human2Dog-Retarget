@@ -18,6 +18,11 @@ helpers are imported where they need no dataset ``Clip`` (``adapt_height``, ``fr
   learned line's flagged hand bodies), not under the palm centre, which a wrist lifted at a table's edge holds over
   the edge.
 
+A grasp task (``meta.grip == "grasp"``, ``build_grasp``) takes its frame from the part's geometry at the human's
+contact (``h2d/fullopt/grasp.py``, spec §2.2): the target is the grasp point with the approach along the grasp's
+axis, the tool axes are the approach and the closing axis, the tool point is between the pads, and the gripper opens
+and closes on a schedule (spec §7.5). A press keeps the gripper closed and the semantics above.
+
 The task gate weights the task terms of the solver. It is this line's own (the learned gate, 1 within 0.25 s of
 contact, left the arm too little time, R027): 0 until ``gate_rise_s`` before the first contact frame, 1 from
 ``gate_full_s`` before it (smoothstep), mirrored after the last. The targets cover the gate's span, the frames where
@@ -27,6 +32,7 @@ use.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -164,6 +170,9 @@ class Task:
     tool_z: np.ndarray            # (T, 3) world jaw axis target (NaN outside the span or without a roll target)
     local: dict = field(default_factory=dict)   # object-frame arrays over the span: target, tool_x, tool_z
     record: dict = field(default_factory=dict)
+    grip: str = "press"           # "press" (the gripper locked closed, r_c) or "grasp"
+    tool_offset: np.ndarray | None = None      # the tool point in the tool frame (None: the description's r_c)
+    theta: np.ndarray | None = None            # (T,) the gripper's opening [deg] (grasps)
 
     @property
     def frames(self) -> np.ndarray:
@@ -178,10 +187,9 @@ class Task:
         return out
 
 
-def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
-    """``cfg``: configs/fullopt/solver.yaml ``task``; ``band``: configs/candidate_selection.yaml ``reach_band``."""
-    obj = ObjectMesh(str(c.meta.get("object", "object")), np.asarray(c.obj_verts, float), np.asarray(c.obj_faces))
-    contact = hand_contacts(c, obj)
+def _timing(c: HOIClip, cfg: dict, obj: ObjectMesh, contact: np.ndarray):
+    """Contact segment [s, e), virtual-hand mode, its source, the task window [w0, w1), the span [a0, a1) and the
+    gate (module docstring)."""
     if "segment" in c.meta and "mode" in c.meta:
         (s, e), mode, source = tuple(int(x) for x in c.meta["segment"]), c.meta["mode"], "meta"
     else:
@@ -189,9 +197,22 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
         source = "detected"
     w0, w1 = (tuple(int(x) for x in c.meta["window"]) if "window" in c.meta and source == "meta" else
               (max(0, s - round(cfg["pre_s"] * c.fps)), min(c.n, e + round(cfg["post_s"] * c.fps))))
-    interaction = c.meta.get("interaction") or ("push" if is_push(c, obj, mode, (s, e)) else "pull")
     rise, full = round(cfg["gate_rise_s"] * c.fps), round(cfg["gate_full_s"] * c.fps)
     a0, a1 = max(0, min(w0, s - rise)), min(c.n, max(w1, e + rise))
+    t = np.arange(c.n)
+    x = np.clip(np.minimum(t - (s - rise), (e - 1 + rise) - t) / max(rise - full, 1), 0.0, 1.0)
+    return (s, e), mode, source, (w0, w1), (a0, a1), x * x * (3.0 - 2.0 * x)
+
+
+def build(c: HOIClip, cfg: dict, band: dict | None = None, gripper=None) -> Task:
+    """``cfg``: configs/fullopt/solver.yaml ``task``; ``band``: configs/candidate_selection.yaml ``reach_band``;
+    ``gripper``: the robot's ``grasp.Gripper``, for a clip whose ``meta`` says ``grip: grasp`` (``build_grasp``)."""
+    obj = ObjectMesh(str(c.meta.get("object", "object")), np.asarray(c.obj_verts, float), np.asarray(c.obj_faces))
+    contact = hand_contacts(c, obj)
+    if c.meta.get("grip") == "grasp":
+        return build_grasp(c, cfg, gripper, obj, contact)
+    (s, e), mode, source, (w0, w1), (a0, a1), gate = _timing(c, cfg, obj, contact)
+    interaction = c.meta.get("interaction") or ("push" if is_push(c, obj, mode, (s, e)) else "pull")
     fr = np.arange(a0, a1)
     con = (fr >= s) & (fr < e)
     pos, rot = c.obj_pos[fr], c.obj_quat[fr]
@@ -254,9 +275,6 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
         out[fr] = Rw.apply(local) + offset
         return out
 
-    t = np.arange(c.n)
-    x = np.clip(np.minimum(t - (s - rise), (e - 1 + rise) - t) / max(rise - full, 1), 0.0, 1.0)
-    gate = x * x * (3.0 - 2.0 * x)
     return Task(mode=mode, segment=(s, e), window=(w0, w1), span=(a0, a1), gate=gate, target=world(target_local, pos),
                 tool_x=world(tool_x), tool_z=world(tool_z),
                 local={"target": target_local, "tool_x": tool_x, "tool_z": tool_z, "n_robot": n_robot},
@@ -266,6 +284,83 @@ def build(c: HOIClip, cfg: dict, band: dict | None = None) -> Task:
                         "patch_coherence_median": float(np.median(coh)), "palm_face_deg": palm_face,
                         "palm_used": palm_used, "palm_flipped": palm_flipped, "forearm_face_deg": fore_face,
                         "forearm_used": fore_used})
+
+
+def build_grasp(c: HOIClip, cfg: dict, gr, obj: ObjectMesh, contact: np.ndarray) -> Task:
+    """A grasp task (spec §2.2, §7.5): the grasp frame from the part's geometry at the human's contact
+    (``grasp.choose``; two hands: their contacts' midpoint), the target E - s a - delta c in the object frame (s: the
+    palm's approach and retreat distance, at most ``approach_mps``, the retreat after the jaws reopen; delta: the
+    open jaws' clearance, 0 once closed), the tool axes a and c, the tool point r_g and the gripper's schedule."""
+    from h2d.fullopt import grasp as gp
+
+    if gr is None:
+        raise ValueError("a grasp task needs the robot's gripper (h2d.fullopt.grasp.Gripper)")
+    g_cfg = gr.cfg
+    (s, e), mode, source, (w0, w1), (a0, a1), gate = _timing(c, cfg, obj, contact)
+    fr, seg = np.arange(a0, a1), slice(s, e)
+    pos, rot = c.obj_pos, c.obj_quat
+    loc = lambda p, f: obj.to_local(p[:, None], pos[f], rot[f])[:, 0]  # noqa: E731
+    Cs, dirs, elb = [], [], []
+    for h in (["L", "R"] if mode == "B" else [mode]):
+        p = loc(palm(c, h, seg), seg)
+        q = obj.closest_face(p)[1]
+        Cs.append(obj.closest_face(np.median(q, 0)[None])[1][0])
+        dirs.append(_unit(p - q).mean(0))
+        elb.append(loc(elbow(c, h, seg), seg).mean(0))
+    C = obj.closest_face(np.mean(Cs, 0)[None])[1][0]
+    side = np.mean(elb, 0) - C
+    n = _unit(np.sum(dirs, 0))
+    n = n if n @ side >= 0 else -n                                     # (a palm's joint centre inside a thin part)
+    up = R.from_quat(rot[w0]).inv().apply([0.0, 0.0, 1.0])            # the part at rest: a pulled table tips
+    R_s = R.from_quat(rot[s])
+    height = lambda x: float(R_s.apply(x)[2] + pos[s, 2])  # noqa: E731
+    shell = gp.odd_line_fraction(obj.verts, obj.faces) > g_cfg["shell_odd_frac"]
+    g = gp.choose(gr, obj.verts, obj.faces, C, n, up, side, height, shell)
+    f = g.frame
+    # the target's distance out along -a: the palm's distance to the contact beyond its median in contact, at most
+    # approach_mps from the contact. After the release (once the jaws have reopened) the jaws leave the part: out at
+    # approach_mps to at least reclose_m, farther as the palm goes (it never comes back; a palm that hovers near the
+    # part brought the open jaws back onto it)
+    n_close = math.ceil(max(g.theta_open - g.theta_c, 0.0) / (gr.speed / c.fps))
+    released = e + n_close - 1
+    dist = np.linalg.norm(loc(palm(c, mode, fr), fr) - C, axis=1)
+    con = (fr >= s) & (fr < e)
+    d = np.clip(dist - np.median(dist[con]), 0.0, None)
+    d[con] = 0.0
+    after = np.maximum.accumulate(np.maximum(np.where(fr >= e, d[np.clip(fr - n_close - a0, 0, len(fr) - 1)], 0.0),
+                                             g_cfg["reclose_m"] * (fr > released)))
+    out = np.where(fr < s, np.minimum(d, cfg["approach_mps"] * (s - fr) / c.fps),
+                   np.minimum(after, cfg["approach_mps"] * np.maximum(fr - released, 0) / c.fps))
+    dist_out = np.full(c.n, np.inf)
+    dist_out[fr] = out
+    theta, phases = gp.schedule(c.n, (s, e), c.fps, g.theta_open, g.theta_c, gr.speed, g_cfg["open_before_s"],
+                                dist_out, g_cfg["reclose_m"])
+    span_th = theta[fr]
+    k = (span_th - g.theta_c) / (g.theta_open - g.theta_c) if g.theta_open > g.theta_c else np.zeros(len(fr))
+    delta = g_cfg["clearance_m"] * np.clip(k, 0.0, 1.0)
+    target_local = f.E - out[:, None] * f.a - delta[:, None] * f.c
+    tool_x, tool_z = np.tile(f.a, (len(fr), 1)), np.tile(f.c, (len(fr), 1))
+    Rw, R_all = R.from_quat(rot[fr]), R.from_quat(rot)
+
+    def world(local: np.ndarray, offset=0.0) -> np.ndarray:
+        o = np.full((c.n, 3), np.nan)
+        o[fr] = Rw.apply(local) + offset
+        return o
+
+    rec = {"source": source, "interaction": c.meta.get("interaction", "pull"), "grip": "grasp",
+           "contact_labels": c.hand_contact is not None,
+           "grasp": {"kind": f.kind, "beta_deg": f.beta, "feasible": g.feasible, "reasons": f.reasons,
+                     "w_m": f.w, "slide_m": f.slide, "h_rc_m": f.h_rc, "shell": bool(shell),
+                     "theta_open_deg": g.theta_open, "theta_c_deg": g.theta_c, "theta_c_gap_deg": g.theta_c_gap,
+                     "mu_need": g.mu_need, "approach_depth_m": g.approach_depth, "phases": phases,
+                     "contact_local": C.tolist(), "E_local": f.E.tolist(), "a_local": f.a.tolist(),
+                     "c_local": f.c.tolist(), "candidates": g.candidates}}
+    return Task(mode=mode, segment=(s, e), window=(w0, w1), span=(a0, a1), gate=gate,
+                target=world(target_local, pos[fr]), tool_x=R_all.apply(np.tile(f.a, (c.n, 1))),
+                tool_z=R_all.apply(np.tile(f.c, (c.n, 1))),     # (the axes on every frame: pre-shaping)
+                local={"target": target_local, "tool_x": tool_x, "tool_z": tool_z, "n_robot": n, "out": out,
+                       "delta": delta, "E": f.E, "a": f.a, "c": f.c, "t": f.t, "palm_dist": d},
+                record=rec, grip="grasp", tool_offset=gr.tool_point(f.w), theta=theta)
 
 
 def compare(task: Task, learned: dict) -> dict:

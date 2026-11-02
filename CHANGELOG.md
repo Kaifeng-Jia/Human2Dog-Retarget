@@ -2,6 +2,55 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [0.3.5] — 2026-11-01 (full-optimization line: M1g, the gripper)
+
+### Added (fullopt spec v0.2 §2.2, §7.1, §7.5, §8.6; a kinematic grasp: the arm's pose and the gripper's timing)
+- `h2d/fullopt/grasp.py`, `configs/fullopt/grasp.yaml`: the grasp frame from the part's geometry at the human's
+  contact (two hands: their midpoint). Candidates: along an edge pitched down 0/15/30 deg, from above across a lip or
+  a rail, level across a post; feasible when r_c is in the whole-body reach band, the pads hold the part alone (its
+  section fits the 6.9 cm gap at 2 cm insertion; straight parts slide off legs and rails) and the open jaws clear the
+  part on the last 15 cm. Edges are squared to the part's outline and take the lowest feasible pitch, kinds the
+  thinnest section; no object names. The Z1
+  jaws from the model's meshes (pad gap per angle, voxel signed distances). The gripper's schedule: open by 0.3 s
+  before the contact (from the first frame when the clip starts later), close to theta_c (the moving jaw's first
+  touch) at it, hold, reopen at the release, then retreat at least 15 cm (never back towards the part).
+- `task.build` builds a grasp task for `meta.grip == "grasp"`: tool point between the pads (r_g), target E - s a -
+  delta c (the approach along the grasp's axis, centred in the open jaws), both axes as targets. Presses unchanged.
+- Solver: grasps weight the tool point's error along the closing axis x10 and take both axes as two-point rows with
+  a 0.15 m lever; the arm rests at home until the gate rises (else it folded against its limits chasing the human's
+  hand); the gripper joint follows the task's schedule. The relation term uses r_g as the end effector.
+- `evaluate.grasp` (spec §8.6): per contact frame e_c <= 5 mm, e_a <= 1 cm, e_t <= 2 cm, both axes <= 15 deg,
+  collision free, pads <= 5 mm and other jaw parts <= 2 mm (3 mm single-sheet meshes) in the part; jaws clear of the
+  part before the closing and after the release; theta_c, the gap table's angle, mu needed = tan(theta_c / 2)
+  (friction flag), timing and the release lag.
+- `solve.py` solves press and grasp clips in one folder, checks them per kind and split (grasps: >= 90 % of the
+  feasible dev clips reached, jaws clear on 0 frames, the M1 checks; no learned-line agreement), reports a grasp
+  table. `render.py`: a gripper close-up, phases and grasp key frames; `--strips-only`.
+- Spec: M1g revision table and sections §2.2, §7.5, §8.6, the §7.1 and §7.2 addenda, the §10 row.
+
+### Changed (after the dev grasp run; Kevin: thresholds reasonable, not strict)
+- The body checks (body in object, object under the body, feet, trunk) skip the clips the reach check already counts
+  as failed (not reached; for grasps of the feasible ones) and list their values under `not_reached`; collisions are
+  still checked on every clip. Presses too (their results are unchanged).
+- Trunk limit tolerance 1 % -> 5 %: the limits are rough estimates and the rotation step bounds hold to first order
+  only (dev, reached: up to 1.017); R027's dive was 13x the vertical limit.
+
+### Known issues (R030; recorded, not fixed in M1g)
+- Approach lunges of 13-15 cm, as press c07 (`sub5_whitechair_036_210`, `260923_06_2_3_186`, `079_113`): M3.
+- A fast-pulled small table (`sub12_smalltable_079_113`, not reached): the trunk bobs 12 cm during the hold, with a
+  jerk at frame 227 (unconverged 227-230, a foot 9.4 mm up): M3.
+- Chairs end up under the body after the grasp on three held-out clips (16-24 frames) and dev `046_25`: M3 stepping.
+- Infeasible clips still try the nearest candidate (chair `04_3_1_246` opens only 29 deg; `06_2_3_89` body 1.18 cm in
+  the object). They are outside the reach bar; whether they should not grasp at all is open.
+- Held-out `sub4_whitechair_020_3` is reached on no frame, jaws in the part on frames 0-2: to look into.
+
+### Fixed
+- `Collision.distance` also requires each witness point to lie on its geom's surface (within 1 mm). MuJoCo 3.11 can
+  return exactly 0 with an all-zero fromto for the gripper and the trunk's front plate (R027d on Ubuntu, c09 frame
+  0: 25.9 mm apart, reported as 0 mm); the old check passed it because both are 0. Such a distance now goes through
+  the swapped order, the re-measure and the sample fallback. Press dry run (14 clips): 13 identical to the bit; c01
+  meets the case on three trial poses (stator, front plate), max |dq| 1.7e-4 from frame 71, no check changes.
+
 ## [0.3.4] — 2026-11-01 (full-optimization line: grasp inventory)
 
 ### Added (Kevin: the gripper is done in the full-optimization line; the learned line stays as it is)
