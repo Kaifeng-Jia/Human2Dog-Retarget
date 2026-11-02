@@ -26,6 +26,13 @@ weights:
                             # relation (at 100 the relation held the arm off the first contact frames)
   lever_m: 0.05             # two-point direction: tool point and the point lever_m along the approach axis
   roll_m: 0.02              # soft roll: roll_m x (jaw axis - target), below the direction lever (does not decide reach)
+  grasp_lever_m: 0.15       # grasps: the lever of the approach and closing axes' two-point rows (pads flat on the part:
+                            # a tilt phi puts a 2 cm pad 2 sin(phi) cm into it); 3 x the press lever
+  grasp_c: 10.0             # grasps: the tool point's error along the closing axis, x this (a few mm there is one jaw
+                            # in the part or off it, spec §7.1)
+  grasp_arm_rest: 1.0       # grasps: the arm's joints to home x (1 - gate) [per rad^2]: before the gate the relation
+                            # term chased the human's hand and folded the arm against its limits, from where two dev
+                            # clips never turned the jaws to the part
   tilt: 10.0                # trunk up axis, horizontal part (roll and pitch -> 0)
   height: 10.0              # trunk height -> nominal, weak: a low edge needs the trunk ~8 cm lower (as the X-Morph
                             # prior's 0.46-0.55 m)

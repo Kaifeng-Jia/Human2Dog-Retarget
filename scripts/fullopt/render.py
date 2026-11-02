@@ -8,6 +8,10 @@ robot's base, so the human tile hides the robot (geom group 1) instead of moving
 dark sphere; on contact frames the arm turns red where the frame is not reached. Per clip: <out>/<id>.mp4 (H.264)
 and <out>/<id>.png, a key-frame strip (approach, contact, end) small enough for the reports branch.
 
+A grasp (spec §7.5) adds a third tile, a close-up of the gripper at the grasp point, labels the gripper's opening and
+phase, and its strip shows the opening's key frames: fully open before the contact, at the contact, closed, the hold,
+reopened and retreating.
+
 Offscreen rendering: MUJOCO_GL=egl on a GPU machine, MUJOCO_GL=osmesa without one.
 """
 
@@ -117,9 +121,26 @@ class Renderer:
         self.cam.distance, self.cam.elevation = args.distance, args.elevation
         self.cam.azimuth = float(np.degrees(np.arctan2(side[1], side[0]))) + args.azimuth_offset
         self.s, self.e = (int(x) for x in sol["segment"])
+        self.grasp = info.get("task", {}).get("grasp") if "theta" in sol else None
+        self.cam_close = mujoco.MjvCamera()
+        self.cam_close.type, self.cam_close.distance = mujoco.mjtCamera.mjCAMERA_FREE, args.closeup_distance
+        self.cam_close.elevation = -10.0
+        if self.grasp:                  # the close-up looks along the jaws' width: the opening in the a-c plane
+            Ro = R.from_quat(c.obj_quat)
+            self.E = Ro.apply(np.asarray(self.grasp["E_local"])) + c.obj_pos
+            t = Ro.apply(np.cross(self.grasp["c_local"], self.grasp["a_local"]))
+            t *= np.sign(np.sum((trunk - self.E)[:, :2] * t[:, :2], 1) + 1e-9)[:, None]   # the camera off the trunk
+            self.az = np.degrees(np.arctan2(t[:, 1], t[:, 0]))
+            self.el = np.where(np.abs(t[:, 2]) > 0.7, -80.0, -10.0)    # a post: the jaws' plane is level
 
     def phase(self, t: int) -> str:
-        return "approach" if t < self.s else "contact" if t < self.e else "after contact"
+        if not self.grasp:
+            return "approach" if t < self.s else "contact" if t < self.e else "after contact"
+        p = self.grasp["phases"]
+        return ("approach, gripper closed" if t < p["open_start"] else "opening" if t < p["open_done"] else
+                "open" if t < self.s else "closing" if t <= p["closed"] else "hold" if t < self.e else
+                "reopening" if t <= p["released"] else "retreat" if p["reclose"] is None or t < p["reclose"] else
+                "retreat, closing")
 
     def tile(self, t: int, kind: str) -> np.ndarray:
         c, sol, m, d = self.c, self.sol, self.model, self.data
@@ -131,9 +152,12 @@ class Renderer:
         m.geom_rgba[self.arm] = self.arm_rgba if ok else RED
         mujoco.mj_forward(m, d)
         opt = mujoco.MjvOption()
-        opt.geomgroup[1] = int(kind == "robot")
-        self.cam.lookat[:] = self.look[t]
-        self.gl.update_scene(d, camera=self.cam, scene_option=opt)
+        opt.geomgroup[1] = int(kind != "human")
+        cam = self.cam if kind != "closeup" else self.cam_close
+        if kind == "closeup":
+            cam.azimuth, cam.elevation = self.az[t], self.el[t]
+        cam.lookat[:] = self.look[t] if kind != "closeup" else self.E[t]
+        self.gl.update_scene(d, camera=cam, scene_option=opt)
         scn = self.gl.scene
         if kind == "human":
             J = {n: c.joint(n)[t] for n in c.joint_names}
@@ -147,6 +171,11 @@ class Renderer:
             sphere(scn, sol["target"][t], 0.022, TARGET)
         img = self.gl.render()
         sec = f"t = {t / c.fps:.1f} s, {self.phase(t)}"
+        if kind == "closeup":
+            g = self.grasp
+            return label(img, [f"gripper {sol['theta'][t]:.0f}° · {sec}",
+                               f"{g['kind']} {g['beta_deg']:.0f}°, w {100 * g['w_m']:.1f} cm, "
+                               f"closing {g['theta_c_deg']:.0f}°, mu {g['mu_need']:.2f}"], bad=not ok)
         if kind == "human":
             return label(img, [f"human ({self.info.get('dataset') or 'input'}) · {self.info['object']}", sec])
         lines = [f"{self.robot.desc.get('title', self.robot.name)} · full optimization, pass 1, relation (a)",
@@ -157,8 +186,9 @@ class Renderer:
         return label(img, lines, bad=not ok)
 
     def frame(self, t: int) -> np.ndarray:
-        return np.concatenate([self.tile(t, "human"), np.full((self.args.height, 4, 3), 255, np.uint8),
-                               self.tile(t, "robot")], 1)
+        gap = np.full((self.args.height, 4, 3), 255, np.uint8)
+        tiles = [self.tile(t, "human"), gap, self.tile(t, "robot")]
+        return np.concatenate(tiles + ([gap, self.tile(t, "closeup")] if self.grasp else []), 1)
 
     def close(self):
         self.gl.close()
@@ -168,7 +198,11 @@ def strip(r: Renderer, path: Path, scale: float = 0.6) -> None:
     """Approach, contact and end as rows of a small PNG (palette, under 1 MB for the reports branch)."""
     w0, w1 = (int(x) for x in r.sol["window"])
     picks = [max(w0, r.s - round(0.5 * r.c.fps)), (r.s + r.e) // 2, w1 - 1]
-    size = (int(scale * (2 * r.args.width + 4)), int(scale * r.args.height))
+    if r.grasp:                    # fully open, at the contact, closed, the hold, reopened and retreating
+        p, scale = r.grasp["phases"], 0.5
+        picks = [max(p["open_done"], 0), r.s, p["closed"], (r.s + r.e) // 2, min(p["released"] + 4, r.c.n - 1)]
+    W = r.frame(picks[0]).shape[1]
+    size = (int(scale * W), int(scale * r.args.height))
     rows = [np.asarray(Image.fromarray(r.frame(t)).resize(size, Image.LANCZOS)) for t in picks]
     img = Image.fromarray(np.concatenate(rows, 0)).quantize(256, method=Image.Quantize.MEDIANCUT,
                                                             dither=Image.Dither.NONE)
@@ -177,7 +211,11 @@ def strip(r: Renderer, path: Path, scale: float = 0.6) -> None:
 
 def render(robot: Robot, c: HOIClip, sol, info: dict, out: Path, args) -> None:
     r = Renderer(robot, c, sol, info, args)
-    W, H = 2 * args.width + 4, args.height
+    if args.strips_only:
+        strip(r, out / f"{info['id']}.png")
+        r.close()
+        return
+    W, H = r.frame(0).shape[1], args.height
     enc = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{W}x{H}", "-r", f"{c.fps / args.stride:g}", "-i", "-", "-pix_fmt", "yuv420p",
                             "-vcodec", "libx264", "-preset", "veryfast", "-crf", "23", str(out / f"{info['id']}.mp4")],
@@ -203,6 +241,8 @@ def main() -> int:
     ap.add_argument("--elevation", type=float, default=-20.0, help="camera elevation [deg]")
     ap.add_argument("--azimuth-offset", type=float, default=60.0,
                     help="camera azimuth relative to the object -> human direction [deg] (90: from the side)")
+    ap.add_argument("--closeup-distance", type=float, default=0.45, help="grasps: close-up camera distance [m]")
+    ap.add_argument("--strips-only", action="store_true", help="the key-frame strips, no video")
     ap.add_argument("--out", default=None, help="default <solve-dir>/videos")
     args = ap.parse_args()
     sd = Path(args.solve_dir)
@@ -216,7 +256,7 @@ def main() -> int:
             continue
         c = leveled(HOIClip.load(Path(args.clips) / p.name))
         render(robot, c, dict(np.load(p)), info.get(p.stem, {"id": p.stem, "object": "object"}), out, args)
-        print(f"  {p.stem} -> {out / p.stem}.mp4, .png", flush=True)
+        print(f"  {p.stem} -> {out / p.stem}" + (".png" if args.strips_only else ".mp4, .png"), flush=True)
     return 0
 
 

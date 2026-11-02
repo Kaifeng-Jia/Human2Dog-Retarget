@@ -21,6 +21,16 @@ legs: [FL_hip_joint, FL_thigh_joint, FL_calf_joint, FR_hip_joint, FR_thigh_joint
        RL_hip_joint, RL_thigh_joint, RL_calf_joint, RR_hip_joint, RR_thigh_joint, RR_calf_joint]
 arm: [joint1, joint2, joint3, joint4, joint5, joint6]
 locked: {jointGripper: 0.0}   # closed; the contact point below is only valid here
+# The gripper (spec §7.5): presses keep it locked closed; a grasp task opens and closes it on a schedule.
+gripper:
+  joint: jointGripper
+  open_sign: -1               # qpos = open_sign x the opening angle (the model's range is [-1.57, 0] rad)
+  max_open_deg: 90.0
+  speed_deg_s: 180.0          # Z1: the full 90 deg stroke in 0.5 s
+  bodies: [gripperStator, gripperMover]   # the fixed jaw (the tool body) and the moving jaw
+  tip_x: 0.149                # jaw tips along the approach axis (tool frame)
+  pad_z: -0.009               # the fixed jaw's pad face; the closed jaws meet on it
+  pad_half_width: 0.034       # the pads' half width (tool y) at the tips
 # Trunk speed and acceleration per axis (translation: world x, y, z; rotation: trunk frame). Speeds: 1 m/s per
 # horizontal axis (1.4 m/s diagonally) is about the walk / trot boundary (Froude 0.35: 1.37 m/s at this hip height);
 # the dev people walk at 0.17-0.61 m/s (M0, R026b). Vertically 0.3 m/s: the whole height range in 0.6 s, where R027

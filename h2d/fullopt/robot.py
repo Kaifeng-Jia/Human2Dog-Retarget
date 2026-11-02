@@ -165,10 +165,12 @@ class Robot:
         f = (self.base_rot() @ self.forward)[:2]
         return f / max(float(np.linalg.norm(f)), 1e-12)
 
-    def point(self, name: str, floor_z: float = 0.0) -> np.ndarray:
+    def point(self, name: str, floor_z: float = 0.0, offset: np.ndarray | None = None) -> np.ndarray:
+        """A dog point; ``offset`` replaces a body point's offset (a grasp's tool point for the gripper)."""
         bodies, off, on_floor = self.points[name]
         if off is not None:
-            return self.data.xpos[bodies[0]] + self.data.xmat[bodies[0]].reshape(3, 3) @ off
+            return self.data.xpos[bodies[0]] + self.data.xmat[bodies[0]].reshape(3, 3) @ (off if offset is None
+                                                                                           else offset)
         p = self.data.xpos[bodies].mean(0)
         if on_floor:
             p[2] = floor_z
@@ -178,10 +180,10 @@ class Robot:
         mujoco.mj_jac(self.model, self.data, self._jp, None, np.asarray(p, float), int(body))
         return self._jp[:, dofs].copy()
 
-    def point_jac(self, name: str, dofs: np.ndarray) -> np.ndarray:
+    def point_jac(self, name: str, dofs: np.ndarray, offset: np.ndarray | None = None) -> np.ndarray:
         bodies, off, on_floor = self.points[name]
         if off is not None:
-            return self.body_point_jac(bodies[0], self.point(name), dofs)
+            return self.body_point_jac(bodies[0], self.point(name, offset=offset), dofs)
         J = np.mean([self.body_point_jac(b, self.data.xpos[b], dofs) for b in bodies], axis=0)
         if on_floor:
             J[2] = 0.0
@@ -195,8 +197,16 @@ class Robot:
         mujoco.mj_jacBody(self.model, self.data, None, self._jr, int(body))
         return np.cross(self._jr[:, dofs].T, self.axis(body, local)).T
 
-    def tool_point(self) -> np.ndarray:
-        return self.data.xpos[self.tool_body] + self.data.xmat[self.tool_body].reshape(3, 3) @ self.r_c
+    def tool_point(self, offset: np.ndarray | None = None) -> np.ndarray:
+        """The tool point: r_c, or ``offset`` in the tool frame (a grasp's point between the pads)."""
+        return self.data.xpos[self.tool_body] + self.data.xmat[self.tool_body].reshape(3, 3) @ (
+            self.r_c if offset is None else offset)
+
+    def opened(self, q: np.ndarray, deg: float) -> np.ndarray:
+        """q with the gripper opened by ``deg`` (the description's ``gripper``)."""
+        g, out = self.desc["gripper"], np.array(q, float)
+        out[self.qadr[g["joint"]]] = g["open_sign"] * np.radians(deg)
+        return out
 
     def soles(self, floor_z: float = 0.0) -> np.ndarray:
         """Height of each sole above the floor, (4,)."""

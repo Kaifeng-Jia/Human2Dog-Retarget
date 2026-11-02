@@ -2,7 +2,31 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
-## [Unreleased] (full-optimization line: M1g, the gripper)
+## [0.3.5] — 2026-11-01 (full-optimization line: M1g, the gripper)
+
+### Added (fullopt spec v0.2 §2.2, §7.1, §7.5, §8.6; a kinematic grasp: the arm's pose and the gripper's timing)
+- `h2d/fullopt/grasp.py`, `configs/fullopt/grasp.yaml`: the grasp frame from the part's geometry at the human's
+  contact (two hands: their midpoint). Candidates: along an edge pitched down 0/15/30 deg, from above across a lip or
+  a rail, level across a post; feasible when r_c is in the whole-body reach band, the pads hold the part alone (its
+  section fits the 6.9 cm gap at 2 cm insertion; straight parts slide off legs and rails) and the open jaws clear the
+  part on the last 15 cm. Edges are squared to the part's outline and take the lowest feasible pitch, kinds the
+  thinnest section; no object names. The Z1
+  jaws from the model's meshes (pad gap per angle, voxel signed distances). The gripper's schedule: open by 0.3 s
+  before the contact (from the first frame when the clip starts later), close to theta_c (the moving jaw's first
+  touch) at it, hold, reopen at the release, then retreat at least 15 cm (never back towards the part).
+- `task.build` builds a grasp task for `meta.grip == "grasp"`: tool point between the pads (r_g), target E - s a -
+  delta c (the approach along the grasp's axis, centred in the open jaws), both axes as targets. Presses unchanged.
+- Solver: grasps weight the tool point's error along the closing axis x10 and take both axes as two-point rows with
+  a 0.15 m lever; the arm rests at home until the gate rises (else it folded against its limits chasing the human's
+  hand); the gripper joint follows the task's schedule. The relation term uses r_g as the end effector.
+- `evaluate.grasp` (spec §8.6): per contact frame e_c <= 5 mm, e_a <= 1 cm, e_t <= 2 cm, both axes <= 15 deg,
+  collision free, pads <= 5 mm and other jaw parts <= 2 mm (3 mm single-sheet meshes) in the part; jaws clear of the
+  part before the closing and after the release; theta_c, the gap table's angle, mu needed = tan(theta_c / 2)
+  (friction flag), timing and the release lag.
+- `solve.py` solves press and grasp clips in one folder, checks them per kind and split (grasps: >= 90 % of the
+  feasible dev clips reached, jaws clear on 0 frames, the M1 checks; no learned-line agreement), reports a grasp
+  table. `render.py`: a gripper close-up, phases and grasp key frames; `--strips-only`.
+- Spec: M1g revision table and sections §2.2, §7.5, §8.6, the §7.1 and §7.2 addenda, the §10 row.
 
 ### Fixed
 - `Collision.distance` also requires each witness point to lie on its geom's surface (within 1 mm). MuJoCo 3.11 can

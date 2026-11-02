@@ -7,6 +7,21 @@ penetration_tol_m: 0.002    # ... and no self, floor or arm-object penetration d
 joint_limit_tol_rad: 1.0e-4
 same_side_deg: 45.0         # the robot is on the human's side of the object: directions from the object centre within this
 
+grasp:                      # grasp tasks (spec §8.6); a hold frame is reached when all of these hold
+  e_c_max_m: 0.005          # along the closing axis. A kinematic grasp: a real Z1 closes under torque until contact,
+                            # so a few mm along c is taken up by the closing jaw; 5 mm is half the 1 cm open clearance
+                            # per side and half of OmniRetarget's 1 cm penetration tolerance (holosoma eval_retargeting)
+  e_a_max_m: 0.01           # along the approach: insertion 2 +- 1 cm, inside the 6.4 cm throat
+  e_t_max_m: 0.02           # along the part: a long edge or rim; a leg there shows as jaws in the part
+  max_angle_deg: 15.0       # approach and closing axes
+  pad_in_part_max_m: 0.005  # the pads during the hold (as e_c)
+  jaw_in_part_max_m: 0.002  # any jaw part before the closing and after the release (the penetration tolerance) ...
+  jaw_in_part_max_shell_m: 0.003   # ... single-sheet meshes, measured on 1.5 mm samples
+  clear_until_m: 0.05       # after the release: checked until the tool point is this far from the grasp point
+  release_m: 0.15           # the release lag: robot and human 15 cm out
+  mu_ok: 0.25               # mu needed = tan(theta_c / 2) (a wedge self-locks below 2 atan mu): ok up to this,
+  mu_limit: 0.35            # "friction limit" up to this, beyond it above
+
 pass:                       # decided on the dev split only (spec §8.5)
   dev_reached_min: 9        # tasks fully reached: no worse than the learned line's interaction-mesh layout (9/10)
   body_in_object_max_m: 0.01
@@ -16,6 +31,8 @@ pass:                       # decided on the dev split only (spec §8.5)
   sole_height_max_m: 0.002          # every sole within this of the floor on every frame
   trunk_limit_ratio_max: 1.01       # trunk speeds and accelerations within the description's limits (no dive); 1 %
                                     # for the rotation increments, which the step bounds add to first order only
+  grasp_reached_frac_min: 0.9   # grasp tasks: of the feasible dev clips (an M1 9/10 analogue)
+  grasp_clear_frames_max: 0     # frames whose jaws enter the part before the closing or after the release
   target_agreement:         # task targets vs the learned line's task files of the same segments (median, contact frames)
     position_m: 0.01
     tool_x_deg: 5.0
