@@ -23,7 +23,7 @@ from h2d.common.collision import _geom_samples
 from h2d.paths import load_config, xmorph_path
 
 GROUPS = ("base", "legs", "arm")
-WITNESS_TOL_M = 1e-3   # a distance's two witness points lie |distance| apart (mj_geomDistance's fromto)
+WITNESS_TOL_M = 1e-3   # mj_geomDistance's witness points (fromto): |distance| apart, on their geoms
 JITTER_M = (1e-7, 1e-6, 1e-5)
 
 
@@ -247,9 +247,10 @@ class Collision:
     MuJoCo 3.11's ``mj_geomDistance`` can return a wrong distance for a mesh and a box: negative for two that do not
     touch (R027, clip c10 frame 45: the gripper's stator mesh and the trunk's front plate, -24 mm with witness points
     41 mm apart, the same in both orders, while no vertex of either lies in the other), or exactly 0 for two 24 mm
-    apart (R027b dry runs, the gripper's mover and the same plate, witness points 32 mm apart), switching on and off
-    with steps of 1e-5. ``distance`` keeps a distance only when its witness points are |distance| apart, in one order
-    or the other; else it measures again with one geom moved by 0.1, 1 or 10 um (the error the move adds), and only
+    apart (R027b dry runs, the gripper's mover and the same plate, witness points 32 mm apart; R027d on Ubuntu, c09
+    frame 0, 25.9 mm apart with an all-zero fromto), switching on and off with steps of 1e-5. ``distance`` keeps a
+    distance only when its witness points are |distance| apart and each lies on its geom's surface, in one order or
+    the other; else it measures again with one geom moved by 0.1, 1 or 10 um (the error the move adds), and only
     then estimates the pair by sample points, as the object check does (an estimate a few mm off would make the
     distance jump as the pose moves in and out of the bug).
     """
@@ -320,25 +321,34 @@ class Collision:
                 best = (float(sd[j]), np.r_[pw, qw] if p_geom == a else np.r_[qw, pw])
         return best
 
+    def _consistent(self, a: int, g: int, dist: float, ft: np.ndarray, distmax: float) -> bool:
+        """At or beyond ``distmax``, or witness points (on a, on g) |dist| apart and each on its geom's surface."""
+        if dist >= distmax:
+            return True
+        d = self.robot.data
+        off = [self._sdf(x, ((p - d.geom_xpos[x]) @ d.geom_xmat[x].reshape(3, 3))[None])[0]
+               for x, p in ((a, ft[:3]), (g, ft[3:]))]
+        return abs(np.linalg.norm(ft[3:] - ft[:3]) - abs(dist)) <= WITNESS_TOL_M and max(map(abs, off)) <= WITNESS_TOL_M
+
     def distance(self, a: int, g: int, distmax: float) -> tuple[float, np.ndarray]:
         """``mj_geomDistance`` (distance and fromto) cross-checked (see the class): a distance below ``distmax`` is
-        kept only when its witness points are |distance| apart, in one order or the other."""
+        kept only when its witness points are |distance| apart and on the two geoms, in one order or the other."""
         m, d = self.robot.model, self.robot.data
-        agree = lambda x, f: x >= distmax or abs(np.linalg.norm(f[3:] - f[:3]) - abs(x)) <= WITNESS_TOL_M  # noqa: E731
         ft = np.zeros(6)
         dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
-        if agree(dist, ft):
+        if self._consistent(a, g, dist, ft, distmax):
             return float(dist), ft
         ft2 = np.zeros(6)
         dist2 = mujoco.mj_geomDistance(m, d, g, a, distmax, ft2)
-        if agree(dist2, ft2):
+        if self._consistent(g, a, dist2, ft2, distmax):
             return float(dist2), np.r_[ft2[3:], ft2[:3]]
         x0 = d.geom_xpos[a].copy()                    # the bug sits on isolated poses: geom a moved by 0.1-10 um
         for e in np.concatenate([np.vstack([np.eye(3), -np.eye(3)]) * k for k in JITTER_M]):
             d.geom_xpos[a] = x0 + e
             dist = mujoco.mj_geomDistance(m, d, a, g, distmax, ft)
+            ok = self._consistent(a, g, dist, ft, distmax)
             d.geom_xpos[a] = x0
-            if agree(dist, ft):
+            if ok:
                 self.retries += 1
                 return float(dist), np.r_[ft[:3] - e, ft[3:]]
         self.fallbacks += 1

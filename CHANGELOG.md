@@ -2,6 +2,15 @@
 
 Format: one section per version, newest first. Versioning rules: `docs/versioning.md`.
 
+## [Unreleased] (full-optimization line: M1g, the gripper)
+
+### Fixed
+- `Collision.distance` also requires each witness point to lie on its geom's surface (within 1 mm). MuJoCo 3.11 can
+  return exactly 0 with an all-zero fromto for the gripper and the trunk's front plate (R027d on Ubuntu, c09 frame
+  0: 25.9 mm apart, reported as 0 mm); the old check passed it because both are 0. Such a distance now goes through
+  the swapped order, the re-measure and the sample fallback. Press dry run (14 clips): 13 identical to the bit; c01
+  meets the case on three trial poses (stator, front plate), max |dq| 1.7e-4 from frame 71, no check changes.
+
 ## [0.3.4] — 2026-11-01 (full-optimization line: grasp inventory)
 
 ### Added (Kevin: the gripper is done in the full-optimization line; the learned line stays as it is)

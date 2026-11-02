@@ -135,6 +135,38 @@ def test_a_distance_of_zero_needs_consistent_witness_points():
     assert coll.retries == (1 if raw == 0.0 else 0)
 
 
+@pytest.mark.parametrize("bogus_calls", [1, None])
+def test_a_distance_of_zero_with_an_all_zero_fromto_is_measured_again(monkeypatch, bogus_calls):
+    """R027d on Ubuntu, c09 frame 0: exactly 0 with fromto all zero for the gripper's mover and the front plate 25.9 mm
+    apart (the old check passed: both are 0). Here on a pose where MuJoCo measures the pair right (13.7 mm), made bogus
+    on the first call (the swapped order measures it) or on every call (the sample estimate)."""
+    import mujoco
+
+    coll, m = Collision(ROBOT), ROBOT.model
+    a = next(x for x in coll.tool if coll.body_of[x] == "gripperMover")
+    g = next(x for x in coll.body if coll.body_of[x] == "base_link" and m.geom_pos[x][0] > 0.4)
+    ROBOT.set(np.array(C10_Q45))
+    true = coll.distance(a, g, 0.15)[0]
+    assert true == pytest.approx(0.0137, abs=1e-4) and coll.retries == coll.fallbacks == 0
+    real, calls = mujoco.mj_geomDistance, []
+
+    def bogus(model, data, g1, g2, distmax, fromto):
+        calls.append((g1, g2))
+        if {g1, g2} == {a, g} and (bogus_calls is None or len(calls) <= bogus_calls):
+            fromto[:] = 0.0
+            return 0.0
+        return real(model, data, g1, g2, distmax, fromto)
+
+    monkeypatch.setattr(mujoco, "mj_geomDistance", bogus)
+    coll.retries = coll.fallbacks = 0
+    dist, ft = coll.distance(a, g, 0.15)
+    if bogus_calls:
+        assert dist == true and len(calls) == 2 and coll.fallbacks == 0
+    else:
+        assert dist == pytest.approx(true, abs=0.005) and coll.fallbacks == 1
+    assert np.linalg.norm(ft[3:] - ft[:3]) == pytest.approx(dist, abs=1e-3)
+
+
 def test_real_penetrations_keep_mujocos_distance():
     coll = Collision(ROBOT)
     q = ROBOT.placed([0.0, 0.0], 0.0)
