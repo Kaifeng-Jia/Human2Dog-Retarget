@@ -35,6 +35,15 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
 - Trunk limit tolerance 1 % -> 5 %: the limits are rough estimates and the rotation step bounds hold to first order
   only (dev, reached: up to 1.017); R027's dive was 13x the vertical limit.
 
+### Known issues (R030; recorded, not fixed in M1g)
+- Approach lunges of 13-15 cm, as press c07 (`sub5_whitechair_036_210`, `260923_06_2_3_186`, `079_113`): M3.
+- A fast-pulled small table (`sub12_smalltable_079_113`, not reached): the trunk bobs 12 cm during the hold, with a
+  jerk at frame 227 (unconverged 227-230, a foot 9.4 mm up): M3.
+- Chairs end up under the body after the grasp on three held-out clips (16-24 frames) and dev `046_25`: M3 stepping.
+- Infeasible clips still try the nearest candidate (chair `04_3_1_246` opens only 29 deg; `06_2_3_89` body 1.18 cm in
+  the object). They are outside the reach bar; whether they should not grasp at all is open.
+- Held-out `sub4_whitechair_020_3` is reached on no frame, jaws in the part on frames 0-2: to look into.
+
 ### Fixed
 - `Collision.distance` also requires each witness point to lie on its geom's surface (within 1 mm). MuJoCo 3.11 can
   return exactly 0 with an all-zero fromto for the gripper and the trunk's front plate (R027d on Ubuntu, c09 frame
