@@ -159,7 +159,8 @@ def grasp(c: HOIClip, robot: Robot, coll: Collision, gr, task: tk.Task, Q: np.nd
                                     "theta_open_deg", "theta_c_deg", "theta_c_gap_deg", "mu_need")},
         "friction": "ok" if mu <= gc["mu_ok"] else "limit" if mu <= gc["mu_limit"] else "beyond",
         "timing": {"late_start": ph["late_start"],
-                   "open_lead_s": (s - next(t for t in range(n) if theta[t] >= g["theta_open_deg"] - 1e-6)) / c.fps,
+                   "open_lead_s": (s - next((t for t in range(s) if theta[t] >= g["theta_open_deg"] - 1e-6), s))
+                   / c.fps,                                                   # 0 if the clip starts in contact
                    "closing_s": (ph["closed"] - s + 1) / c.fps,
                    "moved_while_closing_m": float(np.linalg.norm(Ew[min(ph["closed"], n - 1)] - Ew[s])),
                    "reopen_s": (ph["released"] - e + 1) / c.fps, "robot_out_s": r_rob, "human_out_s": r_hum,
