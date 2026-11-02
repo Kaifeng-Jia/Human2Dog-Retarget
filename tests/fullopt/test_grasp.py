@@ -179,3 +179,33 @@ def test_a_synthetic_table_pull_is_grasped_and_reached():
     assert ev["penetration"]["collision_frames"] == 0 and ev["penetration"]["body_in_object_m"] < 1e-3
     q = sol["q"][45, ROBOT.qadr[ROBOT.desc["gripper"]["joint"]]]
     assert q == pytest.approx(-math.radians(g["theta_c_deg"]))                    # the solution carries the gripper
+
+
+def test_the_body_checks_skip_the_clips_counted_as_not_reached():
+    """A clip the reach check counts as failed is not failed again by the body checks (its values are listed apart);
+    an infeasible grasp is outside the reach bar, so its body still counts."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "fullopt" / "solve.py"
+    spec = importlib.util.spec_from_file_location("fullopt_solve", path)
+    sv = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sv)
+    crit = load_config("fullopt/evaluation.yaml")["pass"]
+
+    def row(i, reached, feasible=True, body=0.0, sole=0.001, trunk=1.0):
+        return {"id": i, "agreement": None, "solver": {"unconverged_frames": 0, "qp_failures": 0},
+                "reach": {"reached": reached, "fail_reasons": {}, "clear": {"bad_frames": []}, "friction": "ok",
+                          "grasp": {"feasible": feasible, "reasons": []}},
+                "penetration": {"body_in_object_m": body, "object_under_body_frames": 0, "collision_frames": 0},
+                "feet": {"sole_height_max_m": sole},
+                "limits": {"trunk_speed_ratio_max": trunk, "trunk_accel_ratio_max": trunk}}
+
+    rows = [row(f"r{i}", True, trunk=1.02) for i in range(9)] + [row("miss", False, body=0.05, sole=0.01, trunk=1.3)]
+    for kind in ("grasp", "press"):
+        ch = sv.checks_of(rows, 0, crit, "dev", kind)
+        assert ch["reached"]["pass"] and ch["body_in_object"]["max_m"] == 0.0, kind      # 9/10, 90 %
+        assert ch["body_in_object"]["pass"] and ch["feet_on_floor"]["pass"] and ch["trunk_within_limits"]["pass"]
+        assert ch["body_in_object"]["not_reached"] == {"miss": 0.05}
+    rows[-1] = row("off", True, feasible=False, body=0.05)
+    ch = sv.checks_of(rows, 0, crit, "dev", "grasp")
+    assert ch["reached"]["of"] == 9 and not ch["body_in_object"]["pass"] and not ch["body_in_object"]["not_reached"]

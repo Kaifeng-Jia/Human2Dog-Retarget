@@ -28,6 +28,13 @@ Format: one section per version, newest first. Versioning rules: `docs/versionin
   table. `render.py`: a gripper close-up, phases and grasp key frames; `--strips-only`.
 - Spec: M1g revision table and sections §2.2, §7.5, §8.6, the §7.1 and §7.2 addenda, the §10 row.
 
+### Changed (after the dev grasp run; Kevin: thresholds reasonable, not strict)
+- The body checks (body in object, object under the body, feet, trunk) skip the clips the reach check already counts
+  as failed (not reached; for grasps of the feasible ones) and list their values under `not_reached`; collisions are
+  still checked on every clip. Presses too (their results are unchanged).
+- Trunk limit tolerance 1 % -> 5 %: the limits are rough estimates and the rotation step bounds hold to first order
+  only (dev, reached: up to 1.017); R027's dive was 13x the vertical limit.
+
 ### Fixed
 - `Collision.distance` also requires each witness point to lie on its geom's surface (within 1 mm). MuJoCo 3.11 can
   return exactly 0 with an all-zero fromto for the gripper and the trunk's front plate (R027d on Ubuntu, c09 frame

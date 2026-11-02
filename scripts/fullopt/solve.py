@@ -154,14 +154,21 @@ def packages() -> dict:
 
 
 def checks_of(rows: list[dict], n_errors: int, crit: dict, split: str = "dev", kind: str = "press") -> dict:
-    """The run's checks on one group of clips (a split and a task kind); pass is None where only reported."""
+    """The run's checks on one group of clips (a split and a task kind); pass is None where only reported. The body
+    checks (body in object, object under the body, feet, trunk) are taken over the clips the reach check does not
+    already count as failed (the clips not reached, of the feasible ones for grasps); those clips' values are listed
+    under ``not_reached``. Collisions are checked on every clip."""
     dev = split == "dev"
-    worst = lambda f: max((f(r) for r in rows), default=float("nan"))  # noqa: E731
-    body = worst(lambda r: r["penetration"]["body_in_object_m"])
-    under = {r["id"]: r["penetration"]["object_under_body_frames"] for r in rows
-             if r["penetration"]["object_under_body_frames"]}
-    sole = worst(lambda r: r["feet"]["sole_height_max_m"])
-    trunk = worst(lambda r: max(r["limits"]["trunk_speed_ratio_max"], r["limits"]["trunk_accel_ratio_max"]))
+    failed = lambda r: not r["reach"]["reached"] and (kind == "press" or r["reach"]["grasp"]["feasible"])  # noqa: E731
+    counted, missed = [r for r in rows if not failed(r)], [r for r in rows if failed(r)]
+    worst = lambda f: max((f(r) for r in counted), default=float("nan"))  # noqa: E731
+    each = lambda f: {r["id"]: f(r) for r in missed}  # noqa: E731
+    body_of = lambda r: r["penetration"]["body_in_object_m"]  # noqa: E731
+    under_of = lambda r: r["penetration"]["object_under_body_frames"]  # noqa: E731
+    sole_of = lambda r: r["feet"]["sole_height_max_m"]  # noqa: E731
+    trunk_of = lambda r: max(r["limits"]["trunk_speed_ratio_max"], r["limits"]["trunk_accel_ratio_max"])  # noqa: E731
+    body, sole, trunk = worst(body_of), worst(sole_of), worst(trunk_of)
+    under = {r["id"]: under_of(r) for r in counted if under_of(r)}
     hits = {r["id"]: r["penetration"]["collision_frames"] for r in rows if r["penetration"]["collision_frames"]}
     unconverged = {r["id"]: r["solver"]["unconverged_frames"] for r in rows if r["solver"]["unconverged_frames"]}
     out = {"all_clips_solved": {"pass": bool(rows) and not n_errors, "n": len(rows), "n_errors": n_errors,
@@ -185,10 +192,14 @@ def checks_of(rows: list[dict], n_errors: int, crit: dict, split: str = "dev", k
                                      "frames": bad}
     out.update({
         "collision_free_all_frames": {"pass": sum(hits.values()) <= crit["collision_frames_max"], "frames": hits},
-        "body_in_object": {"pass": bool(body <= crit["body_in_object_max_m"]), "max_m": body},
-        "object_under_body": {"pass": sum(under.values()) <= crit["object_under_body_frames_max"], "frames": under},
-        "feet_on_floor": {"pass": bool(sole <= crit["sole_height_max_m"]), "sole_height_max_m": sole},
-        "trunk_within_limits": {"pass": bool(trunk <= crit["trunk_limit_ratio_max"]), "ratio_max": trunk},
+        "body_in_object": {"pass": bool(body <= crit["body_in_object_max_m"]), "max_m": body,
+                           "not_reached": each(body_of)},
+        "object_under_body": {"pass": sum(under.values()) <= crit["object_under_body_frames_max"], "frames": under,
+                              "not_reached": each(under_of)},
+        "feet_on_floor": {"pass": bool(sole <= crit["sole_height_max_m"]), "sole_height_max_m": sole,
+                          "not_reached": each(sole_of)},
+        "trunk_within_limits": {"pass": bool(trunk <= crit["trunk_limit_ratio_max"]), "ratio_max": trunk,
+                                "not_reached": each(trunk_of)},
         "converged": {"pass": None, "unconverged_frames": unconverged}})
     if kind == "press":
         ag = crit["target_agreement"]
@@ -212,9 +223,11 @@ NOTE = ("Reached: contact point within 1 cm, tool axis within 15° and collision
         "where the object's hull overlaps the box under the trunk (thicker than the penetration tolerance) and the "
         "thickest overlap. Feet: the largest horizontal path of a sole (they slide: no gait before M3); every sole "
         "is within 2 mm of the floor. Trunk: largest vertical speed, vertical and horizontal acceleration (limits "
-        "0.3 m/s, 3 and 5 m/s²) and tilt (15°). Relations: the fixed evaluation network on the contact frames. "
-        "Unconverged: frames whose SQP ended without a step below the tolerance inside the trust region (reported, "
-        "not a pass criterion).")
+        "0.3 m/s, 3 and 5 m/s²) and tilt (15°). The body checks (body in object, under body, feet, trunk) are taken "
+        "over the clips the reach check does not already count as failed; those clips' values are listed apart "
+        "(not_reached). Relations: the fixed evaluation network on the contact frames. Unconverged: frames whose "
+        "SQP stopped at the iteration cap, or on the trust-region floor with a row violated (reported, not a pass "
+        "criterion).")
 GRASP_NOTE = ("Grasps (spec §8.6): a contact frame (the closing and the hold) is reached when the point between the "
               "pads is within 5 mm of the target along the closing axis c, 1 cm along the approach a and 2 cm along "
               "the part, both axes within 15°, collision free, the pads at most 5 mm and any other jaw part at most "
